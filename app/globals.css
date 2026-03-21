@@ -1,0 +1,222 @@
+@import "tailwindcss";
+
+@custom-variant dark (.dark &);
+
+@layer base {
+  :root {
+    --background: #fdfdfd;
+    --foreground: #0f172a; /* slate-900 */
+    --auth-bg-light: #f0f9f9; /* very light teal */
+    --auth-bg-dark: #020617; /* slate-950 */
+    color-scheme: light;
+  }
+
+  .dark {
+    --background: #020617; /* slate-950 */
+    --foreground: #f8fafc; /* slate-50 */
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-auth-bg-light: var(--auth-bg-light);
+  --color-auth-bg-dark: var(--auth-bg-dark);
+  --font-sans: var(--font-outfit), var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-outfit), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Premium UI Utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass {
+  background: rgba(17, 24, 39, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Autofill fix - Removed generic white fix to prevent conflicts with themed auth-input fixes */
+
+button,
+a {
+  cursor: pointer;
+}
+
+/* ===== Premium Auth Form Styles ===== */
+
+/* Label */
+.auth-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #374151; /* gray-700 - visible in light mode */
+  transition: color 0.2s;
+}
+.dark .auth-label {
+  color: #f3f4f6; /* gray-100 - bright and clear in dark mode */
+}
+
+/* Icon container - z-index ABOVE the input so it's always visible */
+.auth-icon {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  padding-left: 1rem;
+  display: flex;
+  align-items: center;
+  pointer-events: none; /* clicks go through to input */
+  z-index: 3; /* above the input background */
+  color: #9ca3af; /* gray-400 */
+  transition: color 0.2s;
+}
+
+/* Base input - NO z-index so icon can overlay its left padding area */
+.auth-input {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid #d1d5db; /* gray-300 */
+  background-color: #f3f4f6; /* gray-100 - visible bg in light mode */
+  color: #111827; /* gray-900 - dark text in light mode */
+  font-size: 0.875rem;
+  line-height: 1.5;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-clip: padding-box; /* Fix for corner bleeding */
+  overflow: hidden;
+}
+
+.auth-input::placeholder {
+  color: #9ca3af; /* gray-400 */
+}
+
+/* Dark mode - resting */
+.dark .auth-input {
+  background-color: #1f2937; /* gray-800 - darker for more contrast */
+  border-color: #374151; /* gray-700 */
+  color: #f9fafb; /* gray-50 - bright text */
+}
+
+.dark .auth-input::placeholder {
+  color: #6b7280; /* gray-500 */
+}
+
+/* Hover */
+.auth-input:hover {
+  border-color: #5eead4; /* teal-300 */
+}
+.dark .auth-input:hover {
+  border-color: #0d9488; /* teal-600 */
+}
+
+/* Focus - Light mode */
+.auth-input:focus {
+  border-color: #0d9488; /* teal-600 */
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+  background-color: #ffffff; /* white on focus */
+  color: #111827;
+}
+
+/* Focus - Dark mode - Must stay dark! */
+.dark .auth-input:focus {
+  border-color: #14b8a6; /* teal-500 */
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2);
+  background-color: #1f2937; /* stays dark gray-800 */
+  color: #f9fafb;
+}
+
+/* Error state */
+.auth-input-error {
+  border-color: #ef4444 !important; /* red-500 */
+}
+.auth-input-error:focus {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+.dark .auth-input-error {
+  border-color: #f87171 !important; /* red-400 */
+}
+
+/* With left icon: add left padding so text doesn't overlap icon */
+.auth-input-icon {
+  padding-left: 3rem;
+}
+
+/* With right action button: add right padding */
+.auth-input-action {
+  padding-right: 3rem;
+}
+
+/* Icon color changes to teal when field is focused */
+.auth-field:focus-within .auth-icon {
+  color: #0d9488; /* teal-600 */
+}
+.dark .auth-field:focus-within .auth-icon {
+  color: #2dd4bf; /* teal-400 */
+}
+
+/* Right action button (show/hide password) */
+.auth-action-btn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  padding-right: 1rem;
+  display: flex;
+  align-items: center;
+  color: #6b7280; /* gray-500 */
+  transition: color 0.2s;
+  z-index: 3;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.auth-action-btn:hover {
+  color: #111827; /* gray-900 */
+}
+.dark .auth-action-btn {
+  color: #9ca3af; /* gray-400 */
+}
+.dark .auth-action-btn:hover {
+  color: #e5e7eb; /* gray-200 */
+}
+
+/* Fix select option colors in dark mode */
+.dark .auth-input option {
+  background-color: #1f2937;
+  color: #f9fafb;
+}
+
+/* Autofill fix - light mode */
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 30px #f3f4f6 inset;
+  -webkit-text-fill-color: #111827;
+}
+
+/* Autofill fix - dark mode */
+.dark .auth-input:-webkit-autofill,
+.dark .auth-input:-webkit-autofill:hover,
+.dark .auth-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 30px #1f2937 inset;
+  -webkit-text-fill-color: #f9fafb;
+}

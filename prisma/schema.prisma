@@ -1,0 +1,163 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum UserType {
+  ADMIN
+  FOUNDER
+  CONSULTANT
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String?  // [CHANGE] Optional for social login
+  googleId  String?  @unique // [NEW] Link to Google identity
+  image     String?  // [NEW] Profile picture from Google
+  phone     String?
+  isEmailVerified Boolean @default(false) // [NEW] Email verification status
+  isPhoneVerified Boolean @default(false) // [NEW] Phone verification status
+  type      UserType? // [CHANGE] Optional to allow role selection after Google login
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  admin     Admin?
+  founder   StartupFounder?
+  consultant Consultant?
+}
+
+model Admin {
+  id          Int    @id @default(autoincrement())
+  userId      Int    @unique
+  user        User   @relation(fields: [userId], references: [id])
+  adminLevel  String
+  adminScope  String
+}
+
+model StartupFounder {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique
+  user           User     @relation(fields: [userId], references: [id])
+  foundingDate   DateTime?
+  businessSector String
+  businessName   String
+  description    String?  @db.Text
+  logo           String?
+
+  payments       Payment[]
+  budgetAnalyses BudgetAnalysis[]
+  sessions       Session[]
+  chatHistory    AIChatbot[]
+  reports        FounderReport[]
+}
+
+model Consultant {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique
+  user           User     @relation(fields: [userId], references: [id])
+  yearsOfExp     Int
+  date           DateTime @default(now())
+  certificate    String?
+  specialization String
+  availability   String
+
+  sessions       Session[]
+}
+
+model Payment {
+  id            Int      @id @default(autoincrement())
+  founderId     Int
+  founder       StartupFounder @relation(fields: [founderId], references: [id])
+  sessionId     Int?     @unique
+  session       Session? @relation(fields: [sessionId], references: [id])
+  paymentType   String   // renamed from typeRating
+  paymentMethod String
+  amount        Float
+  transDate     DateTime @default(now())
+
+  subscription  Subscription?
+}
+
+model Subscription {
+  id            Int      @id @default(autoincrement())
+  paymentId     Int      @unique
+  payment       Payment  @relation(fields: [paymentId], references: [id])
+  status        String
+  trialType     String
+  startDate     DateTime
+  endDate       DateTime
+}
+
+model Package {
+  id          Int    @id @default(autoincrement())
+  price       Float
+  type        String
+  duration    String
+  description String @db.Text
+}
+
+model BudgetAnalysis {
+  id           Int            @id @default(autoincrement())
+  founderId    Int
+  founder      StartupFounder @relation(fields: [founderId], references: [id])
+  fixedCost    Float
+  variableCost Float
+  totalBudget  Float
+  createdAt    DateTime       @default(now())
+}
+
+model Session {
+  id            Int            @id @default(autoincrement())
+  founderId     Int
+  founder       StartupFounder @relation(fields: [founderId], references: [id])
+  consultantId  Int
+  consultant    Consultant     @relation(fields: [consultantId], references: [id])
+  date          DateTime
+  duration      String
+  notes         String?        @db.Text
+  paymentStatus String         @default("PENDING")
+
+  payment       Payment?
+}
+
+model AIChatbot {
+  id          Int            @id @default(autoincrement())
+  founderId   Int
+  founder     StartupFounder @relation(fields: [founderId], references: [id])
+  userMessage String         @db.Text
+  chatDate    DateTime       @default(now())
+  chatTime    DateTime       @default(now())
+  sysResponse String         @db.Text
+}
+
+model FounderReport {
+  id        Int            @id @default(autoincrement())
+  founderId Int
+  founder   StartupFounder @relation(fields: [founderId], references: [id])
+  createdAt DateTime       @default(now())
+}
+
+model StartawyReport {
+  id         Int      @id @default(autoincrement())
+  industry   String
+  uploadDate DateTime @default(now())
+  link       String
+}
+
+model OTP {
+  id        Int      @id @default(autoincrement())
+  phone     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}
