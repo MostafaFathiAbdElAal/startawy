@@ -32,6 +32,7 @@ model User {
   admin     Admin?
   founder   StartupFounder?
   consultant Consultant?
+  feedbacks Feedback[]
 }
 
 model Admin {
@@ -160,4 +161,13 @@ model OTP {
   createdAt DateTime @default(now())
 
   @@index([phone])
+}
+
+model Feedback {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  rating    Int
+  comment   String   @db.Text
+  createdAt DateTime @default(now())
 }

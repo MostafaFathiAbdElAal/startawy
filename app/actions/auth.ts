@@ -283,8 +283,8 @@ export async function sendVerificationOTP() {
 
       console.log('[OTP] OTP sent successfully');
       return { success: true };
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') {
         console.error('[OTP] WhatsApp Service timed out');
         return { error: 'WhatsApp service timed out. Please check if it is running.' };
       }

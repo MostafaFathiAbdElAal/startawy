@@ -8,6 +8,7 @@ import { Lock, Mail, Eye, EyeOff, User, UserCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import GoogleLoginButton from './GoogleLoginButton';
 import PhoneInput from './ui/PhoneInput';
+import DateInput from './ui/DateInput';
 
 // Reusable input class builder
 const inputCls = (hasError: boolean) =>
@@ -102,7 +103,7 @@ export default function RegisterForm() {
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-100 dark:border-gray-700 my-8 sm:my-0">
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[32px] shadow-2xl p-6 sm:p-10 border border-slate-200 dark:border-slate-800 max-w-[520px] mx-auto relative">
             <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Create Account</h2>
                 <p className="text-gray-600 dark:text-gray-400">Join BIS today</p>
@@ -196,18 +197,16 @@ export default function RegisterForm() {
                                 />
                                 {formik.touched.businessSector && formik.errors.businessSector && <p className="text-red-500 text-xs mt-1">{formik.errors.businessSector as string}</p>}
                             </div>
-                            <div>
-                                <label className="auth-label">Founding Date</label>
-                                <input
-                                    name="foundingDate"
-                                    type="date"
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                    value={formik.values.foundingDate}
-                                    className={inputClsNoIcon(!!(formik.touched.foundingDate && formik.errors.foundingDate))}
-                                />
-                                {formik.touched.foundingDate && formik.errors.foundingDate && <p className="text-red-500 text-xs mt-1">{formik.errors.foundingDate as string}</p>}
-                            </div>
+                             <div>
+                                 <label className="auth-label">Founding Date</label>
+                                 <DateInput 
+                                     value={formik.values.foundingDate}
+                                     onChange={(val: string) => formik.setFieldValue('foundingDate', val)}
+                                     error={!!(formik.touched.foundingDate && formik.errors.foundingDate)}
+                                     disableFuture={true}
+                                 />
+                                 {formik.touched.foundingDate && formik.errors.foundingDate && <p className="text-red-500 text-xs mt-1">{formik.errors.foundingDate as string}</p>}
+                             </div>
                         </>
                     )}
 

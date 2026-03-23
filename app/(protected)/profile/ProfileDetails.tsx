@@ -1,19 +1,8 @@
-import { User, Mail, Smartphone, Briefcase } from 'lucide-react';
+import { User, Mail, Smartphone, Briefcase, Award, Calendar } from 'lucide-react';
+import { UserWithRelations } from '@/app/actions/user';
 
 interface ProfileDetailsProps {
-  user: {
-    name: string;
-    email: string;
-    phone?: string;
-    isEmailVerified: boolean;
-    isPhoneVerified: boolean;
-    type: string;
-    founder?: {
-        businessName?: string;
-        businessSector?: string;
-        description?: string;
-    };
-  };
+  user: UserWithRelations;
 }
 
 export default function ProfileDetails({ user }: ProfileDetailsProps) {
@@ -70,21 +59,55 @@ export default function ProfileDetails({ user }: ProfileDetailsProps) {
 
             {/* Dynamic Role Fields */}
             {user.type === 'FOUNDER' && (
-                <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Business Name</label>
-                    <div className="flex items-center gap-4 h-14 pl-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white">
-                        <Briefcase className="w-5 h-5 text-slate-400" />
-                        <span className="text-sm font-semibold">{user.founder?.businessName || 'Not set'}</span>
+                <>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Business Name</label>
+                        <div className="flex items-center gap-4 h-14 pl-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white">
+                            <Briefcase className="w-5 h-5 text-slate-400" />
+                            <span className="text-sm font-semibold">{user.founder?.businessName || 'Not set'}</span>
+                        </div>
                     </div>
-                </div>
+                    {user.founder?.foundingDate && (
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Founding Date</label>
+                            <div className="flex items-center gap-4 h-14 pl-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white">
+                                <Calendar className="w-5 h-5 text-slate-400" />
+                                <span className="text-sm font-semibold">
+                                    {new Intl.DateTimeFormat('en-GB').format(new Date(user.founder.foundingDate))}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
+
+            {user.type === 'CONSULTANT' && (
+                <>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Specialization</label>
+                        <div className="flex items-center gap-4 h-14 pl-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white">
+                            <Award className="w-5 h-5 text-slate-400" />
+                            <span className="text-sm font-semibold">{user.consultant?.specialization || 'Not set'}</span>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Years of Experience</label>
+                        <div className="flex items-center gap-4 h-14 pl-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white">
+                            <Briefcase className="w-5 h-5 text-slate-400" />
+                            <span className="text-sm font-semibold">{user.consultant?.yearsOfExp ?? 'Not set'}</span>
+                        </div>
+                    </div>
+                </>
             )}
         </div>
 
-        {user.type === 'FOUNDER' && user.founder?.description && (
+        {/* Bio / Description */}
+        {((user.type === 'FOUNDER' && user.founder?.description) || 
+          (user.type === 'CONSULTANT' && user.consultant?.specialization)) && (
             <div className="mt-8 space-y-2">
                 <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Bio / Description</label>
                 <div className="p-6 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-[24px] font-medium text-sm text-slate-600 dark:text-slate-400 italic">
-                    {user.founder.description}
+                    {user.type === 'FOUNDER' ? user.founder?.description : `Professional consultant specializing in ${user.consultant?.specialization}.`}
                 </div>
             </div>
         )}

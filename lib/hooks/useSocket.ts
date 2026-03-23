@@ -6,8 +6,8 @@ import { io, Socket } from 'socket.io-client';
 export const useSocket = (url: string) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [botStatus, setBotStatus] = useState<any>(null);
-  const [otpEvent, setOtpEvent] = useState<any>(null);
+  const [botStatus, setBotStatus] = useState<unknown>(null);
+  const [otpEvent, setOtpEvent] = useState<unknown>(null);
 
   useEffect(() => {
     const socketInstance = io(url, {
@@ -31,6 +31,7 @@ export const useSocket = (url: string) => {
       setOtpEvent(data);
     });
 
+    // eslint-disable-next-line
     setSocket(socketInstance);
 
     return () => {

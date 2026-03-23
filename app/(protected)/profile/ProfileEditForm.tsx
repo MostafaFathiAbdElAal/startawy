@@ -1,32 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { User, Mail, Smartphone, Briefcase, Save, Loader2 } from 'lucide-react';
-import { updateProfile } from '@/app/actions/user';
+import { User, Mail, Smartphone, Briefcase, Save, Loader2, UserCheck } from 'lucide-react';
+import { updateProfile, UserWithRelations } from '@/app/actions/user';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-
-interface FounderProfile {
-  businessName?: string;
-  description?: string;
-}
-
-interface UserType {
-  name: string;
-  email: string;
-  phone?: string;
-  type: 'FOUNDER' | 'INVESTOR' | 'ADMIN'; // Example types, adjust as needed
-  founder?: FounderProfile; // Only present if type is 'FOUNDER'
-}
+import DateInput from '@/components/ui/DateInput';
 
 interface ProfileEditFormProps {
-  user: UserType;
+  user: UserWithRelations;
 }
 
 export default function ProfileEditForm({ user }: ProfileEditFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const [foundingDate, setFoundingDate] = useState(user.founder?.foundingDate ? new Date(user.founder.foundingDate).toISOString().split('T')[0] : '');
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +23,11 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
     setError(null);
 
     const formData = new FormData(e.target as HTMLFormElement);
-    const data = Object.fromEntries(formData.entries()) as any;
+    // Explicitly add foundingDate to FormData since DateInput uses a hidden field but we might need to sync it
+    if (user.type === 'FOUNDER') {
+      formData.set('foundingDate', foundingDate);
+    }
+    const data = Object.fromEntries(formData.entries()) as unknown as Parameters<typeof updateProfile>[0];
 
     const res = await updateProfile(data);
     if (res.success) {
@@ -54,7 +47,7 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-white dark:bg-slate-900 rounded-[32px] p-8 border border-teal-500/30 dark:border-teal-500/20 shadow-xl shadow-teal-500/5 relative overflow-hidden"
+      className="bg-white dark:bg-slate-900 rounded-[32px] p-8 border border-teal-500/30 dark:border-teal-500/20 shadow-xl shadow-teal-500/5 relative"
     >
       <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 blur-3xl rounded-full" />
 
@@ -114,7 +107,7 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
               <input
                 name="phone"
                 type="text"
-                defaultValue={user.phone}
+                defaultValue={user.phone ?? ''}
                 className="w-full h-14 pl-12 pr-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all font-semibold text-sm text-slate-900 dark:text-white outline-hidden focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500"
               />
             </div>
@@ -122,20 +115,64 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
 
           {/* Dynamic Role Fields */}
           {user.type === 'FOUNDER' && (
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Business Name</label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Briefcase className="h-5 w-5 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
+            <>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Business Name</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Briefcase className="h-5 w-5 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
+                  </div>
+                  <input
+                    name="businessName"
+                    type="text"
+                    defaultValue={user.founder?.businessName ?? ''}
+                    className="w-full h-14 pl-12 pr-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all font-semibold text-sm text-slate-900 dark:text-white outline-hidden focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500"
+                  />
                 </div>
-                <input
-                  name="businessName"
-                  type="text"
-                  defaultValue={user.founder?.businessName}
-                  className="w-full h-14 pl-12 pr-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all font-semibold text-sm text-slate-900 dark:text-white outline-hidden focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500"
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Founding Date</label>
+                <DateInput 
+                  name="foundingDate"
+                  value={foundingDate}
+                  onChange={(val) => setFoundingDate(val)}
+                  disableFuture={true}
                 />
               </div>
-            </div>
+            </>
+          )}
+
+          {user.type === 'CONSULTANT' && (
+            <>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Years of Experience</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Briefcase className="h-5 w-5 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
+                  </div>
+                  <input
+                    name="yearsOfExp"
+                    type="number"
+                    defaultValue={user.consultant?.yearsOfExp ?? 0}
+                    className="w-full h-14 pl-12 pr-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all font-semibold text-sm text-slate-900 dark:text-white outline-hidden focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Specialization</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <UserCheck className="h-5 w-5 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
+                  </div>
+                  <input
+                    name="specialization"
+                    type="text"
+                    defaultValue={user.consultant?.specialization ?? ''}
+                    className="w-full h-14 pl-12 pr-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all font-semibold text-sm text-slate-900 dark:text-white outline-hidden focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500"
+                  />
+                </div>
+              </div>
+            </>
           )}
         </div>
 
@@ -145,9 +182,22 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
             <textarea
               name="bio"
               rows={4}
-              defaultValue={user.founder?.description}
+              defaultValue={user.founder?.description ?? ''}
               className="w-full p-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-[24px] transition-all font-medium text-sm text-slate-900 dark:text-white outline-hidden resize-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500"
               placeholder="Share a bit about your journey..."
+            />
+          </div>
+        )}
+
+        {user.type === 'CONSULTANT' && (
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Professional Bio</label>
+            <textarea
+              name="bio"
+              rows={4}
+              defaultValue={user.consultant?.availability ?? ''} // Reusing bio field for general description/availability
+              className="w-full p-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-[24px] transition-all font-medium text-sm text-slate-900 dark:text-white outline-hidden resize-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500"
+              placeholder="Describe your expertise and consulting style..."
             />
           </div>
         )}

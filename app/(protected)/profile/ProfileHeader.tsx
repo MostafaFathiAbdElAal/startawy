@@ -1,21 +1,14 @@
-import { ShieldCheck, AlertCircle, Briefcase, Calendar, Edit } from 'lucide-react';
-import Image from 'next/image';
+import { ShieldCheck, Briefcase, Calendar, Edit } from 'lucide-react';
+import { UserWithRelations } from '@/app/actions/user';
 import Link from 'next/link';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 interface ProfileHeaderProps {
-  user: {
-    name: string;
-    image?: string;
-    type: string;
-    isEmailVerified: boolean;
-    isPhoneVerified: boolean;
-    createdAt: Date;
-  };
+  user: UserWithRelations;
   isEditing: boolean;
 }
 
 export default function ProfileHeader({ user, isEditing }: ProfileHeaderProps) {
-  const initials = user.name?.charAt(0) || 'U';
   const isFullyVerified = user.isEmailVerified && user.isPhoneVerified;
 
   return (
@@ -29,28 +22,13 @@ export default function ProfileHeader({ user, isEditing }: ProfileHeaderProps) {
 
         <div className="px-8 pb-10">
           <div className="flex flex-col md:flex-row items-start md:items-end gap-8 -mt-12 relative z-10">
-            {/* Avatar with Ring */}
-            <div className="relative group/avatar">
-              <div className="w-32 h-32 rounded-[28px] bg-white dark:bg-slate-900 p-1.5 shadow-2xl transition-transform duration-500 group-hover/avatar:scale-[1.02]">
-                <div className="w-full h-full rounded-[24px] bg-linear-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white text-3xl font-bold relative overflow-hidden">
-                  {user.image ? (
-                    <Image src={user.image} alt={user.name} fill className="object-cover" />
-                  ) : (
-                    initials
-                  )}
-                  
-                </div>
-              </div>
-              {/* Verification Status Dot */}
-              <div className={`absolute bottom-2 right-2 w-8 h-8 rounded-full border-4 border-white dark:border-slate-900 flex items-center justify-center shadow-lg ${
-                isFullyVerified ? 'bg-teal-500' : 'bg-yellow-400'
-              }`}>
-                {isFullyVerified ? (
-                   <ShieldCheck className="w-4 h-4 text-white" />
-                ) : (
-                   <AlertCircle className="w-4 h-4 text-white" />
-                )}
-              </div>
+            {/* Reusable UserAvatar */}
+            <div className="relative">
+              <UserAvatar 
+                name={user.name || 'User'} 
+                size="xl" 
+                isVerified={isFullyVerified} 
+              />
             </div>
 
             {/* Profile Meta */}

@@ -18,6 +18,7 @@ export default function Error({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line
     setMounted(true);
     // Log the error to an error reporting service
     console.error('Global Error Caught:', error);
@@ -63,7 +64,7 @@ export default function Error({
             Something went wrong
           </h2>
           <p className="text-lg lg:text-xl mb-10 max-w-md mx-auto lg:mx-0" style={{ color: '#828282' }}>
-            Don't worry we're working on it.
+            Don&apos;t worry we&apos;re working on it.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">

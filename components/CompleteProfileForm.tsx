@@ -6,6 +6,7 @@ import * as Yup from 'yup';
 import { useRouter } from 'next/navigation';
 import { UserCheck } from 'lucide-react';
 import PhoneInput from './ui/PhoneInput';
+import DateInput from './ui/DateInput';
 
 const CompleteProfileSchema = Yup.object().shape({
   phone: Yup.string()
@@ -86,7 +87,7 @@ export default function CompleteProfileForm() {
     });
 
     return (
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[32px] shadow-2xl p-10 border border-slate-200 dark:border-slate-800 max-w-[520px] mx-auto relative overflow-hidden">
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[32px] shadow-2xl p-10 border border-slate-200 dark:border-slate-800 max-w-[520px] mx-auto relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 blur-3xl rounded-full" />
             
             <div className="text-center mb-10 relative">
@@ -173,15 +174,13 @@ export default function CompleteProfileForm() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Founding Date</label>
-                                <input
-                                    name="foundingDate"
-                                    type="date"
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
+                                <DateInput 
                                     value={formik.values.foundingDate}
-                                    className={`auth-input px-5 py-4 ${formik.touched.foundingDate && formik.errors.foundingDate ? 'auth-input-error' : ''}`}
+                                    onChange={(val) => formik.setFieldValue('foundingDate', val)}
+                                    error={!!(formik.touched.foundingDate && formik.errors.foundingDate)}
+                                    disableFuture={true}
                                 />
-                                {formik.touched.foundingDate && formik.errors.foundingDate && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold">{formik.errors.foundingDate}</p>}
+                                {formik.touched.foundingDate && formik.errors.foundingDate && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold">{formik.errors.foundingDate as string}</p>}
                             </div>
                         </div>
                     )}

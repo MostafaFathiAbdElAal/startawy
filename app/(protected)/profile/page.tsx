@@ -1,11 +1,12 @@
 import { getProfileData } from "@/app/actions/user";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import ProfileHeader from "./ProfileHeader";
 import ProfileStats from "./ProfileStats";
 import ProfileDetails from "./ProfileDetails";
 import ProfileEditForm from "./ProfileEditForm";
 import SecurityActions from "./SecurityActions";
-import { Award, Globe, ShieldCheck, Smartphone, ChevronRight } from "lucide-react";
+import { Award } from "lucide-react";
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -20,7 +21,16 @@ export default async function ProfilePage({ searchParams }: PageProps) {
     redirect("/login");
   }
 
-  const { user, stats } = data;
+  const { user, stats, subscription, activePlan } = data;
+
+  const formatDate = (date: Date | null | undefined) => {
+    if (!date) return 'N/A';
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }).format(new Date(date));
+  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 transition-colors duration-300">
@@ -44,7 +54,7 @@ export default async function ProfilePage({ searchParams }: PageProps) {
         </div>
 
         {/* Profile Header (Server) */}
-        <ProfileHeader user={user as any} isEditing={isEditing} />
+        <ProfileHeader user={user} isEditing={isEditing} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Stats Strip (Server) */}
@@ -54,38 +64,72 @@ export default async function ProfilePage({ searchParams }: PageProps) {
           <div className="lg:col-span-8 space-y-10">
             {/* Toggle between Edit Form and Static Details */}
             {isEditing ? (
-              <ProfileEditForm user={user as any} />
+              <ProfileEditForm user={user} />
             ) : (
-              <ProfileDetails user={user as any} />
+              <ProfileDetails user={user} />
             )}
 
             {/* Security Actions (Client) */}
-            <SecurityActions user={user as any} />
+            <SecurityActions user={user} />
           </div>
 
           {/* SIDEBAR WIDGETS (Server) */}
           <div className="lg:col-span-4 space-y-10">
              {/* PLAN CARD */}
-             <div className="bg-slate-900 rounded-[32px] p-8 text-white relative overflow-hidden shadow-2xl">
-                <div className="absolute -top-10 -right-10 w-40 h-40 bg-teal-500/20 rounded-full blur-3xl" />
-                <h3 className="text-xl font-black mb-6 flex items-center gap-2">
-                  <Award className="w-6 h-6 text-teal-400" />
-                  Your Plan
-                </h3>
-                <div className="space-y-6">
-                   <div>
-                     <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Active Plan</p>
-                     <p className="text-3xl font-black mt-1">Startawy <span className="text-teal-400">Pro</span></p>
-                   </div>
-                   <div className="flex items-center justify-between py-4 border-y border-white/10 uppercase tracking-tighter font-black text-sm">
-                      <span className="text-slate-400">Next Bill</span>
-                      <span>Apr 19, 2026</span>
-                   </div>
-                   <button className="w-full py-4 bg-teal-500 hover:bg-teal-400 text-slate-900 rounded-2xl font-black transition-all shadow-lg active:scale-95">
-                      Manage Plan
-                   </button>
-                </div>
-             </div>
+             {user.type === 'FOUNDER' && (
+               <div className="bg-slate-900 rounded-[32px] p-8 text-white relative overflow-hidden shadow-2xl">
+                  {/* Dynamic background blur based on plan type */}
+                  <div className={`absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl ${
+                      activePlan.includes('Premium') || activePlan === 'Subscription' 
+                        ? 'bg-[#BF953F]/20' 
+                        : 'bg-teal-500/20'
+                    }`} 
+                  />
+                  
+                  <h3 className="text-xl font-black mb-6 flex items-center gap-2">
+                    <Award className={`w-6 h-6 ${
+                      activePlan.includes('Premium') || activePlan === 'Subscription'
+                        ? 'text-[#BF953F]'
+                        : 'text-teal-400'
+                    }`} />
+                    Your Plan
+                  </h3>
+                  
+                  <div className="space-y-6">
+                     <div>
+                       <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Active Plan</p>
+                       <p className="text-3xl font-black mt-1">
+                         {/* Handle previously recorded 'Subscription' as Premium fallback */}
+                         {(activePlan === 'Subscription' ? 'Premium Plan' : activePlan).split(' ').map((word, idx) => {
+                           // Style first word white, second word colored
+                           if (idx === 0) return <span key={idx}>{word} </span>;
+                           
+                           const isPremium = activePlan.includes('Premium') || activePlan === 'Subscription';
+                           return (
+                             <span key={idx} className={isPremium ? "text-transparent bg-clip-text bg-linear-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728]" : "text-teal-400"}>
+                               {word}{' '}
+                             </span>
+                           );
+                         })}
+                       </p>
+                     </div>
+                     <div className="flex items-center justify-between py-4 border-y border-white/10 uppercase tracking-tighter font-black text-sm">
+                        <span className="text-slate-400">Next Bill</span>
+                        <span>{subscription ? formatDate(subscription.endDate) : 'N/A'}</span>
+                     </div>
+                     <Link 
+                       href="/my-plan"
+                       className={`w-full py-4 rounded-2xl font-black transition-all shadow-lg active:scale-95 flex items-center justify-center text-slate-900 ${
+                         activePlan.includes('Premium') || activePlan === 'Subscription'
+                          ? 'bg-linear-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] hover:opacity-90'
+                          : 'bg-teal-500 hover:bg-teal-400'
+                       }`}
+                     >
+                        Manage Plan
+                     </Link>
+                  </div>
+               </div>
+             )}
 
           </div>
         </div>

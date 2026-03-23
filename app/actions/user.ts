@@ -2,7 +2,28 @@
 
 import { prisma } from '@/lib/prisma';
 import { verifyAuth } from '@/lib/auth-utils';
+import { Prisma } from '@prisma/client';
 import { cookies } from 'next/headers';
+
+export type UserWithRelations = Prisma.UserGetPayload<{
+  include: {
+    founder: {
+      include: {
+        payments: {
+          include: {
+            subscription: true
+          },
+          orderBy: {
+            transDate: 'desc'
+          },
+          take: 1
+        }
+      }
+    },
+    consultant: true,
+    admin: true,
+  }
+}>;
 
 export async function getProfileData() {
   const cookieStore = await cookies();
@@ -16,13 +37,29 @@ export async function getProfileData() {
   const user = await prisma.user.findUnique({
     where: { id: parseInt(userPayload.id) },
     include: {
-      founder: true,
+      founder: {
+        include: {
+          payments: {
+            include: {
+              subscription: true
+            },
+            orderBy: {
+              transDate: 'desc'
+            },
+            take: 1
+          }
+        }
+      },
       consultant: true,
       admin: true,
     }
-  });
+  }) as UserWithRelations;
 
   if (!user) return null;
+
+  // Extract subscription info
+  const subscription = user.founder?.payments[0]?.subscription || null;
+  const activePlan = user.founder?.payments[0]?.paymentType || 'Free Plan';
 
   // Fetch some stats for the profile
   const stats = {
@@ -34,7 +71,6 @@ export async function getProfileData() {
   if (user.type === 'FOUNDER' && user.founder) {
     stats.sessions = await prisma.session.count({ where: { founderId: user.founder.id } });
     stats.reports = await prisma.founderReport.count({ where: { founderId: user.founder.id } });
-    // Projects could be represented by something else, let's mock or use budget analyses
     stats.projects = await prisma.budgetAnalysis.count({ where: { founderId: user.founder.id } });
   } else if (user.type === 'CONSULTANT' && user.consultant) {
     stats.sessions = await prisma.session.count({ where: { consultantId: user.consultant.id } });
@@ -42,11 +78,22 @@ export async function getProfileData() {
 
   return {
     user,
-    stats
+    stats,
+    subscription,
+    activePlan
   };
 }
 
-export async function updateProfile(data: { name: string; phone?: string; businessName?: string; businessSector?: string; bio?: string }) {
+export async function updateProfile(data: { 
+  name: string; 
+  phone?: string; 
+  businessName?: string; 
+  businessSector?: string; 
+  bio?: string;
+  yearsOfExp?: string | number;
+  specialization?: string;
+  foundingDate?: string;
+}) {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
   const userPayload = await verifyAuth(token);
@@ -56,7 +103,7 @@ export async function updateProfile(data: { name: string; phone?: string; busine
   }
 
   try {
-    console.log('[UPDATE] Updating user:', userPayload.id, 'data:', data);
+    console.log('[UPDATE] Updating user:', userPayload.id, 'role:', userPayload.role, 'data:', data);
 
     // 1. Get current user to check if phone changed
     const currentUser = await prisma.user.findUnique({
@@ -81,7 +128,17 @@ export async function updateProfile(data: { name: string; phone?: string; busine
         data: {
           businessName: data.businessName,
           businessSector: data.businessSector,
+          foundingDate: data.foundingDate ? new Date(data.foundingDate) : undefined,
           description: data.bio,
+        }
+      });
+    } else if (userPayload.role === 'CONSULTANT') {
+      console.log('[UPDATE] Updating Consultant profile');
+      await prisma.consultant.update({
+        where: { userId: parseInt(userPayload.id) },
+        data: {
+          yearsOfExp: data.yearsOfExp ? parseInt(data.yearsOfExp.toString()) : undefined,
+          specialization: data.specialization,
         }
       });
     }

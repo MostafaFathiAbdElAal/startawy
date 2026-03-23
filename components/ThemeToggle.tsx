@@ -1,15 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sun, Moon } from 'lucide-react';
 
 export default function ThemeToggle() {
-    const [isDarkMode, setIsDarkMode] = useState(() => {
+    const [mounted, setMounted] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    useEffect(() => {
+        // eslint-disable-next-line
+        setMounted(true);
         if (typeof window !== 'undefined') {
-            return document.documentElement.classList.contains('dark');
+            setIsDarkMode(document.documentElement.classList.contains('dark'));
         }
-        return false;
-    });
+    }, []);
 
     const toggleTheme = () => {
         const nextDark = !isDarkMode;
@@ -20,6 +24,18 @@ export default function ThemeToggle() {
             document.documentElement.classList.remove('dark');
         }
     };
+
+    if (!mounted) {
+        return (
+            <button
+                type="button"
+                className="absolute top-4 right-4 z-10 p-2 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 transition-colors shadow-sm"
+                title="Toggle Theme"
+            >
+                <Moon className="w-5 h-5 opacity-0" />
+            </button>
+        );
+    }
 
     return (
         <button

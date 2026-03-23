@@ -27,7 +27,7 @@ export async function GuestGuard({ children }: { children: React.ReactNode }) {
   const token = cookieStore.get('auth-token')?.value;
   const user = await verifyAuth(token);
 
-  if (user) {
+  if (user && (user as { role?: string }).role) {
     redirect('/dashboard');
   }
 

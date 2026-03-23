@@ -76,6 +76,7 @@ export function Sidebar({ userRole = "FOUNDER" }: SidebarProps) {
     { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
     { icon: UserCheck, label: "Manage Founders", path: "/admin/founders" },
     { icon: Users, label: "Manage Consultants", path: "/admin/consultants" },
+    { icon: FileText, label: "Manage Reports", path: "/admin/reports" },
     { icon: Package, label: "Manage Packages", path: "/admin/packages" },
     { icon: MessageCircle, label: "Review Feedback", path: "/admin/feedback" },
     { icon: BarChart3, label: "Analytics", path: "/admin/analytics" },
@@ -83,8 +84,8 @@ export function Sidebar({ userRole = "FOUNDER" }: SidebarProps) {
   ];
 
   const menuItems =
-    userRole === "CONSULTANT" ? consultantMenuItems :
-      userRole === "ADMIN" ? adminMenuItems :
+    userRole?.toUpperCase() === "CONSULTANT" ? consultantMenuItems :
+      userRole?.toUpperCase() === "ADMIN" ? adminMenuItems :
         founderMenuItems;
 
   return (
