@@ -119,7 +119,9 @@ export async function POST(req: NextRequest) {
     const token = await new SignJWT({
       id: user.id,
       email: user.email,
-      role: user.type, // Could be null for new users
+      name: user.name,
+      role: user.type,
+      isPhoneVerified: user.isPhoneVerified
     })
       .setProtectedHeader({ alg: 'HS256' })
       .setExpirationTime('1d')

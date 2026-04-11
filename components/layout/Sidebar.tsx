@@ -26,6 +26,7 @@ import {
   ChevronRight,
   Menu,
   X,
+  Headset,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -79,6 +80,7 @@ export function Sidebar({ userRole = "FOUNDER" }: SidebarProps) {
     { icon: FileText, label: "Manage Reports", path: "/admin/reports" },
     { icon: Package, label: "Manage Packages", path: "/admin/packages" },
     { icon: MessageCircle, label: "Review Feedback", path: "/admin/feedback" },
+    { icon: Headset, label: "Support Chat", path: "/admin/support" },
     { icon: BarChart3, label: "Analytics", path: "/admin/analytics" },
     { icon: User, label: "Profile", path: "/profile" },
   ];

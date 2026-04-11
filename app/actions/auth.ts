@@ -1,6 +1,8 @@
 'use server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
+import { SignJWT } from 'jose';
 
 import bcrypt from 'bcryptjs';
 import * as Yup from 'yup';
@@ -326,6 +328,31 @@ export async function verifyPhone(otp: string) {
 
     // Cleanup OTP
     await prisma.oTP.deleteMany({ where: { phone: user.phone } });
+
+    // 5. Update JWT Cookie to reflect verified status
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+    const token = await new SignJWT({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.type,
+      isPhoneVerified: true
+    })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setExpirationTime('1d')
+      .sign(secret);
+
+    const cookieStore = await cookies();
+    cookieStore.set('auth-token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24, // 1 day
+      path: '/',
+    });
+
+    revalidatePath('/');
+    revalidatePath('/profile');
 
     return { success: true };
   } catch (error) {

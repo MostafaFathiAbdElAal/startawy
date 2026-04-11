@@ -6,7 +6,7 @@ import Link from "next/link";
 import {
   TrendingUp, MessageSquare, Users, BarChart3, Target,
   Shield, ArrowRight, CheckCircle, Sparkles, Zap, Award, Globe,
-  Menu, X
+  Menu, X, User as UserIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -64,6 +64,7 @@ export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<{ email?: string; role?: string } | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -72,14 +73,28 @@ export default function Home() {
       setScrolled(window.scrollY > 50);
     };
 
-    // Check auth status from cookie (basic client-side check for UI)
     const checkAuthStatus = () => {
-      const hasToken = document.cookie.includes('auth-token');
-      setIsAuthenticated(hasToken);
+      const cookies = document.cookie.split('; ');
+      const tokenCookie = cookies.find(row => row.startsWith('auth-token='));
+      
+      if (tokenCookie) {
+        setIsAuthenticated(true);
+        try {
+          const token = tokenCookie.split('=')[1];
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const payload = JSON.parse(window.atob(base64));
+          setUser(payload);
+        } catch (e) {
+          console.error("Failed to decode token", e);
+        }
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+      }
     };
 
     checkAuthStatus();
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -129,13 +144,19 @@ export default function Home() {
               </a>
 
               {isAuthenticated ? (
-                <Link
-                  href="/dashboard"
-                  className="px-6 py-2.5 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg font-semibold flex items-center gap-2"
-                >
-                  Dashboard
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+                <div className="flex items-center gap-4">
+                  <div className="hidden lg:flex flex-col items-end">
+                    <span className="text-xs text-gray-400">Welcome back</span>
+                    <span className="text-sm font-bold text-teal-600 truncate max-w-[150px]">{user?.email}</span>
+                  </div>
+                  <Link
+                    href="/dashboard"
+                    className="px-6 py-2.5 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg font-semibold flex items-center gap-2"
+                  >
+                    Dashboard
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
               ) : (
                 <div className="flex items-center gap-4">
                   <Link
@@ -176,6 +197,15 @@ export default function Home() {
               className="md:hidden border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden"
             >
               <div className="flex flex-col p-6 gap-4">
+                {isAuthenticated && (
+                  <div className="flex items-center gap-3 p-3 bg-teal-50 dark:bg-teal-900/20 rounded-xl mb-2">
+                    <UserIcon className="text-teal-600" size={20} />
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-gray-400">Logged in as</span>
+                      <span className="text-sm font-bold truncate max-w-[200px]">{user?.email}</span>
+                    </div>
+                  </div>
+                )}
                 <a
                   href="#features"
                   onClick={() => setIsMenuOpen(false)}
@@ -234,13 +264,13 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 lg:px-6 pt-24 lg:pt-32 pb-12 overflow-hidden">
+      <section className="max-w-7xl mx-auto px-4 lg:px-6 pt-20 lg:pt-32 pb-12 overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="space-y-6 order-2 lg:order-1"
+            className="space-y-6 lg:space-y-8 order-2 lg:order-1"
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 rounded-full text-sm font-medium animate-pulse">
               <Sparkles className="w-4 h-4" />
@@ -327,7 +357,7 @@ export default function Home() {
             >
               <div className="flex items-center gap-2 lg:gap-4">
                 <div className="w-8 h-8 lg:w-12 lg:h-12 bg-teal-50 dark:bg-teal-900/30 rounded-lg lg:rounded-xl flex items-center justify-center">
-                  <Users className="w-4 h-4 lg:w-6 lg:h-6 text-teal-600" />
+                   <Users className="w-4 h-4 lg:w-6 lg:h-6 text-teal-600" />
                 </div>
                 <div>
                   <div className="text-xl lg:text-3xl font-extrabold text-teal-600 leading-none">
@@ -399,155 +429,6 @@ export default function Home() {
               </div>
             );
           })}
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="max-w-7xl mx-auto px-6 py-20" id="how-it-works">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            How Startawy Works
-          </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400">
-            Get started in three simple steps
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Step 1 */}
-          <div className="relative">
-            <div className="bg-linear-to-br from-teal-500 to-teal-600 rounded-2xl overflow-hidden shadow-xl">
-              <Image
-                src="https://images.unsplash.com/photo-1515355252367-42ae86cb92f9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0ZWNobm9sb2d5JTIwaW5ub3ZhdGlvbiUyMHdvcmtzcGFjZXxlbnwxfHx8fDE3NzI5MjgwMjl8MA&ixlib=rb-4.1.0&q=80&w=1080"
-                alt="Step 1"
-                width={400}
-                height={200}
-                className="w-full h-48 object-cover opacity-80"
-              />
-              <div className="absolute top-4 left-4 w-12 h-12 bg-white rounded-full flex items-center justify-center font-bold text-2xl text-teal-600 shadow-lg">
-                1
-              </div>
-            </div>
-            <div className="mt-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Sign Up & Setup</h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Create your account and tell us about your startup. It takes less than 2 minutes.
-              </p>
-            </div>
-          </div>
-
-          {/* Step 2 */}
-          <div className="relative">
-            <div className="bg-linear-to-br from-blue-500 to-blue-600 rounded-2xl overflow-hidden shadow-xl">
-              <Image
-                src="https://images.unsplash.com/photo-1763038311036-6d18805537e5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmaW5hbmNpYWwlMjBhbmFseXNpcyUyMGRhc2hib2FyZCUyMGNoYXJ0c3xlbnwxfHx8fDE3NzMwNTM1MzF8MA&ixlib=rb-4.1.0&q=80&w=1080"
-                alt="Step 2"
-                width={400}
-                height={200}
-                className="w-full h-48 object-cover opacity-80"
-              />
-              <div className="absolute top-4 left-4 w-12 h-12 bg-white rounded-full flex items-center justify-center font-bold text-2xl text-blue-600 shadow-lg">
-                2
-              </div>
-            </div>
-            <div className="mt-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Get AI Insights</h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Upload your financial data and get instant AI-powered analysis and recommendations.
-              </p>
-            </div>
-          </div>
-
-          {/* Step 3 */}
-          <div className="relative">
-            <div className="bg-linear-to-br from-purple-500 to-purple-600 rounded-2xl overflow-hidden shadow-xl">
-              <Image
-                src="https://images.unsplash.com/photo-1589114207353-1fc98a11070b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMGNvbnN1bHRhbnQlMjBwcm9mZXNzaW9uYWx8ZW58MXx8fHwxNzczMDEzMTI1fDA&ixlib=rb-4.1.0&q=80&w=1080"
-                alt="Step 3"
-                width={400}
-                height={200}
-                className="w-full h-48 object-cover opacity-80"
-              />
-              <div className="absolute top-4 left-4 w-12 h-12 bg-white rounded-full flex items-center justify-center font-bold text-2xl text-purple-600 shadow-lg">
-                3
-              </div>
-            </div>
-            <div className="mt-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Connect with Experts</h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Book sessions with our certified consultants to get personalized financial guidance.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="max-w-7xl mx-auto px-6 py-20" id="reviews">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Trusted by Successful Founders
-          </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400">
-            See what our clients say about Startawy
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            {
-              name: "Sarah Mitchell",
-              role: "CEO, TechFlow",
-              content: "Startawy helped us optimize our burn rate and secure our Series A. The insights were invaluable!",
-              rating: 5,
-            },
-            {
-              name: "James Rodriguez",
-              role: "Founder, GrowthHub",
-              content: "The AI advisor is like having a CFO on demand. It's been a game-changer for our financial planning.",
-              rating: 5,
-            },
-            {
-              name: "Emily Chen",
-              role: "Co-founder, DataLabs",
-              content: "Working with Startawy consultants helped us reduce costs by 30% while scaling faster than ever.",
-              rating: 5,
-            },
-          ].map((testimonial, index) => (
-            <div key={index} className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-gray-100 dark:border-gray-700">
-              <div className="flex gap-1 mb-4">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <span key={i} className="text-yellow-400 text-xl">★</span>
-                ))}
-              </div>
-              <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed italic">&quot;{testimonial.content}&quot;</p>
-              <div>
-                <div className="font-bold text-gray-900 dark:text-white">{testimonial.name}</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">{testimonial.role}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="max-w-5xl mx-auto px-6 py-20">
-        <div className="bg-linear-to-r from-teal-500 to-teal-600 rounded-3xl p-12 text-center text-white shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full translate-y-32 -translate-x-32"></div>
-          <div className="relative z-10">
-            <h2 className="text-4xl font-bold mb-4">Ready to Transform Your Startup?</h2>
-            <p className="text-xl mb-8 text-teal-50 opacity-90">
-              Join hundreds of successful founders who trust Startawy for their financial growth.
-            </p>
-            <Link
-              href={isAuthenticated ? "/dashboard" : "/register"}
-              className="inline-flex items-center gap-2 px-10 py-4 bg-white text-teal-600 rounded-lg hover:bg-gray-50 transition-all shadow-xl hover:shadow-2xl text-lg font-semibold group"
-            >
-              Get Started Now
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
         </div>
       </section>
 

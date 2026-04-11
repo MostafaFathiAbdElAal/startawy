@@ -39,6 +39,7 @@ export default function LoginForm() {
                 if (!response.ok) {
                     setServerError(result.error || 'Invalid credentials');
                 } else {
+                    router.refresh();
                     router.push('/dashboard');
                 }
             } catch {

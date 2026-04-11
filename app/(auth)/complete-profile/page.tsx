@@ -11,12 +11,12 @@ export const metadata: Metadata = {
 
 export default function CompleteProfilePage() {
   return (
-    <div className="h-screen w-full flex overflow-hidden relative bg-white dark:bg-auth-bg-dark">
+    <div className="min-h-screen w-full flex flex-col md:flex-row relative bg-white dark:bg-auth-bg-dark overflow-y-auto">
       {/* Dark Mode Toggle */}
       <ThemeToggle />
 
       {/* Left Side - Image */}
-      <div className="flex w-[40%] lg:w-[60%] relative overflow-hidden bg-linear-to-br from-teal-900 via-cyan-900 to-blue-900 border-r border-gray-200 dark:border-gray-800">
+      <div className="hidden md:flex w-[40%] lg:w-[60%] relative overflow-hidden bg-linear-to-br from-teal-900 via-cyan-900 to-blue-900 border-r border-gray-200 dark:border-gray-800">
         <div className="absolute inset-0 bg-black/10 z-10"></div>
         <div className="absolute inset-0">
           <Image

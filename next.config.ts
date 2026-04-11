@@ -1,6 +1,5 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const nextConfig: any = {
   images: {
     remotePatterns: [
       {
@@ -21,4 +20,5 @@ const nextConfig: NextConfig = {
   ],
 };
 
-export default nextConfig;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default nextConfig as any;

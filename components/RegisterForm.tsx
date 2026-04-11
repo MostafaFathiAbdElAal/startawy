@@ -58,6 +58,7 @@ export default function RegisterForm() {
                 if (!response.ok) {
                     setServerError(result.error || 'Something went wrong');
                 } else {
+                    router.refresh();
                     router.push('/login?registered=true');
                 }
             } catch (err) {

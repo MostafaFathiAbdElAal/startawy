@@ -4,7 +4,7 @@ import ThemeToggle from '../../../components/ThemeToggle';
 import bgRegister from "../../../assets/imgs/signup-image.png"
 export default function RegisterPage() {
   return (
-    <div className="h-screen w-full flex overflow-hidden relative bg-white dark:bg-auth-bg-dark">
+    <div className="min-h-screen w-full flex flex-col md:flex-row relative bg-white dark:bg-auth-bg-dark overflow-y-auto">
       {/* Dark Mode Toggle (Client Component) */}
       <ThemeToggle />
 
@@ -26,12 +26,8 @@ export default function RegisterPage() {
       {/* Right Side - Form Container */}
       <div className="flex-1 flex flex-col items-center p-4 sm:p-8 bg-auth-bg-light dark:bg-gray-900/50 overflow-y-auto py-10 sm:py-16">
         <div className="w-full max-w-md">
-
-          <fieldset>
-
-            {/* Interactive Form (Client Component) */}
-            <RegisterForm />
-          </fieldset>
+          {/* Interactive Form (Client Component) */}
+          <RegisterForm />
         </div>
       </div>
     </div>

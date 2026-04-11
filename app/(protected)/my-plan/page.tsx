@@ -4,14 +4,44 @@ import { prisma } from "@/lib/prisma";
 import { verifyAuth } from "@/lib/auth-utils";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import Stripe from "stripe";
+import { fulfillPayment } from "@/lib/payments/fulfillment";
 
-export default async function MyPlanPage() {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2026-02-25.clover",
+});
+
+export default async function MyPlanPage({ 
+  searchParams 
+}: { 
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }> 
+}) {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
   const userPayload = await verifyAuth(token);
 
   if (!userPayload) {
     redirect('/login');
+  }
+
+  // Handle Synchronous Verification after payment
+  const resolvedParams = await searchParams;
+  const sessionId = resolvedParams.session_id as string;
+
+  if (sessionId) {
+    try {
+      console.log(`[MY-PLAN] Verifying session: ${sessionId}`);
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      
+      if (session.payment_status === 'paid' || session.status === 'complete') {
+        await fulfillPayment(session);
+        console.log(`[MY-PLAN] Payment verified and fulfilled for session ${sessionId}`);
+      }
+    } catch (error) {
+      console.error("[MY-PLAN] Session verification failed:", error);
+    }
+    // Clean up the URL
+    redirect('/my-plan');
   }
 
   const user = await prisma.user.findUnique({
@@ -24,11 +54,10 @@ export default async function MyPlanPage() {
   }
 
   // Fetch highest active subscription
-  // Actually simplest is fetching latest subscription
   const latestPayment = await prisma.payment.findFirst({
     where: { 
       founderId: user.founder.id,
-      paymentType: 'Subscription'
+      subscription: { isNot: null }
     },
     orderBy: { transDate: 'desc' },
     include: { subscription: true }

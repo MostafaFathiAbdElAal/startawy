@@ -1,7 +1,7 @@
 import * as Yup from 'yup';
 
 export const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-export const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+export const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#._-])[A-Za-z\d@$!%*?&#._-]{8,}$/;
 export const phoneRegex = /^[1-9][0-9]{7,14}$/; // International format (no leading zero, 8-15 digits)
 
 export const RegisterSchema = Yup.object().shape({

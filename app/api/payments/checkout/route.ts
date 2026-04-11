@@ -42,6 +42,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Sanitize origin if it's 0.0.0.0 (happens in dev with -H 0.0.0.0)
+    let origin = req.nextUrl.origin;
+    if (origin.includes("0.0.0.0")) {
+      origin = origin.replace("0.0.0.0", "localhost");
+    }
+
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -58,8 +64,8 @@ export async function POST(req: NextRequest) {
         },
       ],
       mode: "payment",
-      success_url: `${req.nextUrl.origin}${body.returnTo}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.nextUrl.origin}${body.returnTo}?cancelled=true`,
+      success_url: `${origin}${body.returnTo}?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}${body.returnTo}?cancelled=true`,
       customer_email: user.email,
       metadata: {
         userId: userId.toString(),

@@ -24,7 +24,7 @@ export default async function DashboardPage() {
   const { stats, recentActivities, upcomingSessions, revenueData, growthData, user } = data;
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       {/* Welcome Section */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
