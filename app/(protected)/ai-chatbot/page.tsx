@@ -37,7 +37,7 @@ export default async function AIChatbotPage() {
   ];
 
   /* dbHistory has userMessage and sysResponse. Flattening them into sequential history */
-  dbHistory.forEach((record) => {
+  dbHistory.forEach((record: { id: number; userMessage: string; sysResponse: string; chatDate: Date }) => {
     history.push({
       id: record.id * 2,
       role: "user",
