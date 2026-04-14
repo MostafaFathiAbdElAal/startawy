@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User as UserIcon } from "lucide-react";
 
-type Message = {
+export type Message = {
   id: number;
   role: "user" | "assistant";
   content: string;

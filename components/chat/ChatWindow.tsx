@@ -8,6 +8,7 @@ import { useChatSocket } from '@/lib/hooks/useChatSocket';
 import { clsx } from 'clsx';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { formatChatDate, isSameDay } from '@/lib/utils/date-formatter';
 
 interface ChatWindowProps {
   isAuthenticated: boolean;
@@ -144,39 +145,58 @@ export const ChatWindow = ({ isAuthenticated, isPhoneVerified, userName, userRol
                   </div>
                 )}
 
-                {messages.map((msg) => {
+                {messages.map((msg, idx) => {
+                  const showDate = idx === 0 || !isSameDay(msg.timestamp, messages[idx - 1].timestamp);
+
                   if (msg.sender === 'system') {
                     return (
-                      <div key={msg.id} className="flex justify-center my-4">
-                        <div className="bg-gray-100 dark:bg-slate-800/80 text-gray-500 dark:text-gray-400 text-xs px-3 py-1.5 rounded-full shadow-sm text-center">
-                          {msg.text}
+                      <div key={msg.id} className="space-y-4">
+                        {showDate && (
+                          <div className="flex justify-center my-6">
+                            <div className="bg-white/50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 text-gray-500 dark:text-gray-400 text-[10px] font-extrabold px-4 py-1.5 rounded-full shadow-sm">
+                              {formatChatDate(msg.timestamp)}
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex justify-center my-4">
+                          <div className="text-gray-400 dark:text-gray-500 text-[10px] font-bold uppercase tracking-widest text-center px-6">
+                            ————— {msg.text} —————
+                          </div>
                         </div>
                       </div>
                     );
                   }
 
                   return (
-                    <div
-                      key={msg.id}
-                      className={clsx(
-                        "flex flex-col max-w-[80%] wrap-break-word",
-                        msg.sender === 'user' ? "ml-auto items-end" : "mr-auto items-start"
+                    <div key={msg.id} className="space-y-4">
+                      {showDate && (
+                        <div className="flex justify-center my-6">
+                          <div className="bg-white/50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 text-gray-500 dark:text-gray-400 text-[10px] font-extrabold px-4 py-1.5 rounded-full shadow-sm">
+                            {formatChatDate(msg.timestamp)}
+                          </div>
+                        </div>
                       )}
-                    >
-                      <div className={clsx(
-                        "p-3 rounded-2xl shadow-sm",
-                        msg.sender === 'user' 
-                          ? "bg-teal-600 text-white rounded-tr-none" 
-                          : "bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-tl-none"
-                      )}>
-                        <span className="font-semibold text-xs mb-1 block opacity-80">
-                          {msg.sender === 'user' ? 'You' : 'Support'}
+                      <div
+                        className={clsx(
+                          "flex flex-col max-w-[80%] wrap-break-word",
+                          msg.sender === 'user' ? "ml-auto items-end" : "mr-auto items-start"
+                        )}
+                      >
+                        <div className={clsx(
+                          "p-3 rounded-2xl shadow-sm",
+                          msg.sender === 'user' 
+                            ? "bg-teal-600 text-white rounded-tr-none" 
+                            : "bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-tl-none"
+                        )}>
+                          <span className="font-semibold text-xs mb-1 block opacity-80">
+                            {msg.sender === 'user' ? 'You' : 'Support'}
+                          </span>
+                          <p className="text-sm wrap-break-word whitespace-pre-wrap">{msg.text}</p>
+                        </div>
+                        <span className="text-[10px] text-gray-400 mt-1 px-1">
+                          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
-                        <p className="text-sm wrap-break-word whitespace-pre-wrap">{msg.text}</p>
                       </div>
-                      <span className="text-[10px] text-gray-400 mt-1 px-1">
-                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
                     </div>
                   );
                 })}

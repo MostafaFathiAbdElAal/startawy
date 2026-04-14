@@ -37,7 +37,8 @@ export function AdminRevenueChart({ data }: { data: { id: string, month: string,
               color: "#fff",
               boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
             }}
-            formatter={(value: number) => [`$${value}`, "Revenue"]}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            formatter={(value: any) => [`$${value}`, "Revenue"]}
           />
           <Area
             type="monotone"

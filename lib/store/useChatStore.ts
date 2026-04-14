@@ -17,6 +17,7 @@ interface ChatState {
   isAdminTyping: boolean;
   setSessionId: (id: string) => void;
   setIsOpen: (isOpen: boolean) => void;
+  startNewSession: () => void;
   addMessage: (message: Message) => void;
   setQueuePosition: (position: number | null) => void;
   setAdminStatus: (status: 'online' | 'offline' | 'busy') => void;
@@ -38,6 +39,14 @@ export const useChatStore = create<ChatState>()(
       isAdminTyping: false,
       
       setIsOpen: (isOpen) => set({ isOpen }),
+
+      // Generate a fresh session ID and clear history for a new conversation
+      startNewSession: () => set({
+        sessionId: Math.random().toString(36).substring(2, 11),
+        messages: [],
+        queuePosition: null,
+        adminStatus: 'offline',
+      }),
       
       addMessage: (message) => set((state) => ({ 
         messages: [...state.messages, message] 

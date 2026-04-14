@@ -33,24 +33,45 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      if (role === 'FOUNDER') {
-        await tx.startupFounder.create({
-          data: {
-            userId: userId,
-            businessName: roleData.businessName,
-            businessSector: roleData.businessSector,
-            foundingDate: new Date(roleData.foundingDate),
-          },
-        });
-      } else if (role === 'CONSULTANT') {
-        await tx.consultant.create({
-          data: {
-            userId: userId,
-            specialization: roleData.specialization,
-            yearsOfExp: parseInt(roleData.yearsOfExp) || 0,
-            availability: roleData.availability,
-          },
-        });
+      try {
+        if (role === 'FOUNDER') {
+          await tx.startupFounder.upsert({
+            where: { userId: userId },
+            update: {
+              businessName: roleData.businessName,
+              businessSector: roleData.businessSector,
+              foundingDate: new Date(roleData.foundingDate),
+            },
+            create: {
+              userId: userId,
+              businessName: roleData.businessName,
+              businessSector: roleData.businessSector,
+              foundingDate: new Date(roleData.foundingDate),
+            },
+          });
+        } else if (role === 'CONSULTANT') {
+          await tx.consultant.upsert({
+            where: { userId: userId },
+            update: {
+              specialization: roleData.specialization,
+              yearsOfExp: parseInt(roleData.yearsOfExp) || 0,
+              availability: roleData.availability,
+            },
+            create: {
+              userId: userId,
+              specialization: roleData.specialization,
+              yearsOfExp: parseInt(roleData.yearsOfExp) || 0,
+              availability: roleData.availability,
+            },
+          });
+        }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (dbError: any) {
+        // If it's a unique constraint error (P2002), we can ignore it as the record exists
+        if (dbError.code !== 'P2002') {
+          throw dbError;
+        }
+        console.warn('P2002 encountered during profile completion, ignoring as duplicate.');
       }
 
       return updatedUser;

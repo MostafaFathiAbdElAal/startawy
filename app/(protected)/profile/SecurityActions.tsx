@@ -224,7 +224,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Real-time Bot Status Indicator */}
-        {botStatus && !user.isPhoneVerified && (
+        {!!botStatus && !user.isPhoneVerified && (
           <div className="md:col-span-2 mb-2">
             <div className={`flex items-center gap-3 p-4 rounded-2xl border transition-all duration-500 ${
               botStatus.ready 
@@ -421,7 +421,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                     <p className="text-[11px] font-medium text-slate-500 max-w-[200px]">We&apos;ve sent a 6-digit secure code to your number.</p>
                   </div>
                 </div>
-                {otpEvent && <div className={`mb-6 p-4 rounded-xl border text-[10px] font-bold uppercase tracking-widest flex items-center justify-center transition-colors ${otpEvent.status === 'success' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : otpEvent.status === 'error' ? 'bg-red-500/10 text-red-600 border-red-500/20' : 'bg-teal-500/10 text-teal-600 border-teal-500/20 animate-pulse'}`}>{otpEvent.message}</div>}
+                {!!otpEvent && <div className={`mb-6 p-4 rounded-xl border text-[10px] font-bold uppercase tracking-widest flex items-center justify-center transition-colors ${otpEvent.status === 'success' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : otpEvent.status === 'error' ? 'bg-red-500/10 text-red-600 border-red-500/20' : 'bg-teal-500/10 text-teal-600 border-teal-500/20 animate-pulse'}`}>{otpEvent.message}</div>}
                 {otpError && <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-2xl text-[10px] font-bold border border-red-100 flex items-center gap-2"><AlertCircle className="w-4 h-4" /> {otpError}</div>}
                 <div className="space-y-8 flex flex-col items-center">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Enter Verification Code</label>

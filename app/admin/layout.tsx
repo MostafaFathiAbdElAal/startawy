@@ -20,7 +20,9 @@ export default async function AdminLayout({
     where: { id: parseInt(userPayload.id as string) }
   });
 
-  if (!user || user.type !== 'ADMIN') {
+  const isOwner = user?.email === process.env.NEXT_PUBLIC_OWNER_EMAIL;
+
+  if (!user || (user.type !== 'ADMIN' && !isOwner)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 flex-col gap-4">
         <h1 className="text-3xl font-bold text-red-600">Access Denied</h1>
@@ -32,7 +34,7 @@ export default async function AdminLayout({
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-slate-900 overflow-hidden text-gray-900 dark:text-gray-100">
-      <Sidebar userRole="ADMIN" />
+      <Sidebar userRole="ADMIN" userEmail={user?.email} />
       <div className="flex-1 flex flex-col min-w-0 transition-all duration-300">
         <TopBar 
           userRole="ADMIN" 

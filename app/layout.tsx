@@ -69,6 +69,7 @@ export default async function RootLayout({
           <ChatWidget 
             isAuthenticated={isAuthenticated} 
             userRole={userRole} 
+            userEmail={userPayload?.email as string | undefined}
             userName={userName}
             key={isPhoneVerified ? 'verified' : 'unverified'} 
             isPhoneVerified={isPhoneVerified} 

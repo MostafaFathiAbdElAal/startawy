@@ -46,12 +46,12 @@ export const useChatSocket = (userName?: string, userRole?: string) => {
         // eslint-disable-next-line react-hooks/purity
         id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(7),
         sender: 'system',
-        text: 'Previous conversation ended',
+        text: 'Conversation ended',
         timestamp: new Date().toISOString(),
       });
       setAdminStatus('offline');
-      // Generate new session ID so the next message is treated as a clean slate by the backend
-      setSessionId(Math.random().toString(36).substring(2, 11));
+      // Do NOT auto-generate a new session ID here - that caused immediate re-queuing.
+      // A new session ID is generated only when the user closes and reopens the widget.
     });
 
     // Listen for admin typing
@@ -59,11 +59,10 @@ export const useChatSocket = (userName?: string, userRole?: string) => {
       setIsAdminTyping(data.isTyping);
     });
 
-    // Clean up on unmount
     return () => {
       socket.disconnect();
     };
-  }, [sessionId, setSessionId, addMessage, setQueuePosition, setAdminStatus, setIsAdminTyping, userName]);
+  }, [sessionId, setSessionId, addMessage, setQueuePosition, setAdminStatus, setIsAdminTyping, userName, userRole]);
 
   const sendMessage = (text: string) => {
     if (socketRef.current && text.trim()) {

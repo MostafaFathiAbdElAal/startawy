@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { MessageCircle, User, Send, CheckCircle2, Clock } from 'lucide-react';
+import { MessageCircle, Clock, User, Send, CheckCircle2, ShieldCheck, Search, Activity, Trash2, Ban, ArrowLeft } from 'lucide-react';
 import { clsx } from 'clsx';
+import { formatChatDate, isSameDay } from '@/lib/utils/date-formatter';
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
 
@@ -11,24 +12,27 @@ interface ChatSession {
   sessionId: string;
   userName?: string;
   userRole?: string;
-  messages: { sender: 'user' | 'admin'; text: string; timestamp: string }[];
+  messages: { sender: 'user' | 'admin' | 'system'; text: string; timestamp: string }[];
   lastMessage?: string;
   unread?: boolean;
   isTyping?: boolean;
 }
 
 export default function AdminSupportPage() {
+  const [mounted, setMounted] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const [activeChats, setActiveChats] = useState<Map<string, ChatSession>>(new Map());
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('admin_selected_session');
-    }
-    return null;
-  });
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [confirmEndId, setConfirmEndId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+    const saved = localStorage.getItem('admin_selected_session');
+    if (saved) setSelectedSessionId(saved);
+  }, []);
 
   // 🏆 Persistence: Save selected session on change
   useEffect(() => {
@@ -66,7 +70,7 @@ export default function AdminSupportPage() {
       setIsConnected(false);
     });
 
-    newSocket.on('new_user_assigned', ({ sessionId, userName }) => {
+    newSocket.on('new_user_assigned', ({ sessionId, userName, userRole }) => {
       setActiveChats(prev => {
         const next = new Map(prev);
         if (!next.has(sessionId)) {
@@ -74,7 +78,7 @@ export default function AdminSupportPage() {
             sessionId, 
             userName, 
             userRole,
-            messages: [] as { sender: 'user' | 'admin'; text: string; timestamp: string }[], 
+            messages: [] as { sender: 'user' | 'admin' | 'system'; text: string; timestamp: string }[], 
             unread: true 
           });
         }
@@ -85,7 +89,7 @@ export default function AdminSupportPage() {
     newSocket.on('user_message', ({ sessionId, text, timestamp }) => {
       setActiveChats(prev => {
         const next = new Map(prev);
-        const session = next.get(sessionId) || { sessionId, messages: [] as { sender: 'user' | 'admin'; text: string; timestamp: string }[] };
+        const session = next.get(sessionId) || { sessionId, messages: [] as { sender: 'user' | 'admin' | 'system'; text: string; timestamp: string }[] };
         
         // 🛡️ Safeguard: Prevent duplicate messages
         const isDuplicate = session.messages.some(m => m.timestamp === timestamp && m.text === text);
@@ -118,7 +122,7 @@ export default function AdminSupportPage() {
       sessionId: string;
       userName?: string;
       userRole?: string;
-      messages: { sender: 'user' | 'admin'; text: string; timestamp: string }[];
+      messages: { sender: 'user' | 'admin' | 'system'; text: string; timestamp: string }[];
     }
 
     // 🏆 Restoration logic: Syncing sessions and message history on join/refresh
@@ -141,6 +145,19 @@ export default function AdminSupportPage() {
       });
     });
 
+    // 🏆 NEW: Dynamic User Info Update (Real Names)
+    newSocket.on('user_info_update', ({ sessionId, userName, userRole }: { sessionId: string, userName?: string, userRole?: string }) => {
+      console.log('--- USER INFO UPDATE ---', { sessionId, userName });
+      setActiveChats(prev => {
+        const next = new Map(prev);
+        const chat = next.get(sessionId);
+        if (chat) {
+          next.set(sessionId, { ...chat, userName, userRole });
+        }
+        return next;
+      });
+    });
+
     // 🏆 Multi-Admin Sync: Received a reply from another socket/instance
     newSocket.on('admin_reply_sync', ({ sessionId, text, timestamp }) => {
       console.log('--- SYNCED ADMIN REPLY ---', { sessionId, text });
@@ -152,7 +169,7 @@ export default function AdminSupportPage() {
           const isDuplicate = session.messages.some(m => m.timestamp === timestamp && m.text === text);
           if (isDuplicate) return prev;
 
-          const updatedMessages = [...session.messages, { sender: 'admin', text, timestamp }];
+          const updatedMessages: { sender: 'user' | 'admin' | 'system'; text: string; timestamp: string }[] = [...session.messages, { sender: 'admin' as const, text, timestamp }];
           next.set(sessionId, { ...session, messages: updatedMessages, lastMessage: text });
         }
         return next;
@@ -228,9 +245,12 @@ export default function AdminSupportPage() {
   const selectedChat = selectedSessionId ? activeChats.get(selectedSessionId) : null;
 
   return (
-    <div className="flex h-[calc(100vh-120px)] bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 overflow-hidden">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-120px)] bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 overflow-hidden">
       {/* Sidebar: Chat List */}
-      <div className="w-80 border-r border-gray-100 dark:border-slate-800 flex flex-col">
+      <div className={clsx(
+        "w-full md:w-80 border-r border-gray-100 dark:border-slate-800 flex flex-col",
+        mounted && selectedSessionId ? "hidden md:flex" : "flex"
+      )}>
         <div className="p-6 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xl font-bold flex items-center gap-2">
@@ -283,7 +303,11 @@ export default function AdminSupportPage() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold text-sm">{chat.userName || `User ${chat.sessionId.substring(0, 4)}`}</p>
+                        <p className="font-semibold text-sm">
+                          {chat.userName && !chat.userName.startsWith('User ') 
+                            ? chat.userName 
+                            : `Anonymous Client (${chat.sessionId.substring(0, 4)})`}
+                        </p>
                         {chat.userRole && (
                           <span className={clsx(
                             "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase",
@@ -307,17 +331,26 @@ export default function AdminSupportPage() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col bg-gray-50/30 dark:bg-slate-900/30">
+      <div className={clsx(
+        "flex-1 flex flex-col bg-gray-50/30 dark:bg-slate-900/30",
+        mounted && !selectedSessionId ? "hidden md:flex" : "flex"
+      )}>
         {selectedChat ? (
           <>
             <div className="p-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
               <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setSelectedSessionId(null)}
+                  className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full md:hidden"
+                >
+                  <ArrowLeft size={20} />
+                </button>
                 <div className="p-2 bg-teal-100 dark:bg-teal-900/30 rounded-full text-teal-600">
                   <User size={20} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold">{selectedChat.userName || `User ${selectedChat.sessionId}`}</h3>
+                    <h3 className="font-bold text-sm md:text-base">{selectedChat.userName || `User ${selectedChat.sessionId}`}</h3>
                     {selectedChat.userRole && (
                       <span className={clsx(
                         "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase",
@@ -335,21 +368,15 @@ export default function AdminSupportPage() {
               <div className="flex items-center gap-2">
                 {confirmEndId === selectedSessionId ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-red-500 font-bold animate-pulse">ARE YOU SURE?</span>
+                    <span className="hidden sm:inline text-[10px] text-red-500 font-bold animate-pulse">SURE?</span>
                     <button
                       onClick={() => {
                         socketRef.current?.emit('admin_end_chat', { sessionId: selectedSessionId! });
-                        setActiveChats(prev => {
-                          const next = new Map(prev);
-                          next.delete(selectedSessionId!);
-                          return next;
-                        });
-                        setSelectedSessionId(null);
                         setConfirmEndId(null);
                       }}
                       className="px-3 py-1.5 text-[10px] font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-all"
                     >
-                      CLICK TO END
+                      END
                     </button>
                     <button
                       onClick={() => setConfirmEndId(null)}
@@ -369,28 +396,49 @@ export default function AdminSupportPage() {
               </div>
             </div>
 
-            <div ref={scrollRef} className="flex-1 p-6 overflow-y-auto space-y-4">
-              {selectedChat.messages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={clsx(
-                    "flex flex-col max-w-[70%]",
-                    msg.sender === 'admin' ? "ml-auto items-end" : "mr-auto items-start"
-                  )}
-                >
-                  <div className={clsx(
-                    "p-3 rounded-2xl text-sm",
-                    msg.sender === 'admin' 
-                      ? "bg-teal-600 text-white rounded-tr-none" 
-                      : "bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-100 rounded-tl-none shadow-sm border border-gray-100 dark:border-slate-700"
-                  )}>
-                    {msg.text}
+            <div ref={scrollRef} className="flex-1 p-6 overflow-y-auto space-y-6 bg-slate-50/50 dark:bg-slate-950/50">
+              {selectedChat.messages.map((msg, idx) => {
+                const showDate = idx === 0 || !isSameDay(msg.timestamp, selectedChat.messages[idx - 1].timestamp);
+                
+                return (
+                  <div key={idx} className="space-y-4">
+                    {showDate && (
+                      <div className="flex justify-center my-6">
+                        <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-500 dark:text-gray-400 text-[10px] font-extrabold px-4 py-1.5 rounded-full shadow-sm">
+                          {formatChatDate(msg.timestamp)}
+                        </div>
+                      </div>
+                    )}
+
+                    {msg.sender === 'system' ? (
+                      <div className="flex justify-center my-4">
+                        <div className="text-gray-400 dark:text-gray-500 text-[10px] font-bold uppercase tracking-widest text-center px-10">
+                          ————— {msg.text} —————
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className={clsx(
+                          "flex flex-col max-w-[75%]",
+                          msg.sender === 'admin' ? "ml-auto items-end" : "mr-auto items-start"
+                        )}
+                      >
+                        <div className={clsx(
+                          "p-3.5 rounded-2xl text-[13px] leading-relaxed shadow-sm",
+                          msg.sender === 'admin' 
+                            ? "bg-teal-600 text-white rounded-tr-none" 
+                            : "bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-100 rounded-tl-none border border-gray-100 dark:border-slate-800"
+                        )}>
+                          {msg.text}
+                        </div>
+                        <span className="text-[9px] font-bold text-gray-400 mt-1.5 px-1 tracking-tighter">
+                          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <span className="text-[10px] text-gray-400 mt-1">
-                    {new Date(msg.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="p-4 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800">

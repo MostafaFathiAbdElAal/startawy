@@ -26,14 +26,17 @@ import {
   ChevronRight,
   Menu,
   X,
+  ShieldCheck,
   Headset,
 } from "lucide-react";
 
 interface SidebarProps {
   userRole?: "FOUNDER" | "CONSULTANT" | "ADMIN";
+  userEmail?: string;
 }
 
-export function Sidebar({ userRole = "FOUNDER" }: SidebarProps) {
+export function Sidebar({ userRole: rawRole = "FOUNDER", userEmail }: SidebarProps) {
+  const userRole = rawRole || "FOUNDER";
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -48,6 +51,8 @@ export function Sidebar({ userRole = "FOUNDER" }: SidebarProps) {
   const isActive = (path: string) => {
     return pathname === path;
   };
+
+  const isOwner = userEmail === process.env.NEXT_PUBLIC_OWNER_EMAIL;
 
   const founderMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -82,13 +87,19 @@ export function Sidebar({ userRole = "FOUNDER" }: SidebarProps) {
     { icon: MessageCircle, label: "Review Feedback", path: "/admin/feedback" },
     { icon: Headset, label: "Support Chat", path: "/admin/support" },
     { icon: BarChart3, label: "Analytics", path: "/admin/analytics" },
+    ...(isOwner ? [{ icon: ShieldCheck, label: "Manage Admins", path: "/admin/manage-admins" }] : []),
     { icon: User, label: "Profile", path: "/profile" },
   ];
 
-  const menuItems =
-    userRole?.toUpperCase() === "CONSULTANT" ? consultantMenuItems :
-      userRole?.toUpperCase() === "ADMIN" ? adminMenuItems :
-        founderMenuItems;
+  const menuItems = [
+    ...(userRole?.toUpperCase() === "CONSULTANT" ? consultantMenuItems :
+       userRole?.toUpperCase() === "ADMIN" ? adminMenuItems :
+       founderMenuItems),
+    // If owner, also show ONLY UNIQUE admin items (to avoid duplicates like Profile/Dashboard)
+    ...(isOwner && userRole?.toUpperCase() !== "ADMIN" 
+      ? adminMenuItems.filter(item => !["Dashboard", "Profile"].includes(item.label))
+      : [])
+  ];
 
   return (
     <>

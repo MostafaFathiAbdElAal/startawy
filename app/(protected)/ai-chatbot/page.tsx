@@ -1,4 +1,4 @@
-import { ChatInterface } from "@/components/chat/ChatInterface";
+import { ChatInterface, type Message } from "@/components/chat/ChatInterface";
 import { prisma } from "@/lib/prisma";
 import { verifyAuth } from "@/lib/auth-utils";
 import { cookies } from "next/headers";
@@ -27,10 +27,10 @@ export default async function AIChatbotPage() {
     take: 50 // Last 50 interaction pairs
   });
 
-  const history = [
+  const history: Message[] = [
     {
       id: 0,
-      role: "assistant" as const,
+      role: "assistant",
       content: "Hello! I'm StartBot, your AI Financial Advisor. How can I help you today? You can ask me about budget planning, financial strategies, market trends, or any business-related questions.",
       timestamp: new Date()
     }

@@ -190,7 +190,7 @@ export default function ForgotPasswordForm() {
                             <div className="flex flex-col items-center gap-2">
                                 <AlertCircle size={20} className="text-red-500" />
                                 <span>{error}</span>
-                                <Link href="/dashboard/profile" className="text-teal-600 underline text-xs mt-1">Go to Profile to Verify</Link>
+                                <Link href="/profile" className="text-teal-600 underline text-xs mt-1">Go to Profile to Verify</Link>
                             </div>
                         ) : error}
                     </div>

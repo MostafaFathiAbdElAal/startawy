@@ -5,7 +5,18 @@ import { MessageCircle, X } from 'lucide-react';
 import { useChatStore } from '@/lib/store/useChatStore';
 
 export const ChatButton = () => {
-  const { isOpen, setIsOpen } = useChatStore();
+  const { isOpen, setIsOpen, adminStatus, messages, startNewSession } = useChatStore();
+
+  const handleToggle = () => {
+    if (!isOpen) {
+      // If the chat was ended and user is reopening it, start a clean slate
+      const hasEndedSession = messages.some(m => m.sender === 'system' && m.text === 'Conversation ended');
+      if (hasEndedSession && adminStatus === 'offline') {
+        startNewSession();
+      }
+    }
+    setIsOpen(!isOpen);
+  };
 
   return (
     <motion.button
@@ -13,7 +24,7 @@ export const ChatButton = () => {
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
-      onClick={() => setIsOpen(!isOpen)}
+      onClick={handleToggle}
       className="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-teal-600 text-white shadow-lg hover:bg-teal-700 transition-colors"
       aria-label="Toggle Chat"
     >

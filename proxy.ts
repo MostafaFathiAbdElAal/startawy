@@ -18,6 +18,8 @@ export async function proxy(request: NextRequest) {
       // Token invalid
     }
   }
+  
+  const isOwner = user?.email === process.env.NEXT_PUBLIC_OWNER_EMAIL;
 
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forgot-password');
   const isCompleteProfile = pathname.startsWith('/complete-profile');
@@ -45,14 +47,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // 3. New: If user is logged in, has a role, and is trying to access /complete-profile -> Dashboard
-  if (user && user.role && isCompleteProfile) {
-    console.log(`[PROXY] Profile complete -> Redirecting to /dashboard`);
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
+  // 3. Removed: We no longer redirect users away from /complete-profile just because they have a role.
+  // The database (via layout.tsx) is the only true source of truth for profile completeness.
 
   // 4. New: If user is logged in, NO role, and NOT on /complete-profile -> Complete Profile
-  if (user && !user.role && !isCompleteProfile && !isHomePage) {
+  // Owner Bypasses this to allow direct access to Admin tools
+  if (!isOwner && user && !user.role && !isCompleteProfile && !isHomePage) {
       console.log(`[PROXY] Partial user -> Redirecting to /complete-profile`);
       return NextResponse.redirect(new URL('/complete-profile', request.url));
   }

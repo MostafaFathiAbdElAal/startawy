@@ -13,7 +13,8 @@ interface TopBarProps {
   isVerified?: boolean;
 }
 
-export function TopBar({ userRole = "FOUNDER", userName = "User", userEmail, isVerified = true }: TopBarProps) {
+export function TopBar({ userRole: rawRole = "FOUNDER", userName = "User", userEmail, isVerified = true }: TopBarProps) {
+  const userRole = rawRole || "FOUNDER";
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
