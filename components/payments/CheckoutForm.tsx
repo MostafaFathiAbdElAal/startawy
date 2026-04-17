@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Lock, CreditCard, ShieldCheck } from "lucide-react";
+import { useToast } from "@/components/providers/ToastProvider";
 
 type CheckoutProps = {
   itemName: string;
@@ -11,6 +12,7 @@ type CheckoutProps = {
 };
 
 export function CheckoutForm({ itemName, amount, returnTo, metadata }: CheckoutProps) {
+  const { showToast } = useToast();
   const [processing, setProcessing] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,10 +41,15 @@ export function CheckoutForm({ itemName, amount, returnTo, metadata }: CheckoutP
 
       // Redirect to Stripe Checkout
       window.location.href = data.url;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
+      const message = error instanceof Error ? error.message : "Could not initialize secure payment.";
       setProcessing(false);
-      alert("Could not initialize payment. Please try again.");
+      showToast({
+        type: "error",
+        title: "Payment Link Failed",
+        message: message
+      });
     }
   };
 

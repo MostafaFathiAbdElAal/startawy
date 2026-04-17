@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     await prisma.feedback.create({
       data: {
-        userId: parseInt(userPayload.id),
+        userId: Number(userPayload.id),
         rating: data.rating,
         comment: data.comment.trim(),
       },

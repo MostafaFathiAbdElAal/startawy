@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { Star, MapPin, DollarSign, Award, Calendar } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Book a Consultant",
+};
+
 import Link from "next/link";
 import NextImage from "next/image";
 import { ConsultationFilter } from "@/components/consultants/ConsultationFilter";

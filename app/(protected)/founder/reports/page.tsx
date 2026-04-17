@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { getFounderReports } from "@/app/actions/founder";
+
+export const metadata: Metadata = {
+  title: "Business Reports",
+};
+
 import SectionHeader from "@/components/ui/SectionHeader";
 import { FileText, Download, Calendar, ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -26,7 +32,7 @@ export default async function ReportsPage() {
                 <FileText className="w-7 h-7 text-blue-500" />
               </div>
               
-              <p className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-2">{report.reportType.replace('_', ' ')}</p>
+              <p className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-2">{(report.reportType || 'GENERAL').replace('_', ' ')}</p>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 group-hover:text-blue-500 transition-colors">{report.title}</h3>
               
               <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mb-8">

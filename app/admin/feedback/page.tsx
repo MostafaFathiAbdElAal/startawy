@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Star, MessageCircle, Calendar, User as UserIcon, Shield, Quote, Loader2 } from 'lucide-react';
 import Image from 'next/image';
+import { useToast } from '@/components/providers/ToastProvider';
 
 interface FeedbackItem {
   id: number;
@@ -20,6 +21,7 @@ interface FeedbackItem {
 }
 
 export default function AdminFeedbackPage() {
+  const { showToast } = useToast();
   const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +37,7 @@ export default function AdminFeedbackPage() {
         } else {
           setError(res.error || 'Failed to fetch feedbacks');
         }
-      } catch (err) {
+      } catch {
         setError('Network error occurred while fetching feedbacks.');
       } finally {
         setLoading(false);
@@ -56,11 +58,24 @@ export default function AdminFeedbackPage() {
       
       if (res.success) {
         setFeedbacks(feedbacks.map(f => f.id === id ? { ...f, [field]: value } : f));
+        showToast({
+          type: "success",
+          title: "Feedback Updated",
+          message: `The ${field} has been successfully updated.`
+        });
       } else {
-        alert(res.error || 'Update failed');
+        showToast({
+          type: "error",
+          title: "Update Failed",
+          message: res.error || "Failed to update feedback entry."
+        });
       }
     } catch {
-      alert('Network error during update.');
+      showToast({
+        type: "error",
+        title: "Network Error",
+        message: "Could not connect to the server to update feedback."
+      });
     }
   };
 

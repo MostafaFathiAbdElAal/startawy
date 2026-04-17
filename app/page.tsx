@@ -11,7 +11,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import ThemeToggle from "@/components/ThemeToggle";
 import Counter from "@/components/Counter";
-import logoImage from "@/assets/imgs/logo.png";
 import heroImage from "@/assets/imgs/hero.png";
 
 const features = [
@@ -123,11 +122,11 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Image
-                src={logoImage}
+                src="/assets/logos/startawy_s_fullres.png"
                 alt="Startawy"
                 width={120}
                 height={40}
-                className="h-10 w-auto object-contain mix-blend-multiply dark:mix-blend-normal dark:brightness-0 dark:invert transition-all"
+                className="h-10 w-auto object-contain dark:brightness-0 dark:invert transition-all"
               />
             </div>
 
@@ -437,7 +436,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div className="space-y-4">
-              <Image src={logoImage} alt="Startawy" width={100} height={35} className="brightness-0 invert h-8 w-auto" />
+              <Image src="/assets/logos/startawy_s_fullres.png" alt="Startawy" width={100} height={35} className="brightness-0 invert h-8 w-auto" />
               <p className="text-gray-400 text-sm leading-relaxed">
                 Empowering startups with smart financial insights and expert consulting.
               </p>

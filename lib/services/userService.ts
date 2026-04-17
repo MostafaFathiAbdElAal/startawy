@@ -6,7 +6,19 @@ export class UserService {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        founder: true,
+        founder: {
+          include: {
+            payments: {
+              include: {
+                subscription: true
+              },
+              orderBy: {
+                transDate: 'desc'
+              },
+              take: 1
+            }
+          }
+        },
         consultant: true,
         admin: true
       }

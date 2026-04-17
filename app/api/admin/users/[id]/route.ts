@@ -4,16 +4,16 @@ import { authorizeUser } from "@/lib/auth-utils";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await authorizeUser(req, ["ADMIN", "SYSTEM_ADMIN"]);
     if (!auth.authorized) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
     
-    const result = await UserService.updateProfile(parseInt(id), body.role || "FOUNDER", body);
+    const result = await UserService.updateUserProfile(parseInt(id), body);
 
     return NextResponse.json({ success: true, user: result });
   } catch (error: any) {
@@ -24,13 +24,13 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { error, user, isOwner } = await authorizeUser(req, ["ADMIN", "SYSTEM_ADMIN"]);
     if (error) return error;
 
-    const { id } = params;
+    const { id } = await params;
     const targetUserId = parseInt(id);
 
     // Platform Owner cannot be deleted!

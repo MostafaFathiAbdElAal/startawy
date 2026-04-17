@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { BookingForm } from "@/components/consultants/BookingForm";
 
-export default async function BookSessionPage({ params }: { params: { id: string } }) {
+export default async function BookSessionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const consultantId = parseInt(id, 10);
 

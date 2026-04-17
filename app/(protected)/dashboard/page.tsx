@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { getDashboardData } from "@/app/actions/dashboard";
 import { redirect } from "next/navigation";
 import { 
@@ -13,6 +14,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { DashboardCharts } from "./DashboardCharts";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+};
 
 export default async function DashboardPage() {
   const data = await getDashboardData();
@@ -43,11 +48,18 @@ export default async function DashboardPage() {
   return (
     <div className="p-4 sm:p-8">
       {/* Welcome Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Welcome back, {user.name?.split(' ')[0] || 'User'}! 👋
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">Here&apos;s what&apos;s happening with your startup today.</p>
+      <div className="mb-8 p-6 bg-linear-to-r from-gray-900 to-slate-800 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:bg-teal-500/20 transition-all duration-700"></div>
+        <div className="relative z-10">
+          <h1 className="text-3xl font-bold text-white mb-2 font-display">
+            Welcome back, {user.name?.split(' ')[0] || 'User'}! 👋
+          </h1>
+          <p className="text-gray-300">
+            {user.type === 'CONSULTANT' 
+              ? "Here's an overview of your consultations and impact today." 
+              : "Here's what's happening with your startup today."}
+          </p>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -61,7 +73,7 @@ export default async function DashboardPage() {
             {renderIndicator(stats.revenueGrowth)}
           </div>
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">${stats.totalRevenue.toLocaleString()}</h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">Total Revenue</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">{user.type === 'CONSULTANT' ? 'Total Earnings' : 'Total Revenue'}</p>
         </div>
 
         {/* Monthly Profit */}
@@ -72,8 +84,10 @@ export default async function DashboardPage() {
             </div>
             {renderIndicator(stats.profitGrowth)}
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">${stats.monthlyProfit.toLocaleString()}</h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">Monthly Profit</p>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+            {user.type === 'CONSULTANT' ? stats.monthlyProfit : `$${stats.monthlyProfit.toLocaleString()}`}
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">{user.type === 'CONSULTANT' ? 'Sessions Completed' : 'Monthly Profit'}</p>
         </div>
 
         {/* Active Clients */}
@@ -85,7 +99,7 @@ export default async function DashboardPage() {
             {renderIndicator(stats.clientsGrowth)}
           </div>
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.activeClients}</h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">Active Clients</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">{user.type === 'CONSULTANT' ? 'Active Founders' : 'Active Clients'}</p>
         </div>
 
         {/* Growth Rate */}
@@ -162,7 +176,7 @@ export default async function DashboardPage() {
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Upcoming Sessions</h3>
             </div>
             <Link 
-              href="/my-sessions" 
+              href={user.type === 'CONSULTANT' ? "/consultant/sessions" : "/my-sessions"} 
               className="text-xs font-semibold text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 px-3 py-1.5 rounded-lg transition-colors"
             >
               View All
@@ -209,12 +223,14 @@ export default async function DashboardPage() {
                     </div>
                   </div>
                   <p className="text-sm font-bold text-gray-700 dark:text-gray-200">No sessions scheduled</p>
-                  <Link 
-                    href="/book-consultant"
-                    className="mt-4 px-5 py-2 bg-linear-to-r from-teal-500 to-teal-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-teal-500/25 hover:scale-105 transition-transform"
-                  >
-                    Book a Session
-                  </Link>
+                  {user.type !== 'CONSULTANT' && (
+                    <Link 
+                      href="/book-consultant"
+                      className="mt-4 px-5 py-2 bg-linear-to-r from-teal-500 to-teal-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-teal-500/25 hover:scale-105 transition-transform"
+                    >
+                      Book a Session
+                    </Link>
+                  )}
                 </div>
               )}
             </div>

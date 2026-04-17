@@ -33,7 +33,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   return (
     <AuthGuard>
       <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-slate-900">
-        <Sidebar userRole={user.type as "FOUNDER" | "CONSULTANT" | "ADMIN"} userEmail={user.email} isOwner={isOwner} />
+        <Sidebar userRole={user.type as "FOUNDER" | "CONSULTANT" | "ADMIN"} isOwner={isOwner} />
         <div className="flex-1 flex flex-col overflow-hidden transition-all duration-200 ease-in-out">
           <TopBar 
             userRole={user.type as "FOUNDER" | "CONSULTANT" | "ADMIN"} 

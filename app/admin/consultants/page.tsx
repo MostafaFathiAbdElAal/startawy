@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { Users, CheckCircle, Calendar, DollarSign, Plus } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Manage Consultants",
+};
+
 import { prisma } from "@/lib/prisma";
 import { AdminUsersTable } from "@/components/admin/AdminUsersTable";
 import { AddConsultantModal } from "@/components/admin/modals/AddConsultantModal";

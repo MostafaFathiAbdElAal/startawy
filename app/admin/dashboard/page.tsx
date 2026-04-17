@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { Users, UserCheck, Package, DollarSign, Star } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Admin Dashboard",
+};
+
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { AdminRevenueChart } from "@/components/admin/AdminRevenueChart"; // We will create this client component next

@@ -55,9 +55,9 @@ export default async function ConsultantDashboardPage() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Net Earnings */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-amber-100/50 dark:border-amber-900/20 hover:shadow-md hover:shadow-amber-500/10 transition-all group ring-1 ring-amber-50/50 dark:ring-amber-900/10">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center border border-teal-200/50">
               <DollarSign className="w-6 h-6 text-teal-600 dark:text-teal-400" />
             </div>
             {renderIndicator(stats.earningsGrowth)}
@@ -69,7 +69,7 @@ export default async function ConsultantDashboardPage() {
         </div>
 
         {/* Active Clients */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-amber-100/50 dark:border-amber-900/20 hover:shadow-md hover:shadow-amber-500/10 transition-all group ring-1 ring-amber-50/50 dark:ring-amber-900/10">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
               <Users className="w-6 h-6 text-purple-600 dark:text-purple-400" />
@@ -83,7 +83,7 @@ export default async function ConsultantDashboardPage() {
         </div>
 
         {/* Total Sessions */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-amber-100/50 dark:border-amber-900/20 hover:shadow-md hover:shadow-amber-500/10 transition-all group ring-1 ring-amber-50/50 dark:ring-amber-900/10">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -97,7 +97,7 @@ export default async function ConsultantDashboardPage() {
         </div>
 
         {/* Upcoming Sessions */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-amber-100/50 dark:border-amber-900/20 hover:shadow-md hover:shadow-amber-500/10 transition-all group ring-1 ring-amber-50/50 dark:ring-amber-900/10">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
               <Calendar className="w-6 h-6 text-orange-600 dark:text-orange-400" />
@@ -117,7 +117,7 @@ export default async function ConsultantDashboardPage() {
       {/* Lower Panels */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-8">
         {/* Upcoming Sessions Panel */}
-        <div className="bg-white/80 dark:bg-gray-800/50 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700/50 overflow-hidden flex flex-col">
+        <div className="bg-white/80 dark:bg-gray-800/50 backdrop-blur-xl rounded-2xl shadow-sm border border-amber-100/50 dark:border-amber-900/20 overflow-hidden flex flex-col ring-1 ring-amber-50/50 dark:ring-amber-900/10 shadow-amber-900/5">
           <div className="p-6 border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/30">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-teal-500/10 rounded-lg">
@@ -159,7 +159,7 @@ export default async function ConsultantDashboardPage() {
         </div>
 
         {/* Recent Completed Sessions */}
-        <div className="bg-white/80 dark:bg-gray-800/50 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700/50 overflow-hidden flex flex-col">
+        <div className="bg-white/80 dark:bg-gray-800/50 backdrop-blur-xl rounded-2xl shadow-sm border border-amber-100/50 dark:border-amber-900/20 overflow-hidden flex flex-col ring-1 ring-amber-50/50 dark:ring-amber-900/10 shadow-amber-900/5">
           <div className="p-6 border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/30">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-500/10 rounded-lg">

@@ -13,7 +13,7 @@ async function getAuthConsultant() {
   if (!userPayload) return null;
 
   const consultant = await prisma.consultant.findUnique({
-    where: { userId: parseInt(userPayload.id) },
+    where: { userId: Number(userPayload.id) },
     include: { user: true },
   });
   return consultant;

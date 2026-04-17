@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { getFounderDashboardData } from "@/app/actions/founder";
+
+export const metadata: Metadata = {
+  title: "Founder Dashboard",
+};
+
 import { redirect } from "next/navigation";
 import { 
   TrendingUp, 

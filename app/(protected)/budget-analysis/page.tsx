@@ -1,5 +1,11 @@
+import { Metadata } from "next";
 import { BudgetDashboard } from "@/components/analysis/BudgetDashboard";
 import { prisma } from "@/lib/prisma";
+
+export const metadata: Metadata = {
+  title: "Budget Analysis",
+};
+
 import { verifyAuth } from "@/lib/auth-utils";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";

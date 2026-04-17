@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/lib/auth-utils";
 import { cookies } from "next/headers";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,10 +21,54 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Report ID required" }, { status: 400 });
     }
 
-    // In a real app we would fetch the report S3 URL or generate PDF
-    // For this demonstration, we'll return a mock text file acting as a report.
-    const fileContent = `Startawy ${type === 'custom' ? 'Founder' : 'Market'} Report\n\nReport ID: ${reportId}\nGenerated on: ${new Date().toISOString()}\n\nThis is a securely downloaded mock report for the requested data.`;
-    
+    // Access Control check for library reports
+    if (type === 'library') {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: userPayload.id },
+        include: { 
+          founder: {
+            include: {
+              payments: { orderBy: { transDate: 'desc' }, take: 1 }
+            }
+          } 
+        }
+      });
+
+      const lastPayment = dbUser?.founder?.payments[0];
+      const isPremium = lastPayment?.amount === 299;
+
+      if (!isPremium) {
+        return NextResponse.json({ 
+          error: "Action Forbidden", 
+          message: "Please upgrade to Premium Plan to download full research reports." 
+        }, { status: 403 });
+      }
+
+      // Fetch the real Cloudinary link from the DB
+      const report = await prisma.startawyReport.findUnique({
+        where: { id: parseInt(reportId) }
+      });
+
+      if (!report) {
+         return NextResponse.json({ error: "Report not found" }, { status: 404 });
+      }
+
+      try {
+        const metadata = JSON.parse(report.link);
+        if (metadata.pdfUrl) {
+            // Redirect to the actual Cloudinary PDF URL
+            return NextResponse.redirect(new URL(metadata.pdfUrl));
+        }
+      } catch (e) {
+        // Fallback if not JSON or legacy format
+        if (report.link.startsWith('http')) {
+            return NextResponse.redirect(new URL(report.link));
+        }
+      }
+    }
+
+    // Fallback for custom reports or errors
+    const fileContent = `Startawy ${type} Report\nID: ${reportId}\nNote: Direct cloud access prioritized over static generation.`;
     return new NextResponse(fileContent, {
       headers: {
         "Content-Type": "text/plain",

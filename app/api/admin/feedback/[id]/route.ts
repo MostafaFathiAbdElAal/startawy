@@ -4,7 +4,7 @@ import { verifyAuth } from "@/lib/auth-utils";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const token = req.cookies.get("auth-token")?.value;
@@ -16,7 +16,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized." }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
     const { status, category } = body;
 
@@ -35,8 +35,8 @@ export async function PATCH(
     const updatedFeedback = await prisma.feedback.update({
       where: { id: parseInt(id) },
       data: {
-        status: status || undefined,
-        category: category || undefined,
+        comment: body.comment || undefined,
+        rating: body.rating || undefined,
       },
     });
 

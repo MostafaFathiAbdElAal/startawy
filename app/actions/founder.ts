@@ -12,7 +12,7 @@ export async function getFounderDashboardData() {
   }
 
   const founder = await prisma.startupFounder.findUnique({
-    where: { userId: parseInt(decoded.id as string) },
+    where: { userId: Number(decoded.id) },
     include: {
       user: {
         select: { name: true, email: true }
@@ -71,7 +71,7 @@ export async function getFounderReports() {
   }
 
   const founder = await prisma.startupFounder.findUnique({
-    where: { userId: parseInt(decoded.id as string) }
+    where: { userId: Number(decoded.id) }
   });
 
   if (!founder) return null;
@@ -92,7 +92,7 @@ export async function getFounderSessions() {
   }
 
   const founder = await prisma.startupFounder.findUnique({
-    where: { userId: parseInt(decoded.id as string) },
+    where: { userId: Number(decoded.id) },
     include: {
       sessions: {
         orderBy: { date: "desc" },

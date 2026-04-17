@@ -13,7 +13,7 @@ export async function getProfileData() {
 
   if (!decoded) return null;
 
-  const profile = await UserService.getFullProfile(parseInt(decoded.id as string));
+  const profile = await UserService.getFullProfile(Number(decoded.id));
   
   if (!profile) return null;
 
@@ -33,12 +33,19 @@ export async function getProfileData() {
       isPhoneVerified: profile.isPhoneVerified,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,
-      // Include relations to satisfy ProtectedLayout checks
+      password: null, // Critical to satisfy UserWithRelations
       founder: profile.founder,
       consultant: profile.consultant,
       admin: profile.admin,
       isOwner: !!profile.admin?.isOwner
-    } 
+    },
+    stats: {
+      sessions: (profile.founder as any)?.sessions?.length || (profile.consultant as any)?.sessions?.length || 0,
+      reports: (profile.founder as any)?.reports?.length || 0,
+      projects: (profile.founder as any)?.budgetAnalyses?.length || 0
+    },
+    subscription: (profile.founder as any)?.payments?.[0]?.subscription || null,
+    activePlan: profile.type === 'FOUNDER' ? 'Free Plan' : 'Professional'
   };
 }
 
@@ -58,9 +65,9 @@ export async function updateProfile(formData: FormData) {
   };
 
   try {
-    await UserService.updateUserProfile(parseInt(decoded.id as string), data);
+    await UserService.updateUserProfile(Number(decoded.id), data);
     revalidatePath("/profile");
-    return { success: true };
+    return { success: true, message: "Profile updated successfully!" };
   } catch (err) {
     return { success: false, error: "Failed to update profile" };
   }

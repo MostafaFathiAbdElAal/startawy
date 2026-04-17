@@ -10,6 +10,7 @@ interface ChatWidgetProps {
   userRole?: string;
   userName?: string;
   isPhoneVerified: boolean;
+  userEmail?: string;
   isOwner?: boolean;
 }
 

@@ -3,6 +3,8 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Filter, Edit, Trash2, Eye, UserX, UserCheck, ChevronDown, ChevronUp, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/components/providers/ToastProvider";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 type UserData = {
   id: number;
@@ -24,6 +26,7 @@ type AdminUsersTableProps = {
 };
 
 export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
+  const { showToast } = useToast();
   const [users, setUsers] = useState<UserData[]>(data);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -31,6 +34,7 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
   const [editFormData, setEditFormData] = useState({ name: "", email: "" });
   const filterRef = useRef<HTMLDivElement>(null);
 
@@ -39,9 +43,10 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
     setUsers(data);
   }, [data]);
 
-  const handleDelete = async (id: number) => {
-    if (!global.confirm("Are you SURE you want to permanently delete this user? All their associated records will be lost.")) return;
+  const handleDelete = async () => {
+    if (!userToDelete) return;
     
+    const id = userToDelete.id;
     setProcessingId(id);
     try {
       const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
@@ -49,11 +54,25 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
       
       if (result.success) {
         setUsers(users.filter(u => u.id !== id));
+        showToast({
+          type: "success",
+          title: "User Deleted",
+          message: `${userToDelete.name} has been permanently removed.`
+        });
+        setUserToDelete(null);
       } else {
-        alert(result.error || "Failed to delete user.");
+        showToast({
+          type: "error",
+          title: "Delete Failed",
+          message: result.error || "Failed to remove user account."
+        });
       }
-    } catch (err) {
-      alert("Network error occurred.");
+    } catch {
+      showToast({
+        type: "error",
+        title: "Network Error",
+        message: "Failed to connect to the server for deletion."
+      });
     } finally {
       setProcessingId(null);
     }
@@ -76,11 +95,24 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
           ...u, 
           status: nextSuspended ? "SUSPENDED" : "ACTIVE" 
         } : u));
+        showToast({
+          type: "success",
+          title: "Status Updated",
+          message: `User account is now ${nextSuspended ? 'Suspended' : 'Active'}.`
+        });
       } else {
-        alert(result.error || "Failed to update status.");
+        showToast({
+          type: "error",
+          title: "Update Failed",
+          message: result.error || "Failed to toggle user status."
+        });
       }
-    } catch (err) {
-      alert("Network error occurred.");
+    } catch {
+      showToast({
+        type: "error",
+        title: "Network Error",
+        message: "Failed to reach server for status update."
+      });
     } finally {
       setProcessingId(null);
     }
@@ -101,12 +133,25 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
       
       if (result.success) {
         setUsers(users.map(u => u.id === editingUser.id ? { ...u, name: editFormData.name, email: editFormData.email } : u));
+        showToast({
+          type: "success",
+          title: "Profile Updated",
+          message: "User details have been successfully changed."
+        });
         setEditingUser(null);
       } else {
-        alert(result.error || "Failed to update user.");
+        showToast({
+          type: "error",
+          title: "Update Failed",
+          message: result.error || "Failed to save profile changes."
+        });
       }
-    } catch (err) {
-      alert("Network error occurred.");
+    } catch {
+      showToast({
+        type: "error",
+        title: "Network Error",
+        message: "Network issues prevented saving changes."
+      });
     } finally {
       setProcessingId(null);
     }
@@ -339,7 +384,7 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                     </button>
 
                     <button 
-                      onClick={() => handleDelete(user.id)}
+                      onClick={() => setUserToDelete(user)}
                       disabled={processingId === user.id}
                       className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                       title="Delete Permanently"
@@ -415,6 +460,18 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
           </div>
         )}
       </AnimatePresence>
+      {/* Confirm Deletion Modal */}
+      <ConfirmModal
+        isOpen={!!userToDelete}
+        onClose={() => setUserToDelete(null)}
+        onConfirm={handleDelete}
+        title="Confirm User Deletion"
+        message={`Are you sure you want to permanently delete ${userToDelete?.name}? This action cannot be undone and all associated data will be lost.`}
+        confirmLabel="Delete User"
+        cancelLabel="Keep User"
+        isProcessing={processingId === userToDelete?.id}
+        variant="danger"
+      />
     </div>
   );
 }

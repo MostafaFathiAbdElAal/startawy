@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { Package, Check, ArrowRight, TrendingUp, Calendar as CalendarIcon, Star } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "My Startawy Plan",
+};
+
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { verifyAuth } from "@/lib/auth-utils";

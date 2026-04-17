@@ -34,7 +34,7 @@ export default async function AdminLayout({
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-slate-900 overflow-hidden text-gray-900 dark:text-gray-100">
-      <Sidebar userRole="ADMIN" userEmail={user?.email} isOwner={isOwner} />
+      <Sidebar userRole="ADMIN" isOwner={isOwner} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar 
           userRole="ADMIN" 

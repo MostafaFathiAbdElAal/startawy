@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+
+export const metadata: Metadata = {
+  title: "My Reports",
+};
+
 import { verifyAuth } from "@/lib/auth-utils";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";

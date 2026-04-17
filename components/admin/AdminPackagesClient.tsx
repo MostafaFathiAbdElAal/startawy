@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Package, Plus, ShieldCheck, Trash2, Loader2 } from "lucide-react";
+import { useToast } from "@/components/providers/ToastProvider";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 interface ServicePackage {
   id: number;
@@ -12,9 +14,11 @@ interface ServicePackage {
 }
 
 export default function AdminPackagesClient({ initialData }: { initialData: ServicePackage[] }) {
+  const { showToast } = useToast();
   const [packages, setPackages] = useState<ServicePackage[]>(initialData);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pkgToDelete, setPkgToDelete] = useState<ServicePackage | null>(null);
   const [newPkg, setNewPkg] = useState({ type: "", price: "", duration: "month", description: "" });
 
   const fetchPackages = async () => {
@@ -22,11 +26,16 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
     try {
       const res = await fetch("/api/admin/packages");
       if (res.ok) {
-        const data = await res.ok ? await res.json() : [];
+        const data = await res.json();
         setPackages(data);
       }
     } catch (err) {
       console.error(err);
+      showToast({
+        type: "error",
+        title: "Load Error",
+        message: "Failed to reload packages list."
+      });
     } finally {
       setLoading(false);
     }
@@ -45,28 +54,49 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
         setIsModalOpen(false);
         setNewPkg({ type: "", price: "", duration: "month", description: "" });
         fetchPackages();
+        showToast({
+          type: "success",
+          title: "Package Created",
+          message: "New subscription package has been added successfully."
+        });
       }
     } catch (err) {
       console.error(err);
+      showToast({
+        type: "error",
+        title: "Creation Failed",
+        message: "Could not save the new package."
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this package?")) return;
+  const handleDelete = async () => {
+    if (!pkgToDelete) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/packages?id=${id}`, {
+      const res = await fetch(`/api/admin/packages?id=${pkgToDelete.id}`, {
         method: "DELETE",
       });
       if (res.ok) {
-        setPackages(packages.filter(p => p.id !== id));
+        setPackages(packages.filter(p => p.id !== pkgToDelete.id));
+        showToast({
+          type: "success",
+          title: "Package Deleted",
+          message: `${pkgToDelete.type} has been removed permanently.`
+        });
       }
     } catch (err) {
       console.error(err);
+      showToast({
+        type: "error",
+        title: "Delete Error",
+        message: "An error occurred while trying to delete the package."
+      });
     } finally {
       setLoading(false);
+      setPkgToDelete(null);
     }
   };
 
@@ -103,7 +133,7 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
                   <Package className="w-8 h-8 text-teal-600 dark:text-teal-400" />
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg" onClick={() => handleDelete(pkg.id)}>
+                  <button className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg" onClick={() => setPkgToDelete(pkg)}>
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -158,7 +188,7 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">Package Title (e.g. Premium Plan)</label>
                 <input 
                   required
-                  className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 outline-hidden"
+                  className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
                   value={newPkg.type}
                   onChange={e => setNewPkg({...newPkg, type: e.target.value})}
                   placeholder="Basic, Pro, Enterprise..."
@@ -169,7 +199,7 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
                   <label className="block text-sm font-medium mb-1 dark:text-gray-300">Price ($)</label>
                   <input 
                     required type="number"
-                    className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 outline-hidden"
+                    className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
                     value={newPkg.price}
                     onChange={e => setNewPkg({...newPkg, price: e.target.value})}
                     placeholder="29.99"
@@ -178,7 +208,7 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
                 <div>
                   <label className="block text-sm font-medium mb-1 dark:text-gray-300">Duration</label>
                   <select 
-                    className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 outline-hidden"
+                    className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
                     value={newPkg.duration}
                     onChange={e => setNewPkg({...newPkg, duration: e.target.value})}
                   >
@@ -192,7 +222,7 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">Features (Comma separated)</label>
                 <textarea 
                   required
-                  className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 outline-hidden h-32"
+                  className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none h-32"
                   value={newPkg.description}
                   onChange={e => setNewPkg({...newPkg, description: e.target.value})}
                   placeholder="3 Consultants, 5 Market Reports, 24/7 Support..."
@@ -202,7 +232,7 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
                 <button 
                   type="button" 
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-3 px-4 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 font-semibold"
+                  className="flex-1 py-3 px-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold"
                 >
                   Cancel
                 </button>
@@ -218,6 +248,18 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
           </div>
         </div>
       )}
+
+      {/* Confirm Deletion */}
+      <ConfirmModal 
+        isOpen={!!pkgToDelete}
+        onClose={() => setPkgToDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete Package?"
+        message={`Are you sure you want to delete the ${pkgToDelete?.type} package? This action will prevent new signups for this plan.`}
+        confirmLabel="Delete Permanently"
+        cancelLabel="Keep Package"
+        isProcessing={loading}
+      />
     </div>
   );
 }

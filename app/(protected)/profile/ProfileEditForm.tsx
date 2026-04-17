@@ -34,15 +34,15 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
     const res = await updateProfile(data);
     if (res.success) {
       // Show Toast with the backend's descriptive success message
-      showToast({ type: 'success', title: 'Profile Updated', message: res.message });
+      showToast({ type: 'success', title: 'Profile Updated', message: res.message || 'Profile updated successfully' });
       router.push('/profile');
       router.refresh();
       // Reset loading after a delay to prevent getting stuck if navigation is slow
       setTimeout(() => setLoading(false), 2000);
     } else {
       // Show inline error inside the form AND a Toast — both use the backend's English error
-      setError(res.error);
-      showToast({ type: 'error', title: 'Update Failed', message: res.error });
+      setError(res.error || 'Failed to update profile');
+      showToast({ type: 'error', title: 'Update Failed', message: res.error || 'An unexpected error occurred' });
       setLoading(false);
     }
   };

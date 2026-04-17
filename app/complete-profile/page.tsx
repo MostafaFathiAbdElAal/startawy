@@ -4,7 +4,7 @@ import Footer from '@/components/layout/Footer';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Complete Your Profile - Startawy',
+  title: 'Profile Setup',
   description: 'Tell us a bit more about you to get started',
 };
 

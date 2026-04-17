@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+
+export const metadata: Metadata = {
+  title: "Startup Founders",
+};
+
 import { AdminUsersTable } from "@/components/admin/AdminUsersTable";
 
 export default async function ManageFoundersPage() {

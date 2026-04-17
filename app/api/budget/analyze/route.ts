@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       totalBudget: result.totalBudget,
       analysisData: {
         income: result.income,
+        metrics: result.metrics,
         expenseBreakdown: result.expenseBreakdown,
         monthlyTrend: result.monthlyTrend,
         recommendations: result.recommendations

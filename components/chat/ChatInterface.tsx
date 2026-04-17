@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User as UserIcon } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import { useToast } from "@/components/providers/ToastProvider";
 
 export type Message = {
   id: number;
@@ -15,6 +17,7 @@ type ChatInterfaceProps = {
 };
 
 export function ChatInterface({ initialHistory }: ChatInterfaceProps) {
+  const { showToast } = useToast();
   const [messages, setMessages] = useState<Message[]>(initialHistory.map(m => ({...m, timestamp: new Date(m.timestamp)})));
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -28,13 +31,14 @@ export function ChatInterface({ initialHistory }: ChatInterfaceProps) {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const handleSend = async (customMessage?: string) => {
+    const messageToSend = customMessage || input;
+    if (!messageToSend.trim()) return;
 
     const userMessage: Message = {
       id: Date.now(),
       role: "user",
-      content: input,
+      content: messageToSend,
       timestamp: new Date(),
     };
 
@@ -46,10 +50,16 @@ export function ChatInterface({ initialHistory }: ChatInterfaceProps) {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.content }),
+        body: JSON.stringify({ 
+            message: userMessage.content,
+            isSuggestion: !!customMessage 
+        }),
       });
 
-      if (!res.ok) throw new Error("API error");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "API error");
+      }
       
       const data = await res.json();
       
@@ -60,12 +70,19 @@ export function ChatInterface({ initialHistory }: ChatInterfaceProps) {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiResponse]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat error:", error);
+      
+      showToast({
+          type: "error",
+          title: "فشل الاتصال بـ StartBot",
+          message: "حدث خطأ أثناء محاولة جلب الرد. يرجى المحاولة مرة أخرى لاحقاً."
+      });
+
       const errorMsg: Message = {
         id: Date.now() + 1,
         role: "assistant",
-        content: "I'm having trouble connecting right now. Please try again later.",
+        content: "عذراً، أواجه صعوبة في الاتصال حالياً. يرجى المحاولة مرة أخرى لاحقاً.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMsg]);
@@ -104,7 +121,9 @@ export function ChatInterface({ initialHistory }: ChatInterfaceProps) {
                     : "bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-gray-200 rounded-tl-sm border border-gray-200 dark:border-slate-700"
                 }`}
               >
-                <p className="leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                <div className="leading-relaxed prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                </div>
                 <p
                   className={`text-xs mt-2 ${
                     message.role === "user" ? "text-teal-100" : "text-gray-500 dark:text-gray-500"
@@ -151,7 +170,7 @@ export function ChatInterface({ initialHistory }: ChatInterfaceProps) {
               className="flex-1 px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
             />
             <button
-              onClick={handleSend}
+              onClick={() => handleSend()}
               disabled={!input.trim() || isTyping}
               className="px-6 py-3 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center gap-2"
             >
@@ -163,17 +182,19 @@ export function ChatInterface({ initialHistory }: ChatInterfaceProps) {
           {/* Suggestions */}
           <div className="mt-4 flex flex-wrap gap-2">
             {[
-              "💡 Optimize budget",
-              "📊 Market trends",
-              "💰 Increase revenue",
-              "👥 Get consultant advice"
+              { icon: "💡", text: "Optimize budget" },
+              { icon: "📊", text: "Market trends" },
+              { icon: "💰", text: "Increase revenue" },
+              { icon: "👥", text: "Get consultant advice" }
             ].map((suggestion) => (
               <button
-                key={suggestion}
-                onClick={() => setInput(suggestion.slice(3))} // Remove icon
-                className="px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors text-sm shadow-sm hover:shadow"
+                key={suggestion.text}
+                onClick={() => handleSend(suggestion.text)}
+                disabled={isTyping}
+                className="px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-all text-sm shadow-sm hover:shadow hover:-translate-y-0.5 disabled:opacity-50"
               >
-                {suggestion}
+                <span className="mr-2">{suggestion.icon}</span>
+                {suggestion.text}
               </button>
             ))}
           </div>

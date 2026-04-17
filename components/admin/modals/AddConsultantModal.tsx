@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { Plus, X, Loader2, User, Mail, Lock, Briefcase, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/components/providers/ToastProvider";
 
 export function AddConsultantModal() {
+  const { showToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -29,15 +31,28 @@ export function AddConsultantModal() {
       const result = await response.json();
 
       if (result.success) {
-        alert("Consultant Successfully Registered!");
+        showToast({
+          type: "success",
+          title: "Registration Success",
+          message: "The new consultant has been successfully onboarded."
+        });
         setIsOpen(false);
         setFormData({ name: "", email: "", password: "", specialization: "", yearsOfExp: "" });
-        window.location.reload(); // Refresh to catch new consultant
+        // Use router.refresh() if possible or just rely on state update if this was in a list
+        window.location.reload(); 
       } else {
-        alert(result.error || "Failed to add consultant");
+        showToast({
+          type: "error",
+          title: "Onboarding Failed",
+          message: result.error || "Failed to register new consultant."
+        });
       }
-    } catch (error) {
-      alert("Network error.");
+    } catch {
+      showToast({
+        type: "error",
+        title: "Network Error",
+        message: "Failed to connect to the server."
+      });
     } finally {
       setIsSubmitting(false);
     }

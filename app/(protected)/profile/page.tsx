@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { getProfileData } from "@/app/actions/user";
+
+export const metadata: Metadata = {
+  title: "My Profile",
+};
+
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import ProfileHeader from "./ProfileHeader";

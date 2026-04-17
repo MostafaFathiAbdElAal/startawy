@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+
+export const metadata: Metadata = {
+  title: "Industry Library",
+};
+
 import { verifyAuth } from "@/lib/auth-utils";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -11,80 +17,87 @@ export default async function StartawyLibraryPage() {
 
   if (!userPayload) redirect('/login');
 
-  // Fetch real reports from DB if available
+  const user = await prisma.user.findUnique({
+    where: { id: userPayload.id },
+    include: { 
+      founder: {
+        include: {
+          payments: {
+            orderBy: { transDate: 'desc' },
+            take: 1
+          }
+        }
+      } 
+    }
+  });
+
+  if (!user || user.type !== 'FOUNDER' || !user.founder) {
+    redirect('/login');
+  }
+
+  // Determine user tier
+  const lastPayment = user.founder.payments[0];
+  const userPlan = lastPayment?.amount === 299 ? 'Premium' : (lastPayment?.amount === 99 ? 'Basic' : 'Free');
+  const userIndustry = user.founder.businessSector || "Startup";
+
+  // Fetch real reports from DB
   const dbReports = await prisma.startawyReport.findMany({
     orderBy: { uploadDate: 'desc' },
   });
 
-  // Base mock reports for presentation if DB is small/empty
-  const baseReports = [
-    {
-      id: 9002,
-      title: "SaaS Industry Trends Q1 2026",
-      description: "Comprehensive analysis of SaaS market trends, pricing strategies, and growth insights.",
-      image: "https://images.unsplash.com/photo-1618044733300-9472054094ee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-      pages: 38,
-      downloads: 2614,
-      category: "SaaS",
-      tags: ["SaaS", "Technology"],
-    },
-    {
-      id: 9003,
-      title: "Fintech Market Analysis 2026",
-      description: "In-depth research on fintech innovations, regulatory changes, and investment trends.",
-      image: "https://images.unsplash.com/photo-1618044733300-9472054094ee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-      pages: 48,
-      downloads: 1897,
-      category: "Fintech",
-      tags: ["Fintech", "Investment"],
-    },
-    {
-      id: 9004,
-      title: "E-Commerce Growth Strategies",
-      description: "Explore strategies for scaling e-commerce businesses globally.",
-      image: "https://images.unsplash.com/photo-1763739527737-e3626d731072?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-      pages: 38,
-      downloads: 1673,
-      category: "E-Commerce",
-      tags: ["E-Commerce", "Retail"],
-    },
-  ];
+  // Transform DB Reports from JSON link to structured object
+  const finalReports = dbReports.map(r => {
+    let metadata = {
+        title: `Report - ${r.industry}`,
+        description: "Full research data for this sector.",
+        image: "https://images.unsplash.com/photo-1618044733300-9472054094ee",
+        pages: 20
+    };
 
-  // Merge DB Reports with Base Reports
-  const finalReports = dbReports.length > 0 
-    ? dbReports.map(r => ({
-        id: r.id,
-        title: `Startawy Global Report - ${r.industry}`,
-        description: `Full detailed global report covering standard metrics and analysis for the ${r.industry} sector.`,
-        image: "https://images.unsplash.com/photo-1618044733300-9472054094ee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-        pages: 25,
-        downloads: 100,
-        category: r.industry,
-        tags: [r.industry],
-      })).concat(baseReports)
-    : baseReports;
+    try {
+        const parsed = JSON.parse(r.link);
+        metadata = { ...metadata, ...parsed };
+    } catch (e) {
+        // Fallback for non-json links (legacy)
+        if (r.link.startsWith('http')) metadata.image = r.link;
+    }
 
-  // Derive categories
+    return {
+      id: r.id,
+      title: metadata.title,
+      description: metadata.description,
+      image: metadata.image,
+      pages: metadata.pages,
+      downloads: Math.floor(Math.random() * 500) + 100, // Mock downloads count
+      category: r.industry,
+      tags: [r.industry, "Market Research"],
+    };
+  });
+
+  // Derive categories for filtering
   const mappedCategories = Array.from(new Set(finalReports.map(r => r.category)));
   const categories = ["All Reports", ...mappedCategories];
 
-  const featuredReport = {
-    id: 9001,
-    title: "Q1 2026 Tech & Fintech Mega Analysis",
-    description: "The most comprehensive analysis of digital payments, blockchain technology, neobanking trends, and regulatory insights.",
-    date: "March 1, 2026",
-    pages: 68,
-    category: "Fintech",
+  // Dynamic Featured Report (Take the latest one if available)
+  const featuredReport = finalReports.length > 0 ? finalReports[0] : {
+    id: 0,
+    title: "Startawy Knowledge Base",
+    description: "Welcome to the library! Please upload your first report from the Admin panel to see it featured here.",
+    date: "Awaiting Data",
+    pages: 0,
+    category: "System",
     image: "",
-    downloads: 5000,
-    tags: ["Fintech"]
+    downloads: 0,
+    tags: ["Onboarding"]
   };
 
   return (
     <LibraryClient 
       reports={finalReports} 
-      featuredReport={featuredReport} 
-      categories={categories} 
+      featuredReport={featuredReport as any} 
+      categories={categories}
+      userPlan={userPlan}
+      userIndustry={userIndustry}
     />
   );
 }

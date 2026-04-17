@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import logoImage from "@/assets/imgs/logo.png";
+
 
 interface FooterProps {
   mode?: 'full' | 'minimal';
@@ -22,7 +22,7 @@ export default function Footer({ mode = 'full', year = new Date().getFullYear() 
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div className="space-y-4">
-            <Image src={logoImage} alt="Startawy" width={100} height={35} className="brightness-0 invert h-8 w-auto" />
+            <Image src="/assets/logos/startawy_s_fullres.png" alt="Startawy" width={100} height={35} className="brightness-0 invert h-8 w-auto" />
             <p className="text-gray-400 text-sm leading-relaxed">
               Empowering startups with smart financial insights and expert consulting.
             </p>

@@ -4,7 +4,7 @@ import Footer from '@/components/layout/Footer';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Forgot Password - Startawy',
+  title: 'Reset Password',
   description: 'Reset your password securely via WhatsApp OTP',
 };
 

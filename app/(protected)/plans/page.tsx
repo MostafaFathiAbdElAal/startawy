@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { Check } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Service Plans",
+};
+
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 

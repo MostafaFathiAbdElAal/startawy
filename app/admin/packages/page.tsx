@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+
+export const metadata: Metadata = {
+  title: "Service Packages",
+};
+
 import AdminPackagesClient from "@/components/admin/AdminPackagesClient";
 
 export default async function AdminPackagesPage() {

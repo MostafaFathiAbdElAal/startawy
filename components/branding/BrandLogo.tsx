@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 interface BrandLogoProps {
   className?: string;
@@ -8,20 +9,22 @@ interface BrandLogoProps {
 
 export default function BrandLogo({ className = '', size = 'md', textClassName = '' }: BrandLogoProps) {
   const sizeClasses = {
-    sm: 'w-12 h-12',
-    md: 'w-16 h-16',
+    sm: 'w-10 h-10',
+    md: 'w-14 h-14',
     lg: 'w-20 h-20'
   };
 
-  const textSizes = {
-    sm: 'text-lg',
-    md: 'text-xl',
-    lg: 'text-3xl'
-  };
-
   return (
-    <div className={`inline-flex items-center justify-center ${sizeClasses[size]} rounded-2xl bg-teal-600 text-white shadow-xl shadow-teal-500/20 transform -rotate-3 hover:rotate-0 transition-transform duration-300 ${className}`}>
-      <span className={`font-black italic ${textSizes[size]} ${textClassName}`}>Startawy</span>
+    <div className={`inline-flex items-center justify-center p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 ${className}`}>
+      <div className={`relative ${sizeClasses[size]}`}>
+        <Image 
+          src="/assets/logos/startawy_s_fullres.png" 
+          alt="Startawy Logo" 
+          fill
+          className="object-contain"
+          priority
+        />
+      </div>
     </div>
   );
 }

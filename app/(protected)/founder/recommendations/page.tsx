@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { getFounderRecommendations } from "@/app/actions/recommendation";
+
+export const metadata: Metadata = {
+  title: "Strategic Recommendations",
+};
+
 import SectionHeader from "@/components/ui/SectionHeader";
 import { Lightbulb, Calendar, User, ArrowRight, Clock } from "lucide-react";
 import Link from "next/link";

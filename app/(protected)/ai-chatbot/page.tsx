@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { ChatInterface, type Message } from "@/components/chat/ChatInterface";
+
+export const metadata: Metadata = {
+  title: "AI Strategic Advisor",
+};
+
 import { prisma } from "@/lib/prisma";
 import { verifyAuth } from "@/lib/auth-utils";
 import { cookies } from "next/headers";

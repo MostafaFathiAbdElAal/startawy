@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Star, Loader2, Trash2 } from "lucide-react";
+import { useToast } from "@/components/providers/ToastProvider";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 interface Feedback {
   id: number;
@@ -16,8 +18,11 @@ interface Feedback {
 }
 
 export default function AdminFeedbackClient() {
+  const { showToast } = useToast();
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
+  const [feedbackToDelete, setFeedbackToDelete] = useState<Feedback | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchFeedbacks = async () => {
     try {
@@ -37,17 +42,31 @@ export default function AdminFeedbackClient() {
     fetchFeedbacks();
   }, []);
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this feedback?")) return;
+  const handleDelete = async () => {
+    if (!feedbackToDelete) return;
+    setIsDeleting(true);
     try {
-      const res = await fetch(`/api/admin/feedback?id=${id}`, {
+      const res = await fetch(`/api/admin/feedback?id=${feedbackToDelete.id}`, {
         method: "DELETE",
       });
       if (res.ok) {
-        setFeedbacks(feedbacks.filter(f => f.id !== id));
+        setFeedbacks(feedbacks.filter(f => f.id !== feedbackToDelete.id));
+        showToast({
+          type: "success",
+          title: "Feedback Deleted",
+          message: "The user feedback has been removed from the records."
+        });
       }
     } catch (err) {
       console.error(err);
+      showToast({
+        type: "error",
+        title: "Deletion Failed",
+        message: "A network error occurred while deleting feedback."
+      });
+    } finally {
+      setIsDeleting(false);
+      setFeedbackToDelete(null);
     }
   };
 
@@ -91,7 +110,7 @@ export default function AdminFeedbackClient() {
             </div>
             <div className="flex flex-row md:flex-col gap-2 justify-end self-start md:self-auto shrink-0">
               <button 
-                onClick={() => handleDelete(f.id)}
+                onClick={() => setFeedbackToDelete(f)}
                 className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center justify-center gap-2 w-full md:w-auto"
               >
                 <Trash2 className="w-4 h-4" />
@@ -101,6 +120,18 @@ export default function AdminFeedbackClient() {
           </div>
         ))
       )}
+
+      {/* Confirm Deletion */}
+      <ConfirmModal 
+        isOpen={!!feedbackToDelete}
+        onClose={() => setFeedbackToDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete Feedback?"
+        message={`Are you sure you want to delete the feedback from ${feedbackToDelete?.user.name}? This will remove it from the dashboard.`}
+        confirmLabel="Confirm Delete"
+        cancelLabel="Discard"
+        isProcessing={isDeleting}
+      />
     </div>
   );
 }

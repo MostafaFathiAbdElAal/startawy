@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { Lock, ArrowLeft, Check } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Complete Payment",
+};
+
 import Link from "next/link";
 import { CheckoutForm } from "@/components/payments/CheckoutForm";
 import { prisma } from "@/lib/prisma";

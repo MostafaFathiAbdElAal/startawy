@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { CreditCard, Calendar, Download, Filter, Package, Users, DollarSign, CheckCircle } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "My Payments",
+};
+
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { verifyAuth } from "@/lib/auth-utils";

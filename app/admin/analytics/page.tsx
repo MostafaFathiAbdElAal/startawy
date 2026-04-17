@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import { BarChart3, Users, DollarSign, Activity, PieChart } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Platform Analytics",
+};
+
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminAnalyticsPage() {

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { TrendingUp, TrendingDown, DollarSign, Upload, Sparkles, BarChart3 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { useToast } from "@/components/providers/ToastProvider";
 
 const COLORS = ["#14b8a6", "#3b82f6", "#f97316", "#8b5cf6"];
 
@@ -15,7 +16,6 @@ type BudgetDashboardProps = {
     expenses: number;
     profit: number;
     incomeGrowth: number;
-    incomeGrowth: number;
     expenseGrowth: number;
   };
   recommendations: { title: string; description: string; type: "marketing" | "revenue" | "expense" | "health" }[];
@@ -23,8 +23,10 @@ type BudgetDashboardProps = {
 
 export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendations }: BudgetDashboardProps) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -43,15 +45,29 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
           
           if (res.ok) {
             setUploadedFile(file.name);
+            showToast({
+              type: "success",
+              title: "Analysis Complete",
+              message: "Your financial data has been successfully analyzed by AI."
+            });
             router.refresh();
             setIsUploading(false);
           } else {
             const data = await res.json();
-            alert(`Analysis failed: ${data.error || "Unknown error"}`);
+            showToast({
+              type: "error",
+              title: "Analysis Failed",
+              message: data.error || "Failed to analyze data via AI models."
+            });
             setIsUploading(false);
           }
         } catch (error) {
           console.error(error);
+          showToast({
+            type: "error",
+            title: "System Error",
+            message: "A network error occurred during analysis."
+          });
           setIsUploading(false);
         }
       };
@@ -156,7 +172,29 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
                   <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `$${Math.round(val / 1000)}k`} />
                   <Tooltip 
                     cursor={{ fill: 'rgba(20, 184, 166, 0.05)' }}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-2xl backdrop-blur-md bg-opacity-95">
+                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2 border-b border-slate-800 pb-2">{label}</p>
+                            <div className="space-y-1">
+                              {payload.map((entry, index) => (
+                                <div key={index} className="flex items-center justify-between gap-8">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }}></div>
+                                    <span className="text-slate-300 text-xs font-medium">{entry.name}:</span>
+                                  </div>
+                                  <span className="text-white text-sm font-black">
+                                    ${Number(entry.value).toLocaleString(undefined, { minimumFractionDigits: 0 })}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
                   />
                   <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
                   <Bar dataKey="income" fill="#14b8a6" name="Income" radius={[6, 6, 0, 0]} maxBarSize={40} />
@@ -181,23 +219,45 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
                     paddingAngle={5}
                     dataKey="amount"
                     stroke="none"
+                    onMouseEnter={(_, index) => setActiveIndex(index)}
+                    onMouseLeave={() => setActiveIndex(null)}
                   >
                     {expenseData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={COLORS[index % COLORS.length]} 
+                        style={{ outline: activeIndex === index ? 'none' : 'none', opacity: activeIndex === null || activeIndex === index ? 1 : 0.6 }}
+                        className="transition-opacity duration-300 cursor-pointer"
+                      />
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: unknown) => `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                    content={() => null} // Correct way to hide default tooltip without causing React errors
                   />
                 </PieChart>
               </ResponsiveContainer>
-              {/* Center Text for Donut */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Expenses</span>
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                  ${metrics.expenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
+              {/* Center Text for Donut - Dynamic content */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-all duration-300">
+                {activeIndex !== null && expenseData[activeIndex] ? (
+                  <>
+                    <span className="text-xs font-black text-teal-600 dark:text-teal-400 uppercase tracking-widest mb-1 animate-in fade-in slide-in-from-bottom-2">
+                      {expenseData[activeIndex].category}
+                    </span>
+                    <span className="text-2xl font-black text-gray-900 dark:text-white animate-in zoom-in-95 duration-300">
+                      ${expenseData[activeIndex].amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                    <span className="text-[10px] font-bold text-gray-400 mt-1">
+                      {expenseData[activeIndex].percentage}% of budget
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Total Expenses</span>
+                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                      ${metrics.expenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>

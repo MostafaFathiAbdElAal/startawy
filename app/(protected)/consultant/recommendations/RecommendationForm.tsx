@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Send, Sparkles, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
+import { Send, Loader2, CheckCircle2 } from 'lucide-react';
+import { useToast } from "@/components/providers/ToastProvider";
 
 interface Client {
   id: number;
@@ -10,28 +10,59 @@ interface Client {
   businessName: string;
 }
 
-export default function RecommendationForm({ clients }: { clients: Client[] }) {
+interface RecommendationFormProps {
+  clients: Client[];
+  onSuccess?: () => void;
+}
+
+/**
+ * RecommendationForm - Specialized client component
+ * Handles submission of strategic advice to founders via /api/consultant/recommendations
+ */
+export default function RecommendationForm({ clients, onSuccess }: RecommendationFormProps) {
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  const router = useRouter();
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
-    setMessage(null);
     
     const formData = new FormData(event.currentTarget);
+    const title = formData.get("title") as string;
+    const content = formData.get("content") as string;
+
+    if (title.length < 10) {
+      showToast({
+        type: "error",
+        title: "Invalid Title",
+        message: "Title must be at least 10 characters long."
+      });
+      setLoading(false);
+      return;
+    }
+
+    if (content.length < 20) {
+      showToast({
+        type: "error",
+        title: "Content Too Short",
+        message: "Advice content must be at least 20 characters long."
+      });
+      setLoading(false);
+      return;
+    }
+
     const data = {
       founderId: formData.get("founderId"),
-      title: formData.get("title"),
-      content: formData.get("content"),
+      title,
+      content,
       category: formData.get("category"),
       priority: formData.get("priority"),
       impact: formData.get("impact"),
     };
 
     try {
-      const res = await fetch('/api/recommendations', {
+      // POST request to the dedicated consultant API route
+      const res = await fetch('/api/consultant/recommendations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -39,17 +70,30 @@ export default function RecommendationForm({ clients }: { clients: Client[] }) {
 
       const result = await res.json();
       
-      setLoading(false);
       if (res.ok) {
-        setMessage({ type: 'success', text: 'Recommendation sent successfully!' });
-        event.currentTarget.reset();
-        router.refresh(); 
+        showToast({
+          type: "success",
+          title: "Recommendation Sent",
+          message: "Recommendation sent successfully!"
+        });
+        if (event.currentTarget) event.currentTarget.reset();
+        if (onSuccess) onSuccess(); // Signal parent component to refresh data
       } else {
-        setMessage({ type: 'error', text: result.error || 'Something went wrong' });
+        showToast({
+          type: "error",
+          title: "Submission Failed",
+          message: result.error || 'Something went wrong'
+        });
       }
     } catch (error) {
+      console.error('Submission error:', error);
+      showToast({
+        type: "error",
+        title: "Connection Error",
+        message: "Failed to connect to the server"
+      });
+    } finally {
       setLoading(false);
-      setMessage({ type: 'error', text: 'Failed to connect to the server' });
     }
   }
 
@@ -57,21 +101,13 @@ export default function RecommendationForm({ clients }: { clients: Client[] }) {
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm">
       <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Send New Recommendation</h2>
       
-      {message && (
-        <div className={`p-4 mb-6 rounded-xl text-sm font-bold ${
-          message.type === 'success' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30'
-        }`}>
-          {message.text}
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Select Client</label>
           <select 
             name="founderId" 
             required
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all outline-hidden"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all outline-none"
           >
             <option value="">Select a founder...</option>
             {clients.map(client => (
@@ -85,23 +121,29 @@ export default function RecommendationForm({ clients }: { clients: Client[] }) {
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Category</label>
             <select 
               name="category"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all outline-hidden"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all outline-none"
             >
               <option value="STRATEGY">Strategy</option>
               <option value="BUDGET">Budgeting</option>
               <option value="MARKETING">Marketing</option>
               <option value="OPERATIONS">Operations</option>
+              <option value="LEGAL">Legal & Compliance</option>
+              <option value="RISK">Risk Management</option>
+              <option value="SALES">Sales Growth</option>
+              <option value="SCALING">Scaling</option>
             </select>
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Priority</label>
             <select 
               name="priority"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all outline-hidden"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all outline-none"
             >
               <option value="LOW">Low</option>
               <option value="MEDIUM">Medium</option>
               <option value="HIGH">High</option>
+              <option value="CRITICAL">Critical</option>
+              <option value="URGENT">Urgent</option>
             </select>
           </div>
         </div>
@@ -113,28 +155,28 @@ export default function RecommendationForm({ clients }: { clients: Client[] }) {
             type="text" 
             required
             placeholder="e.g. Q3 Budget Optimization Strategy"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all outline-hidden"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Impact (Optional)</label>
+          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Expected Impact (Optional)</label>
           <input 
             name="impact"
             type="text" 
             placeholder="e.g. 15% reduction in CAC"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all outline-hidden"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Content</label>
+          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Strategic Advice</label>
           <textarea 
             name="content"
             required
             rows={6}
             placeholder="Describe your strategic advice in detail..."
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all outline-hidden resize-none"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all outline-none resize-none"
           />
         </div>
 

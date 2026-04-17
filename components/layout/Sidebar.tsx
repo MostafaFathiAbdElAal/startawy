@@ -32,11 +32,10 @@ import {
 
 interface SidebarProps {
   userRole?: "FOUNDER" | "CONSULTANT" | "ADMIN";
-  userEmail?: string;
   isOwner?: boolean;
 }
 
-export function Sidebar({ userRole: rawRole = "FOUNDER", userEmail, isOwner: propIsOwner }: SidebarProps) {
+export function Sidebar({ userRole: rawRole = "FOUNDER", isOwner: propIsOwner }: SidebarProps) {
   const userRole = rawRole || "FOUNDER";
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -50,7 +49,8 @@ export function Sidebar({ userRole: rawRole = "FOUNDER", userEmail, isOwner: pro
   };
 
   const isActive = (path: string) => {
-    return pathname === path;
+    if (path === '/dashboard') return pathname === '/dashboard';
+    return pathname.startsWith(path);
   };
 
   const isOwner = !!propIsOwner;
@@ -69,7 +69,7 @@ export function Sidebar({ userRole: rawRole = "FOUNDER", userEmail, isOwner: pro
   ];
 
   const consultantMenuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/consultant/dashboard" },
+    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: Calendar, label: "My Sessions", path: "/consultant/sessions" },
     { icon: Users, label: "My Clients", path: "/consultant/clients" },
     { icon: DollarSign, label: "My Earnings", path: "/consultant/earnings" },
@@ -150,13 +150,13 @@ export function Sidebar({ userRole: rawRole = "FOUNDER", userEmail, isOwner: pro
           `}
         >
           {/* Logo */}
-          <div className={`h-[85px] px-[30px] border-b border-gray-100 dark:border-gray-800/50 flex items-center shrink-0`}>
-            <Link href="/dashboard" className="flex items-center gap-3 active:scale-95 transition-transform overflow-hidden">
-              <div className="relative w-5 h-5 shrink-0">
+          <div className={`h-[85px] border-b border-gray-100 dark:border-gray-800/50 flex items-center shrink-0 ${isCollapsed ? "justify-center px-0" : "px-[30px]"}`}>
+            <Link href="/dashboard" className="flex items-center gap-3 active:scale-95 transition-transform">
+              <div className="relative w-8 h-8 shrink-0">
                 <Image 
-                  src="/logo.png" 
+                  src="/assets/logos/startawy_s_fullres.png" 
                   alt="Startawy Logo" 
-                  fill 
+                  fill
                   className="object-contain"
                   priority
                 />

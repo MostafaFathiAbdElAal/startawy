@@ -14,32 +14,31 @@ export async function POST(req: NextRequest) {
     }
 
     const isOwner = !!userPayload.isOwner;
-
     if (userPayload.role !== 'ADMIN' && !isOwner) {
       return NextResponse.json({ error: "Access Denied. Admins Only." }, { status: 403 });
     }
 
     const body = await req.json();
-    const { title, industry, description, pages, image } = body;
+    const { title, industry, description, pages, image, link } = body;
 
-    if (!industry || !title) {
-      return NextResponse.json({ error: "Industry Category and Title are required." }, { status: 400 });
+    if (!industry || !title || !link) {
+      return NextResponse.json({ error: "Title, Industry, and PDF file are required." }, { status: 400 });
     }
 
-    // Insert into DB. We map the input conceptually because StartawyReport schema only has id, industry, uploadDate, link.
-    // However since we MUST stick to the schema: StartawyReport { id, industry, uploadDate, link } 
-    // We will save 'title' etc. inside 'link' as JSON string for now since we cannot migrate DB here.
-    const metaDataString = JSON.stringify({
+    // High Compatibility Storage Strategy:
+    // We pack all metadata + the actual PDF link into the 'link' column as JSON.
+    const metaData = {
       title,
       description,
-      pages: parseInt(pages) || 10,
-      image: image || "https://images.unsplash.com/photo-1618044733300-9472054094ee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
-    });
+      pages: parseInt(pages) || 1 || 10,
+      image: image || "https://images.unsplash.com/photo-1618044733300-9472054094ee",
+      pdfUrl: link // The Cloudinary URL for the PDF
+    };
 
     const newReport = await prisma.startawyReport.create({
       data: {
         industry: industry,
-        link: metaDataString,
+        link: JSON.stringify(metaData),
       }
     });
 
