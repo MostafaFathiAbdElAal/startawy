@@ -53,7 +53,7 @@ export default function LoginForm() {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
             <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h2>
-                <p className="text-gray-600 dark:text-gray-400">Sign in to your BIS account</p>
+                <p className="text-gray-600 dark:text-gray-400">Sign in to your Startawy account</p>
             </div>
 
             {registered && !serverError && (

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { SignJWT } from 'jose';
 import { prisma } from '../../../lib/prisma';
 import { LoginSchema } from '../../../lib/validations';
+import { createSession } from '../../../lib/auth-utils';
 
 export const runtime = 'nodejs';
 
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { error: 'No account found with this email address.' },
         { status: 401 }
       );
     }
@@ -45,25 +45,22 @@ export async function POST(req: NextRequest) {
 
     if (!isPasswordValid) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { error: 'Incorrect password. Please try again.' },
         { status: 401 }
       );
     }
 
-    // 4. Generate JWT
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-    const token = await new SignJWT({          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.type,
-          isPhoneVerified: user.isPhoneVerified,
-        })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setExpirationTime('1d')
-      .sign(secret);
+    // 4. Create Session and Set Cookie (Centralized)
+    await createSession({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.type,
+      isPhoneVerified: user.isPhoneVerified
+    });
 
-    // 5. Create Response and set Cookie
-    const response = NextResponse.json({
+    // 5. Success Response
+    return NextResponse.json({
       success: true,
       message: 'Logged in successfully',
       user: {
@@ -73,16 +70,6 @@ export async function POST(req: NextRequest) {
         role: user.type,
       },
     });
-
-    response.cookies.set('auth-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24, // 1 day
-      path: '/',
-    });
-
-    return response;
 
   } catch (error) {
     console.error('Login API Error:', error);

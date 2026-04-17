@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Stripe from "stripe";
 import { fulfillPayment } from "@/lib/payments/fulfillment";
+import { PaymentSuccessToast } from "@/components/payments/PaymentSuccessToast";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-02-25.clover",
@@ -40,12 +41,12 @@ export default async function MyPlanPage({
     } catch (error) {
       console.error("[MY-PLAN] Session verification failed:", error);
     }
-    // Clean up the URL
-    redirect('/my-plan');
+    // Add success parameter for the toast, and the new param will bust the cache
+    redirect('/my-plan?success=true');
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: parseInt(userPayload.id as string) },
+    where: { id: userPayload.id },
     include: { founder: true }
   });
 
@@ -127,6 +128,9 @@ export default async function MyPlanPage({
 
   return (
     <div className="p-8">
+      {/* Toast Notifier for Payment Success */}
+      <PaymentSuccessToast />
+
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Startawy Plan</h1>

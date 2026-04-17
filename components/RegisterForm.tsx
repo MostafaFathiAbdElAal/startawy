@@ -26,7 +26,7 @@ export default function RegisterForm() {
     const formik = useFormik({
         initialValues: {
             fullName: '',
-            role: '' as '' | 'FOUNDER' | 'CONSULTANT' | 'ADMIN',
+            role: '' as '' | 'FOUNDER' | 'CONSULTANT',
             email: '',
             phone: '',
             password: '',
@@ -39,9 +39,6 @@ export default function RegisterForm() {
             specialization: '',
             yearsOfExp: 0,
             availability: '',
-            // Admin
-            adminLevel: '',
-            adminScope: '',
         },
         validationSchema: RegisterSchema,
         onSubmit: async (values, { setSubmitting }) => {
@@ -80,8 +77,6 @@ export default function RegisterForm() {
             fieldsToValidate.push('businessName', 'businessSector', 'foundingDate');
         } else if (formik.values.role === 'CONSULTANT') {
             fieldsToValidate.push('specialization', 'yearsOfExp', 'availability');
-        } else if (formik.values.role === 'ADMIN') {
-            fieldsToValidate.push('adminLevel', 'adminScope');
         }
 
         fieldsToValidate.forEach(field => formik.setFieldTouched(field, true));
@@ -107,7 +102,7 @@ export default function RegisterForm() {
         <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[32px] shadow-2xl p-6 sm:p-10 border border-slate-200 dark:border-slate-800 max-w-[520px] mx-auto relative">
             <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Create Account</h2>
-                <p className="text-gray-600 dark:text-gray-400">Join BIS today</p>
+                <p className="text-gray-600 dark:text-gray-400">Join Startawy today</p>
             </div>
 
             {serverError && (
@@ -156,7 +151,6 @@ export default function RegisterForm() {
                             <option value="">Select your role</option>
                             <option value="FOUNDER">Startup Founder</option>
                             <option value="CONSULTANT">Consultant</option>
-                            <option value="ADMIN">Administrator</option>
                         </select>
                         <div className="absolute top-0 bottom-0 right-0 pr-4 flex items-center pointer-events-none" style={{ zIndex: 3 }}>
                             <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -255,37 +249,6 @@ export default function RegisterForm() {
                         </>
                     )}
 
-                    {/* ADMIN FIELDS */}
-                    {formik.values.role === 'ADMIN' && (
-                        <>
-                            <div>
-                                <label className="auth-label">Admin Level</label>
-                                <input
-                                    name="adminLevel"
-                                    type="text"
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                    value={formik.values.adminLevel}
-                                    className={inputClsNoIcon(!!(formik.touched.adminLevel && formik.errors.adminLevel))}
-                                    placeholder="e.g. Super Admin"
-                                />
-                                {formik.touched.adminLevel && formik.errors.adminLevel && <p className="text-red-500 text-xs mt-1">{formik.errors.adminLevel as string}</p>}
-                            </div>
-                            <div>
-                                <label className="auth-label">Admin Scope</label>
-                                <input
-                                    name="adminScope"
-                                    type="text"
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                    value={formik.values.adminScope}
-                                    className={inputClsNoIcon(!!(formik.touched.adminScope && formik.errors.adminScope))}
-                                    placeholder="e.g. Global"
-                                />
-                                {formik.touched.adminScope && formik.errors.adminScope && <p className="text-red-500 text-xs mt-1">{formik.errors.adminScope as string}</p>}
-                            </div>
-                        </>
-                    )}
                 </div>
 
                 {/* Email */}

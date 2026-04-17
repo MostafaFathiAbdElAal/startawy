@@ -8,12 +8,12 @@ import { ChatWindow } from './ChatWindow';
 interface ChatWidgetProps {
   isAuthenticated: boolean;
   userRole?: string;
-  userEmail?: string;
   userName?: string;
   isPhoneVerified: boolean;
+  isOwner?: boolean;
 }
 
-export const ChatWidget = ({ isAuthenticated, userRole, userEmail, userName, isPhoneVerified }: ChatWidgetProps) => {
+export const ChatWidget = ({ isAuthenticated, userRole, userEmail, userName, isPhoneVerified, isOwner: propIsOwner }: ChatWidgetProps) => {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 
@@ -28,7 +28,7 @@ export const ChatWidget = ({ isAuthenticated, userRole, userEmail, userName, isP
 
   // Determine if user is Admin or Owner
   const isAdmin = userRole === 'ADMIN';
-  const isOwner = userEmail === process.env.NEXT_PUBLIC_OWNER_EMAIL;
+  const isOwner = !!propIsOwner;
 
   // 1. Hide during hydration to prevent mismatch
   // 2. Hide on auth paths

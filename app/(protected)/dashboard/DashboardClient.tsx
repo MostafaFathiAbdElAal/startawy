@@ -124,7 +124,9 @@ export default function DashboardClient({ data }: DashboardClientProps) {
               <span>-2.4%</span>
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.targetAchievement}%</h3>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+            {Number(stats.targetAchievement).toFixed(2)}%
+          </h3>
           <p className="text-gray-600 dark:text-gray-400 text-sm">Target Achievement</p>
         </div>
       </div>
@@ -140,9 +142,10 @@ export default function DashboardClient({ data }: DashboardClientProps) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="month" stroke="#94a3b8" />
                 <YAxis stroke="#94a3b8" />
-                <Tooltip 
+                 <Tooltip 
                   contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#f9fafb' }}
                   itemStyle={{ color: '#f9fafb' }}
+                  formatter={(value: number) => `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 />
                 <Line 
                   type="monotone" 
@@ -176,10 +179,11 @@ export default function DashboardClient({ data }: DashboardClientProps) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="month" stroke="#94a3b8" />
                 <YAxis stroke="#94a3b8" />
-                <Tooltip 
-                   contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#f9fafb' }}
-                   itemStyle={{ color: '#f9fafb' }}
-                />
+                 <Tooltip 
+                    contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#f9fafb' }}
+                    itemStyle={{ color: '#f9fafb' }}
+                    formatter={(value: number) => `${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}
+                 />
                 <Area 
                   type="monotone" 
                   dataKey="value" 

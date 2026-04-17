@@ -17,7 +17,7 @@ export default async function MyPaymentsPage({
   if (!userPayload) redirect('/login');
 
   const user = await prisma.user.findUnique({
-    where: { id: parseInt(userPayload.id as string) },
+    where: { id: userPayload.id },
     include: { founder: true }
   });
 
@@ -178,9 +178,6 @@ export default async function MyPaymentsPage({
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                    Invoice
-                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-slate-800">
@@ -231,12 +228,6 @@ export default async function MyPaymentsPage({
                         <CheckCircle className="w-3 h-3" />
                         {payment.status}
                       </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <button className="flex items-center gap-2 text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 font-semibold text-sm">
-                        <Download className="w-4 h-4" />
-                        {payment.invoice}
-                      </button>
                     </td>
                   </tr>
                 ))}

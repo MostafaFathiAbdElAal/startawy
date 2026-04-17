@@ -12,7 +12,7 @@ export default async function MyReportsPage() {
   if (!userPayload) redirect('/login');
 
   const user = await prisma.user.findUnique({
-    where: { id: parseInt(userPayload.id as string) },
+    where: { id: userPayload.id },
     include: { founder: true }
   });
 

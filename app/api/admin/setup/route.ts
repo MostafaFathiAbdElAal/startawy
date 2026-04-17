@@ -15,7 +15,7 @@ export async function GET() {
     }
 
     const updatedUser = await prisma.user.update({
-      where: { id: parseInt(userPayload.id as string) },
+      where: { id: userPayload.id },
       data: { type: 'ADMIN' },
     });
 

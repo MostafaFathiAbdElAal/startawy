@@ -1,6 +1,7 @@
 import { Users, CheckCircle, Calendar, DollarSign, Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { AdminUsersTable } from "@/components/admin/AdminUsersTable";
+import { AddConsultantModal } from "@/components/admin/modals/AddConsultantModal";
 
 export default async function ManageConsultantsPage() {
   const dbUsers = await prisma.user.findMany({
@@ -28,10 +29,7 @@ export default async function ManageConsultantsPage() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Manage Consultants</h1>
           <p className="text-gray-600 dark:text-gray-400">Oversee consultant performance and availability</p>
         </div>
-        <button className="inline-flex items-center gap-2 px-6 py-2.5 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all shadow-md font-semibold shrink-0">
-          <Plus className="w-5 h-5" />
-          Add Consultant
-        </button>
+        <AddConsultantModal />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

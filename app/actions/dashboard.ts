@@ -13,86 +13,219 @@ export async function getDashboardData() {
     return null;
   }
 
-  // Fetch full user data including name
-  const user = await prisma.user.findUnique({
-    where: { id: parseInt(userPayload.id) },
-    select: { name: true, email: true }
+  // Fetch full user data including relations
+  const userData = await prisma.user.findUnique({
+    where: { id: userPayload.id },
+    include: { 
+      founder: true,
+      consultant: true,
+      admin: true
+    }
   });
 
-  if (!user) return null;
+  if (!userData) {
+    return null;
+  }
 
-  // Fetch basic stats
+  const role = userData.type;
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+  sixMonthsAgo.setDate(1);
+  sixMonthsAgo.setHours(0, 0, 0, 0);
+
+  // --- Logic for STARTUP FOUNDER ---
+  if (role === 'FOUNDER' && userData.founder) {
+    const founderId = userData.founder.id;
+
+    // 1. Stats
+    const totalPayments = await prisma.payment.aggregate({
+      where: { founderId },
+      _sum: { amount: true }
+    });
+
+    const upcomingSessionsCount = await prisma.session.count({
+      where: { founderId, date: { gte: new Date() } }
+    });
+
+    const budgetAnalyses = await prisma.budgetAnalysis.findMany({
+      where: { founderId },
+      orderBy: { createdAt: 'desc' },
+      take: 2
+    });
+
+    // 2. Activities & Upcoming
+    const recentPayments = await prisma.payment.findMany({
+      where: { founderId },
+      take: 3,
+      orderBy: { transDate: 'desc' }
+    });
+
+    const upcomingSessions = await prisma.session.findMany({
+      where: { founderId, date: { gte: new Date() } },
+      take: 2,
+      include: { consultant: { include: { user: true } } },
+      orderBy: { date: 'asc' }
+    });
+
+    // 3. Charts Data
+    const payments = await prisma.payment.findMany({
+      where: { founderId, transDate: { gte: sixMonthsAgo } },
+      select: { amount: true, transDate: true }
+    });
+
+    const revenueData = [];
+    const growthData = [];
+    let currentTotal = 0;
+    let prevTotal = 0;
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const m = d.getMonth();
+      const y = d.getFullYear();
+      const monthStr = monthNames[m];
+
+      const monthPayments = payments.filter(p => p.transDate.getMonth() === m && p.transDate.getFullYear() === y);
+      const amountSpent = monthPayments.reduce((sum, p) => sum + p.amount, 0);
+      
+      revenueData.push({ month: monthStr, revenue: amountSpent, expenses: amountSpent * 0.2 });
+      
+      const prevVal = growthData.length > 0 ? (growthData[growthData.length - 1] as any).value : 0;
+      growthData.push({ month: monthStr, value: prevVal + (monthPayments.length * 10) });
+
+      if (i === 0) currentTotal = amountSpent;
+      else if (i === 1) prevTotal = amountSpent;
+    }
+
+    const growth = prevTotal === 0 ? (currentTotal > 0 ? 100 : 0) : ((currentTotal - prevTotal) / prevTotal) * 100;
+
+    return {
+      user: userData,
+      stats: {
+        totalRevenue: totalPayments._sum.amount || 0,
+        monthlyProfit: (budgetAnalyses[0]?.totalBudget || 0), // Mapping budget for founders
+        activeClients: upcomingSessionsCount, // Mapping upcoming sessions as "Active" for founders
+        targetAchievement: budgetAnalyses[1] ? ((budgetAnalyses[0].totalBudget / budgetAnalyses[1].totalBudget) * 100) : 100,
+        revenueGrowth: Number(growth.toFixed(1)),
+        profitGrowth: 0,
+        clientsGrowth: upcomingSessionsCount > 0 ? 100 : 0,
+        targetGrowth: 0
+      },
+      recentActivities: recentPayments.map(p => ({
+        id: p.id,
+        type: 'PAYMENT',
+        title: 'Payment processed',
+        description: `$${p.amount} for ${p.paymentType}`,
+        date: p.transDate
+      })),
+      upcomingSessions: upcomingSessions.map(s => ({
+        id: s.id,
+        title: 'Strategy Session',
+        consultant: s.consultant.user.name,
+        date: s.date,
+        status: 'Upcoming'
+      })),
+      revenueData,
+      growthData
+    };
+  }
+
+  // --- Logic for ADMIN (Default fallback to global) ---
   const totalRevenue = await prisma.payment.aggregate({
     _sum: { amount: true }
   });
 
   const activeClients = await prisma.startupFounder.count();
 
-  // Fetch recent payments for activities
   const recentPayments = await prisma.payment.findMany({
     take: 3,
     orderBy: { transDate: 'desc' },
-    include: {
-      founder: {
-        include: { user: true }
-      }
-    }
+    include: { founder: { include: { user: true } } }
   });
 
-  // Fetch upcoming sessions
   const upcomingSessions = await prisma.session.findMany({
     take: 2,
-    where: {
-      date: { gte: new Date() }
-    },
-    include: {
-      consultant: {
-        include: { user: true }
-      }
-    },
+    where: { date: { gte: new Date() } },
+    include: { consultant: { include: { user: true } } },
     orderBy: { date: 'asc' }
   });
 
-  // Mock revenue data for chart (in a real app, this would be aggregated by month)
-  const revenueData = [
-    { month: "Jan", revenue: 12000, expenses: 8000 },
-    { month: "Feb", revenue: 19000, expenses: 9500 },
-    { month: "Mar", revenue: 15000, expenses: 10000 },
-    { month: "Apr", revenue: 25000, expenses: 11000 },
-    { month: "May", revenue: 22000, expenses: 10500 },
-    { month: "Jun", revenue: 30000, expenses: 12000 },
-  ];
+  const recentAllPayments = await prisma.payment.findMany({
+    where: { transDate: { gte: sixMonthsAgo } },
+    select: { amount: true, transDate: true }
+  });
 
-  const growthData = [
-    { month: "Jan", value: 4000 },
-    { month: "Feb", value: 9500 },
-    { month: "Mar", value: 5000 },
-    { month: "Apr", value: 14000 },
-    { month: "May", value: 11500 },
-    { month: "Jun", value: 18000 },
-  ];
+  const recentUsers = await prisma.startupFounder.findMany({
+    include: { user: { select: { createdAt: true } } }
+  });
+
+  const revenueData = [];
+  const growthData = [];
+  let currentMonthRevenue = 0;
+  let previousMonthRevenue = 0;
+  let currentMonthClients = 0;
+  let previousMonthClients = 0;
+
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    const m = d.getMonth();
+    const y = d.getFullYear();
+    const monthStr = monthNames[m];
+
+    const monthPayments = recentAllPayments.filter(p => p.transDate.getMonth() === m && p.transDate.getFullYear() === y);
+    const revenue = monthPayments.reduce((sum, p) => sum + p.amount, 0);
+    
+    const monthFounders = recentUsers.filter(f => 
+       f.user && f.user.createdAt.getMonth() === m && f.user.createdAt.getFullYear() === y
+    );
+    const newClients = monthFounders.length;
+
+    revenueData.push({ month: monthStr, revenue, expenses: revenue * 0.3 });
+    
+    const prevValue: number = growthData.length > 0 ? (growthData[growthData.length - 1] as any).value : 0;
+    growthData.push({ month: monthStr, value: prevValue + (newClients * 100) }); 
+
+    if (i === 0) {
+      currentMonthRevenue = revenue;
+      currentMonthClients = newClients;
+    } else if (i === 1) {
+      previousMonthRevenue = revenue;
+      previousMonthClients = newClients;
+    }
+  }
+
+  const calcGrowth = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  };
 
   return {
-    user,
+    user: userData,
     stats: {
       totalRevenue: totalRevenue._sum.amount || 0,
-      monthlyProfit: (totalRevenue._sum.amount || 0) * 0.15, // Mock profit for now
+      monthlyProfit: (totalRevenue._sum.amount || 0) * 0.15,
       activeClients,
-      targetAchievement: 87.5, // Mock achievement
+      targetAchievement: 85,
+      revenueGrowth: Number(calcGrowth(currentMonthRevenue, previousMonthRevenue).toFixed(1)),
+      profitGrowth: 0,
+      clientsGrowth: Number(calcGrowth(currentMonthClients, previousMonthClients).toFixed(1)),
+      targetGrowth: 0,
     },
     recentActivities: recentPayments.map(p => ({
       id: p.id,
       type: 'PAYMENT',
-      title: 'New payment received',
+      title: 'New payment',
       description: `$${p.amount} from ${p.founder.user.name}`,
       date: p.transDate,
     })),
     upcomingSessions: upcomingSessions.map(s => ({
       id: s.id,
-      title: 'Financial Review',
+      title: 'Global Review',
       consultant: s.consultant.user.name,
       date: s.date,
-      status: 'Tomorrow', // Logic to determine this can be added
+      status: 'Upcoming',
     })),
     revenueData,
     growthData,

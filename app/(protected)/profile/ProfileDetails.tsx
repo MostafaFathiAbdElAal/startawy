@@ -1,5 +1,5 @@
 import { User, Mail, Smartphone, Briefcase, Award, Calendar } from 'lucide-react';
-import { UserWithRelations } from '@/app/actions/user';
+import { UserWithRelations } from '@/lib/types/user';
 
 interface ProfileDetailsProps {
   user: UserWithRelations;

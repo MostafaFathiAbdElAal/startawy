@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { OAuth2Client } from 'google-auth-library';
 import { prisma } from '@/lib/prisma';
 import { SignJWT } from 'jose';
+import { createSession } from '@/lib/auth-utils';
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -114,21 +115,17 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. Generate our BIS JWT
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-    const token = await new SignJWT({
+    // 3. Create Session and Set Cookie (Centralized)
+    await createSession({
       id: user.id,
       email: user.email,
       name: user.name,
       role: user.type,
       isPhoneVerified: user.isPhoneVerified
-    })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setExpirationTime('1d')
-      .sign(secret);
+    });
 
     // 4. Create Response
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
       user: {
         id: user.id,
@@ -139,18 +136,6 @@ export async function POST(req: NextRequest) {
       },
       requiresRole: !user.type, // Flag for frontend to redirect to role selection
     });
-
-    // 5. Set Cookie
-    response.cookies.set('auth-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24, // 1 day
-      path: '/',
-    });
-
-    return response;
-
   } catch (error) {
     console.error('Google Auth Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

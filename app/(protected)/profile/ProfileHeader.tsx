@@ -1,5 +1,5 @@
 import { ShieldCheck, Briefcase, Calendar, Edit } from 'lucide-react';
-import { UserWithRelations } from '@/app/actions/user';
+import { UserWithRelations } from '@/lib/types/user';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
 

@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(userPayload.id as string) },
+      where: { id: userPayload.id },
       include: { founder: true }
     });
 

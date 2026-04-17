@@ -232,6 +232,17 @@ a {
   animation: shake 0.2s ease-in-out infinite;
 }
 
+/* Toast progress bar — pure CSS, zero JS re-renders */
+@keyframes toast-shrink {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+.toast-progress {
+  animation: toast-shrink linear forwards;
+  animation-duration: var(--toast-duration, 4000ms);
+}
+
 /* Global Autofill Override for Standard Inputs */
 input:-webkit-autofill,
 input:-webkit-autofill:hover, 

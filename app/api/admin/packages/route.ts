@@ -22,11 +22,9 @@ export async function POST(req: Request) {
 
     if (!userPayload) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const user = await prisma.user.findUnique({
-      where: { id: parseInt(userPayload.id as string) }
-    });
+    const isOwner = !!userPayload.isOwner;
 
-    if (!user || user.type !== 'ADMIN') {
+    if (userPayload.role !== 'ADMIN' && !isOwner) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

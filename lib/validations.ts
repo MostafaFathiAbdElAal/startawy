@@ -21,7 +21,7 @@ export const RegisterSchema = Yup.object().shape({
     .oneOf([Yup.ref('password')], 'Passwords must match')
     .required('Please confirm your password'),
   role: Yup.string()
-    .oneOf(['FOUNDER', 'CONSULTANT', 'ADMIN'], 'Invalid role selected')
+    .oneOf(['FOUNDER', 'CONSULTANT'], 'Invalid role selected')
     .required('Role is required'),
 
   // Founder Fields
@@ -64,18 +64,6 @@ export const RegisterSchema = Yup.object().shape({
     then: (schema) => schema.required('Availability is required'),
     otherwise: (schema) => schema.optional(),
   }),
-
-  // Admin Fields (Optional but restricted)
-  adminLevel: Yup.string().when('role', {
-    is: 'ADMIN',
-    then: (schema) => schema.required('Admin Level is required'),
-    otherwise: (schema) => schema.optional(),
-  }),
-  adminScope: Yup.string().when('role', {
-    is: 'ADMIN',
-    then: (schema) => schema.required('Admin Scope is required'),
-    otherwise: (schema) => schema.optional(),
-  }),
 });
 
 export const LoginSchema = Yup.object().shape({
@@ -84,4 +72,15 @@ export const LoginSchema = Yup.object().shape({
     .required('Email is required'),
   password: Yup.string()
     .required('Password is required'),
+});
+
+export const ProfileUpdateSchema = Yup.object().shape({
+  name: Yup.string().min(3, 'Name too short').required('Name is required'),
+  phone: Yup.string().matches(phoneRegex, 'Invalid phone format').optional(),
+  businessName: Yup.string().optional(),
+  businessSector: Yup.string().optional(),
+  bio: Yup.string().optional(),
+  yearsOfExp: Yup.number().typeError('Must be a number').optional(),
+  specialization: Yup.string().optional(),
+  foundingDate: Yup.string().optional(),
 });

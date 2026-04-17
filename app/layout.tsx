@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import Script from "next/script";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { ToastProvider } from "@/components/providers/ToastProvider";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/auth-utils";
 import { ChatWidget } from "@/components/chat/ChatWidget";
@@ -65,15 +66,18 @@ export default async function RootLayout({
       >
         <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
         <ThemeProvider>
-          {children}
-          <ChatWidget 
-            isAuthenticated={isAuthenticated} 
-            userRole={userRole} 
-            userEmail={userPayload?.email as string | undefined}
-            userName={userName}
-            key={isPhoneVerified ? 'verified' : 'unverified'} 
-            isPhoneVerified={isPhoneVerified} 
-          />
+          <ToastProvider>
+            {children}
+            <ChatWidget 
+              isAuthenticated={isAuthenticated} 
+              userRole={userRole} 
+              userEmail={userPayload?.email as string | undefined}
+              userName={userName}
+              isOwner={!!userPayload?.isOwner}
+              key={isPhoneVerified ? 'verified' : 'unverified'} 
+              isPhoneVerified={isPhoneVerified} 
+            />
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

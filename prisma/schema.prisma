@@ -5,6 +5,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Current database connection for MariaDB/MySQL
 datasource db {
   provider = "mysql"
 }
@@ -16,158 +17,192 @@ enum UserType {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String?  // [CHANGE] Optional for social login
-  googleId  String?  @unique // [NEW] Link to Google identity
-  image     String?  // [NEW] Profile picture from Google
-  phone     String?
-  isEmailVerified Boolean @default(false) // [NEW] Email verification status
-  isPhoneVerified Boolean @default(false) // [NEW] Phone verification status
-  type      UserType? // [CHANGE] Optional to allow role selection after Google login
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               Int                @id @default(autoincrement())
+  name             String
+  email            String             @unique
+  password         String?            // [CHANGE] Optional for social login
+  googleId         String?            @unique // [NEW] Link to Google identity
+  image            String?            // [NEW] Profile picture from Google
+  phone            String?
+  isEmailVerified  Boolean            @default(false) // [NEW] Email verification status
+  isPhoneVerified  Boolean            @default(false) // [NEW] Phone verification status
+  type             UserType?          // [CHANGE] Optional to allow role selection after Google login
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
-  admin     Admin?
-  founder   StartupFounder?
-  consultant Consultant?
-  feedbacks Feedback[]
+  admin            Admin?
+  founder          StartupFounder?
+  consultant       Consultant?
+  feedbacks        Feedback[]
+  authSessions     AccountSession[]   // Updated relation name
 }
 
 model Admin {
-  id          Int    @id @default(autoincrement())
-  userId      Int    @unique
-  user        User   @relation(fields: [userId], references: [id])
-  adminLevel  String
-  adminScope  String
+  id               Int                @id @default(autoincrement())
+  userId           Int                @unique
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminLevel       String             @default("STAFF")
+  adminScope       String             @default("ALL")
+  isOwner          Boolean            @default(false)
 }
 
 model StartupFounder {
-  id             Int      @id @default(autoincrement())
-  userId         Int      @unique
-  user           User     @relation(fields: [userId], references: [id])
-  foundingDate   DateTime?
-  businessSector String
-  businessName   String
-  description    String?  @db.Text
-  logo           String?
+  id               Int                @id @default(autoincrement())
+  userId           Int                @unique
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foundingDate     DateTime?
+  businessSector   String
+  businessName     String
+  description      String?            @db.Text
+  logo             String?
 
-  payments       Payment[]
-  budgetAnalyses BudgetAnalysis[]
-  sessions       Session[]
-  chatHistory    AIChatbot[]
-  reports        FounderReport[]
+  payments         Payment[]
+  budgetAnalyses   BudgetAnalysis[]
+  sessions         Session[]          // Restored name
+  chatHistory      AIChatbot[]
+  reports          FounderReport[]
+  recommendations  Recommendation[]   // Added for API
 }
 
 model Consultant {
-  id             Int      @id @default(autoincrement())
-  userId         Int      @unique
-  user           User     @relation(fields: [userId], references: [id])
-  yearsOfExp     Int
-  date           DateTime @default(now())
-  certificate    String?
-  specialization String
-  availability   String
+  id               Int                @id @default(autoincrement())
+  userId           Int                @unique
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  yearsOfExp       Int
+  date             DateTime           @default(now())
+  certificate      String?
+  specialization   String
+  availability     String             @db.Text
 
-  sessions       Session[]
+  sessions         Session[]          // Restored name
+  recommendations  Recommendation[]   // Added for API
 }
 
 model Payment {
-  id            Int      @id @default(autoincrement())
-  founderId     Int
-  founder       StartupFounder @relation(fields: [founderId], references: [id])
-  sessionId     Int?     @unique
-  session       Session? @relation(fields: [sessionId], references: [id])
-  paymentType   String   // renamed from typeRating
-  paymentMethod String
-  amount        Float
-  transDate     DateTime @default(now())
+  id               Int                @id @default(autoincrement())
+  founderId        Int
+  founder          StartupFounder     @relation(fields: [founderId], references: [id], onDelete: Cascade)
+  sessionId        Int?               @unique
+  session          Session?           @relation(fields: [sessionId], references: [id]) // Restored name
+  paymentType      String             // renamed from typeRating
+  paymentMethod    String
+  amount           Float
+  transDate        DateTime           @default(now())
 
-  subscription  Subscription?
+  subscription     Subscription?
 }
 
 model Subscription {
-  id            Int      @id @default(autoincrement())
-  paymentId     Int      @unique
-  payment       Payment  @relation(fields: [paymentId], references: [id])
-  status        String
-  trialType     String
-  startDate     DateTime
-  endDate       DateTime
+  id               Int                @id @default(autoincrement())
+  paymentId        Int                @unique
+  payment          Payment            @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  status           String
+  trialType        String
+  startDate        DateTime
+  endDate          DateTime
 }
 
 model Package {
-  id          Int    @id @default(autoincrement())
-  price       Float
-  type        String
-  duration    String
-  description String @db.Text
+  id               Int                @id @default(autoincrement())
+  price            Float
+  type             String
+  duration         String
+  description      String             @db.Text
 }
 
 model BudgetAnalysis {
-  id           Int            @id @default(autoincrement())
-  founderId    Int
-  founder      StartupFounder @relation(fields: [founderId], references: [id])
-  fixedCost    Float
-  variableCost Float
-  totalBudget  Float
-  createdAt    DateTime       @default(now())
+  id               Int                @id @default(autoincrement())
+  founderId        Int
+  founder          StartupFounder     @relation(fields: [founderId], references: [id], onDelete: Cascade)
+  fixedCost        Float
+  variableCost     Float
+  totalBudget      Float
+  createdAt        DateTime           @default(now())
+  analysisData     Json?              // Kept from my addition
 }
 
 model Session {
-  id            Int            @id @default(autoincrement())
-  founderId     Int
-  founder       StartupFounder @relation(fields: [founderId], references: [id])
-  consultantId  Int
-  consultant    Consultant     @relation(fields: [consultantId], references: [id])
-  date          DateTime
-  duration      String
-  notes         String?        @db.Text
-  paymentStatus String         @default("PENDING")
+  id               Int                @id @default(autoincrement())
+  founderId        Int
+  founder          StartupFounder     @relation(fields: [founderId], references: [id], onDelete: Cascade)
+  consultantId     Int
+  consultant       Consultant         @relation(fields: [consultantId], references: [id], onDelete: Cascade)
+  date             DateTime
+  duration         String
+  notes            String?            @db.Text
+  paymentStatus    String             @default("PENDING")
 
-  payment       Payment?
+  payment          Payment?
+}
+
+model AccountSession {
+  id               Int                @id @default(autoincrement())
+  userId           Int
+  // Reduced to 512 for MySQL index limit compatibility (max key length 3072 bytes)
+  token            String             @db.VarChar(512) @unique
+  deviceInfo       String?
+  expiresAt        DateTime
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime           @default(now())
 }
 
 model AIChatbot {
-  id          Int            @id @default(autoincrement())
-  founderId   Int
-  founder     StartupFounder @relation(fields: [founderId], references: [id])
-  userMessage String         @db.Text
-  chatDate    DateTime       @default(now())
-  chatTime    DateTime       @default(now())
-  sysResponse String         @db.Text
+  id               Int                @id @default(autoincrement())
+  founderId        Int
+  founder          StartupFounder     @relation(fields: [founderId], references: [id], onDelete: Cascade)
+  userMessage      String             @db.Text
+  chatDate         DateTime           @default(now())
+  chatTime         DateTime           @default(now())
+  sysResponse      String             @db.Text
 }
 
 model FounderReport {
-  id        Int            @id @default(autoincrement())
-  founderId Int
-  founder   StartupFounder @relation(fields: [founderId], references: [id])
-  createdAt DateTime       @default(now())
+  id               Int                @id @default(autoincrement())
+  founderId        Int
+  founder          StartupFounder     @relation(fields: [founderId], references: [id], onDelete: Cascade)
+  createdAt        DateTime           @default(now())
+  title            String?            // Kept from my addition
+  reportType       String?            // Kept from my addition
 }
 
 model StartawyReport {
-  id         Int      @id @default(autoincrement())
-  industry   String
-  uploadDate DateTime @default(now())
-  link       String
+  id               Int                @id @default(autoincrement())
+  industry         String
+  uploadDate       DateTime           @default(now())
+  link             String
 }
 
 model OTP {
-  id        Int      @id @default(autoincrement())
-  phone     String
-  code      String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  id               Int                @id @default(autoincrement())
+  phone            String
+  code             String
+  expiresAt        DateTime
+  createdAt        DateTime           @default(now())
 
   @@index([phone])
 }
 
 model Feedback {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  rating    Int
-  comment   String   @db.Text
-  createdAt DateTime @default(now())
+  id               Int                @id @default(autoincrement())
+  userId           Int
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating           Int
+  comment          String             @db.Text
+  createdAt        DateTime           @default(now())
+}
+
+model Recommendation {
+  id               Int                @id @default(autoincrement())
+  founderId        Int
+  consultantId     Int
+  title        String
+  content      String         @db.Text
+  category     String         @default("STRATEGY")
+  priority     String         @default("MEDIUM")
+  impact       String?
+  status       String         @default("PENDING")
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  founder      StartupFounder @relation(fields: [founderId], references: [id], onDelete: Cascade)
+  consultant   Consultant     @relation(fields: [consultantId], references: [id], onDelete: Cascade)
 }

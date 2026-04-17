@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Search, Sun, Moon } from "lucide-react";
+import { Search, Sun, Moon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import UserAvatar from "@/components/ui/UserAvatar";
@@ -11,9 +11,10 @@ interface TopBarProps {
   userName?: string;
   userEmail?: string;
   isVerified?: boolean;
+  isOwner?: boolean;
 }
 
-export function TopBar({ userRole: rawRole = "FOUNDER", userName = "User", userEmail, isVerified = true }: TopBarProps) {
+export function TopBar({ userRole: rawRole = "FOUNDER", userName = "User", userEmail, isVerified = true, isOwner = false }: TopBarProps) {
   const userRole = rawRole || "FOUNDER";
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -29,11 +30,17 @@ export function TopBar({ userRole: rawRole = "FOUNDER", userName = "User", userE
   };
 
   const getRoleLabel = (role: string) => {
+    // If user is identifies as system owner, show the Platform Owner label
+    if (isOwner) {
+      return "Platform Owner";
+    }
+
     const normalizedRole = role?.toUpperCase();
     switch (normalizedRole) {
       case "FOUNDER": return "Startup Founder";
       case "CONSULTANT": return "Financial Consultant";
-      case "ADMIN": return "System Admin";
+      case "ADMIN": 
+      case "SYSTEM_ADMIN": return "System Admin";
       default: return role;
     }
   };
@@ -66,11 +73,6 @@ export function TopBar({ userRole: rawRole = "FOUNDER", userName = "User", userE
             {mounted && resolvedTheme === 'dark' ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
           </button>
 
-          {/* Notifications */}
-          <button className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-            <Bell className="w-6 h-6" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
 
           {/* Profile */}
           <LinkNext href="/profile" className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors group">

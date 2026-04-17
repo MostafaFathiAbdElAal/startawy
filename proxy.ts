@@ -1,31 +1,13 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
+import { verifyAuth } from './lib/auth-utils';
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get('auth-token')?.value;
-
-  console.log(`[PROXY] Intercepting: ${pathname}`);
-
-  let user = null;
-  if (token) {
-    try {
-      const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-      const { payload } = await jwtVerify(token, secret);
-      user = payload;
-    } catch {
-      // Token invalid
-    }
-  }
   
-  const isOwner = user?.email === process.env.NEXT_PUBLIC_OWNER_EMAIL;
-
-  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forgot-password');
-  const isCompleteProfile = pathname.startsWith('/complete-profile');
   const isHomePage = pathname === '/';
   
-  // Public assets, API, and Home Page should always pass
+  // Public assets, API, and Home Page should always bypass proxy logic immediately
   if (
     pathname.includes('.') || 
     pathname.startsWith('/api') || 
@@ -35,15 +17,29 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 1. If user is guest and trying to access anything other than auth pages -> Login
+  const token = request.cookies.get('auth-token')?.value;
+  console.log(`[PROXY] Intercepting: ${pathname}`);
+
+  const user = await verifyAuth(token);
+  
+  if (user) {
+    console.log(`[PROXY] User detected: ${user.email}, Role: ${user.role}`);
+  } else {
+    console.log('[PROXY] Guest user detected');
+  }
+
+  const isOwner = !!user?.isOwner;
+
+  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forgot-password');
+  const isCompleteProfile = pathname.startsWith('/complete-profile');
   if (!user && !isAuthPage) {
-    console.log(`[PROXY] Guest access to ${pathname} -> Redirecting to /login`);
+    console.log(`[PROXY] Redirecting guest to /login (Attempted: ${pathname})`);
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // 2. If user is logged in and trying to access auth pages -> Dashboard
   if (user && isAuthPage) {
-    console.log(`[PROXY] Authenticated access to ${pathname} -> Redirecting to /dashboard`);
+    console.log(`[PROXY] Logged in user on auth page -> Redirecting to /dashboard`);
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
@@ -53,7 +49,7 @@ export async function proxy(request: NextRequest) {
   // 4. New: If user is logged in, NO role, and NOT on /complete-profile -> Complete Profile
   // Owner Bypasses this to allow direct access to Admin tools
   if (!isOwner && user && !user.role && !isCompleteProfile && !isHomePage) {
-      console.log(`[PROXY] Partial user -> Redirecting to /complete-profile`);
+      console.log(`[PROXY] User with NO ROLE on protected page -> Redirecting to /complete-profile from ${pathname}`);
       return NextResponse.redirect(new URL('/complete-profile', request.url));
   }
 

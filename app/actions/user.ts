@@ -1,152 +1,67 @@
-'use server';
+"use server";
 
-import { prisma } from '@/lib/prisma';
-import { verifyAuth } from '@/lib/auth-utils';
-import { Prisma } from '@prisma/client';
-import { cookies } from 'next/headers';
-
-export type UserWithRelations = Prisma.UserGetPayload<{
-  include: {
-    founder: {
-      include: {
-        payments: {
-          include: {
-            subscription: true
-          },
-          orderBy: {
-            transDate: 'desc'
-          },
-          take: 1
-        }
-      }
-    },
-    consultant: true,
-    admin: true,
-  }
-}>;
+import { cookies } from "next/headers";
+import { verifyAuth } from "@/lib/auth-utils";
+import { UserService } from "@/lib/services/userService";
+import { revalidatePath } from "next/cache";
+import type { UserWithRelations, UpdateProfileData } from "@/lib/types";
 
 export async function getProfileData() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('auth-token')?.value;
-  const userPayload = await verifyAuth(token);
+  const token = cookieStore.get("auth-token")?.value;
+  const decoded = await verifyAuth(token);
 
-  if (!userPayload) {
-    return null;
-  }
+  if (!decoded) return null;
 
-  const user = await prisma.user.findUnique({
-    where: { id: parseInt(userPayload.id) },
-    include: {
-      founder: {
-        include: {
-          payments: {
-            include: {
-              subscription: true
-            },
-            orderBy: {
-              transDate: 'desc'
-            },
-            take: 1
-          }
-        }
-      },
-      consultant: true,
-      admin: true,
-    }
-  }) as UserWithRelations;
+  const profile = await UserService.getFullProfile(parseInt(decoded.id as string));
+  
+  if (!profile) return null;
 
-  if (!user) return null;
-
-  // Extract subscription info
-  const subscription = user.founder?.payments[0]?.subscription || null;
-  const activePlan = user.founder?.payments[0]?.paymentType || 'Free Plan';
-
-  // Fetch some stats for the profile
-  const stats = {
-    sessions: 0,
-    reports: 0,
-    projects: 0,
-  };
-
-  if (user.type === 'FOUNDER' && user.founder) {
-    stats.sessions = await prisma.session.count({ where: { founderId: user.founder.id } });
-    stats.reports = await prisma.founderReport.count({ where: { founderId: user.founder.id } });
-    stats.projects = await prisma.budgetAnalysis.count({ where: { founderId: user.founder.id } });
-  } else if (user.type === 'CONSULTANT' && user.consultant) {
-    stats.sessions = await prisma.session.count({ where: { consultantId: user.consultant.id } });
-  }
-
-  return {
-    user,
-    stats,
-    subscription,
-    activePlan
+  // IMPORTANT: Avoid circular references which crash the Next.js serializer.
+  // We provide a complete user object to satisfy legacy requirements in layout and components.
+  return { 
+    ...profile, 
+    user: { 
+      id: profile.id,
+      email: profile.email,
+      name: profile.name,
+      type: profile.type,
+      phone: profile.phone,
+      image: profile.image,
+      googleId: profile.googleId,
+      isEmailVerified: profile.isEmailVerified,
+      isPhoneVerified: profile.isPhoneVerified,
+      createdAt: profile.createdAt,
+      updatedAt: profile.updatedAt,
+      // Include relations to satisfy ProtectedLayout checks
+      founder: profile.founder,
+      consultant: profile.consultant,
+      admin: profile.admin,
+      isOwner: !!profile.admin?.isOwner
+    } 
   };
 }
 
-export async function updateProfile(data: { 
-  name: string; 
-  phone?: string; 
-  businessName?: string; 
-  businessSector?: string; 
-  bio?: string;
-  yearsOfExp?: string | number;
-  specialization?: string;
-  foundingDate?: string;
-}) {
+export async function updateProfile(formData: FormData) {
   const cookieStore = await cookies();
-  const token = cookieStore.get('auth-token')?.value;
-  const userPayload = await verifyAuth(token);
+  const token = cookieStore.get("auth-token")?.value;
+  const decoded = await verifyAuth(token);
 
-  if (!userPayload) {
-    return { error: 'Unauthorized' };
-  }
+  if (!decoded) return { success: false, error: "Unauthorized" };
+
+  const data: UpdateProfileData = {
+    name: formData.get("name") as string,
+    email: formData.get("email") as string,
+    businessName: formData.get("businessName") as string,
+    businessSector: formData.get("businessSector") as string,
+    description: formData.get("description") as string,
+  };
 
   try {
-    console.log('[UPDATE] Updating user:', userPayload.id, 'role:', userPayload.role, 'data:', data);
-
-    // 1. Get current user to check if phone changed
-    const currentUser = await prisma.user.findUnique({
-      where: { id: parseInt(userPayload.id) }
-    });
-
-    const phoneChanged = data.phone !== currentUser?.phone;
-
-    await prisma.user.update({
-      where: { id: parseInt(userPayload.id) },
-      data: {
-        name: data.name,
-        phone: data.phone,
-        ...(phoneChanged && { isPhoneVerified: false })
-      }
-    });
-
-    if (userPayload.role === 'FOUNDER') {
-      console.log('[UPDATE] Updating Founder profile');
-      await prisma.startupFounder.update({
-        where: { userId: parseInt(userPayload.id) },
-        data: {
-          businessName: data.businessName,
-          businessSector: data.businessSector,
-          foundingDate: data.foundingDate ? new Date(data.foundingDate) : undefined,
-          description: data.bio,
-        }
-      });
-    } else if (userPayload.role === 'CONSULTANT') {
-      console.log('[UPDATE] Updating Consultant profile');
-      await prisma.consultant.update({
-        where: { userId: parseInt(userPayload.id) },
-        data: {
-          yearsOfExp: data.yearsOfExp ? parseInt(data.yearsOfExp.toString()) : undefined,
-          specialization: data.specialization,
-        }
-      });
-    }
-
-    console.log('[UPDATE] Update successful');
+    await UserService.updateUserProfile(parseInt(decoded.id as string), data);
+    revalidatePath("/profile");
     return { success: true };
-  } catch (error) {
-    console.error('[UPDATE] Update Profile Error:', error);
-    return { error: 'Failed to update profile' };
+  } catch (err) {
+    return { success: false, error: "Failed to update profile" };
   }
 }

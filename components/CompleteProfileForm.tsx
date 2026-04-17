@@ -77,6 +77,7 @@ export default function CompleteProfileForm() {
                 if (!response.ok) {
                     setServerError(result.error || 'Something went wrong');
                 } else {
+                    router.refresh(); // Invalidate server components cache
                     router.push('/dashboard');
                 }
             } catch {

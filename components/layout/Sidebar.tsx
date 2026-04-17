@@ -33,9 +33,10 @@ import {
 interface SidebarProps {
   userRole?: "FOUNDER" | "CONSULTANT" | "ADMIN";
   userEmail?: string;
+  isOwner?: boolean;
 }
 
-export function Sidebar({ userRole: rawRole = "FOUNDER", userEmail }: SidebarProps) {
+export function Sidebar({ userRole: rawRole = "FOUNDER", userEmail, isOwner: propIsOwner }: SidebarProps) {
   const userRole = rawRole || "FOUNDER";
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -52,7 +53,7 @@ export function Sidebar({ userRole: rawRole = "FOUNDER", userEmail }: SidebarPro
     return pathname === path;
   };
 
-  const isOwner = userEmail === process.env.NEXT_PUBLIC_OWNER_EMAIL;
+  const isOwner = !!propIsOwner;
 
   const founderMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },

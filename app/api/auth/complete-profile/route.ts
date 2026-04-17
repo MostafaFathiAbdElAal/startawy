@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify, SignJWT } from 'jose';
 import { prisma } from '@/lib/prisma';
+import { createSession, verifyAuth } from '@/lib/auth-utils';
 
 export const runtime = 'nodejs';
 
@@ -12,9 +12,18 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Verify current partial token
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-    const { payload } = await jwtVerify(token, secret);
-    const userId = payload.id as number;
+    const userPayload = await verifyAuth(token);
+    
+    if (!userPayload || !userPayload.id) {
+      console.error('[API] No valid user payload or ID found in token');
+      return NextResponse.json({ error: 'Invalid or expired session' }, { status: 401 });
+    }
+    
+    const userId = userPayload.id;
+    if (!userId || isNaN(userId)) {
+      console.error('[API] Invalid User ID in payload:', userPayload.id);
+      return NextResponse.json({ error: 'Invalid User ID' }, { status: 400 });
+    }
 
     const body = await req.json();
     const { role, phone, ...roleData } = body;
@@ -23,72 +32,77 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Role and Phone are required' }, { status: 400 });
     }
 
+    // Validate role against Prisma Enum
+    const validRoles = ['FOUNDER', 'CONSULTANT'];
+    if (!validRoles.includes(role)) {
+      return NextResponse.json({ error: 'Invalid role provided' }, { status: 400 });
+    }
+
     // 2. Update User and Create Role-Specific Record
     const user = await prisma.$transaction(async (tx) => {
       const updatedUser = await tx.user.update({
         where: { id: userId },
         data: { 
-            type: role,
+            type: role as any, // Cast to any to avoid TS mismatch with string
             phone: phone
         },
       });
 
       try {
         if (role === 'FOUNDER') {
+          const fDate = roleData.foundingDate ? new Date(roleData.foundingDate) : new Date();
+          const validDate = isNaN(fDate.getTime()) ? new Date() : fDate;
+
           await tx.startupFounder.upsert({
             where: { userId: userId },
             update: {
-              businessName: roleData.businessName,
-              businessSector: roleData.businessSector,
-              foundingDate: new Date(roleData.foundingDate),
+              businessName: roleData.businessName || '',
+              businessSector: roleData.businessSector || '',
+              foundingDate: validDate,
             },
             create: {
               userId: userId,
-              businessName: roleData.businessName,
-              businessSector: roleData.businessSector,
-              foundingDate: new Date(roleData.foundingDate),
+              businessName: roleData.businessName || '',
+              businessSector: roleData.businessSector || '',
+              foundingDate: validDate,
             },
           });
         } else if (role === 'CONSULTANT') {
           await tx.consultant.upsert({
             where: { userId: userId },
             update: {
-              specialization: roleData.specialization,
+              specialization: roleData.specialization || '',
               yearsOfExp: parseInt(roleData.yearsOfExp) || 0,
-              availability: roleData.availability,
+              availability: roleData.availability || 'NOT_SPECIFIED',
             },
             create: {
               userId: userId,
-              specialization: roleData.specialization,
+              specialization: roleData.specialization || '',
               yearsOfExp: parseInt(roleData.yearsOfExp) || 0,
-              availability: roleData.availability,
+              availability: roleData.availability || 'NOT_SPECIFIED',
             },
           });
         }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (dbError: any) {
-        // If it's a unique constraint error (P2002), we can ignore it as the record exists
-        if (dbError.code !== 'P2002') {
-          throw dbError;
-        }
-        console.warn('P2002 encountered during profile completion, ignoring as duplicate.');
+        console.error('[API] DB Operation failed during profile completion:', dbError.message);
+        if (dbError.code !== 'P2002') throw dbError;
       }
 
       return updatedUser;
     });
 
-    // 3. Generate NEW token with the updated role
-    const newToken = await new SignJWT({
+    // 3. Create Session and Set Cookie (Centralized)
+    // This is the CRITICAL part - issue a FULL token with a role
+    await createSession({
       id: user.id,
       email: user.email,
+      name: user.name,
       role: user.type,
-    })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setExpirationTime('1d')
-      .sign(secret);
+      isPhoneVerified: user.isPhoneVerified
+    });
 
-    // 4. Response with New Cookie
-    const response = NextResponse.json({
+    // 4. Success Response
+    return NextResponse.json({
       success: true,
       message: 'Profile completed successfully',
       user: {
@@ -98,18 +112,14 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    response.cookies.set('auth-token', newToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24, // 1 day
-      path: '/',
-    });
-
-    return response;
-
-  } catch (error) {
-    console.error('Complete Profile Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('[API] Complete Profile Error:', error);
+    // Log Prisma specific errors if applicable
+    if (error.code) console.error('[API] Prisma Error Code:', error.code);
+    
+    return NextResponse.json({ 
+        error: 'Internal Server Error',
+        details: error.message 
+    }, { status: 500 });
   }
 }

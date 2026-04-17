@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { User, Mail, Smartphone, Briefcase, Save, Loader2, UserCheck } from 'lucide-react';
-import { updateProfile, UserWithRelations } from '@/app/actions/user';
+import { updateProfile } from '@/app/actions/user';
+import { UserWithRelations } from '@/lib/types/user';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import DateInput from '@/components/ui/DateInput';
+import { useToast } from '@/components/providers/ToastProvider';
 
 interface ProfileEditFormProps {
   user: UserWithRelations;
@@ -15,6 +16,7 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { showToast } = useToast();
   const [foundingDate, setFoundingDate] = useState(user.founder?.foundingDate ? new Date(user.founder.foundingDate).toISOString().split('T')[0] : '');
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -31,22 +33,22 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
 
     const res = await updateProfile(data);
     if (res.success) {
-      console.log('[CLIENT] Profile update success');
-      router.push('/profile?success=true');
+      // Show Toast with the backend's descriptive success message
+      showToast({ type: 'success', title: 'Profile Updated', message: res.message });
+      router.push('/profile');
       router.refresh();
       // Reset loading after a delay to prevent getting stuck if navigation is slow
       setTimeout(() => setLoading(false), 2000);
     } else {
-      console.error('[CLIENT] Profile update failed:', res.error);
-      setError(res.error || 'Failed to update profile');
+      // Show inline error inside the form AND a Toast — both use the backend's English error
+      setError(res.error);
+      showToast({ type: 'error', title: 'Update Failed', message: res.error });
       setLoading(false);
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
+    <div
       className="bg-white dark:bg-slate-900 rounded-[32px] p-8 border border-teal-500/30 dark:border-teal-500/20 shadow-xl shadow-teal-500/5 relative"
     >
       <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 blur-3xl rounded-full" />
@@ -56,6 +58,7 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
         Edit Your Profile
       </h3>
 
+      {/* Inline error — displayed from the backend's English error message */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold border border-red-100 dark:border-red-900/30">
           {error}
@@ -219,6 +222,6 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
           </button>
         </div>
       </form>
-    </motion.div>
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Search, Filter, Edit, Trash2, Eye, UserX, UserCheck, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Filter, Edit, Trash2, Eye, UserX, UserCheck, ChevronDown, ChevronUp, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type UserData = {
@@ -24,11 +24,93 @@ type AdminUsersTableProps = {
 };
 
 export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
+  const [users, setUsers] = useState<UserData[]>(data);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [contextFilter, setContextFilter] = useState("All");
   const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [processingId, setProcessingId] = useState<number | null>(null);
+  const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [editFormData, setEditFormData] = useState({ name: "", email: "" });
   const filterRef = useRef<HTMLDivElement>(null);
+
+  // Synchronize internal state when props change (initial load)
+  useEffect(() => {
+    setUsers(data);
+  }, [data]);
+
+  const handleDelete = async (id: number) => {
+    if (!global.confirm("Are you SURE you want to permanently delete this user? All their associated records will be lost.")) return;
+    
+    setProcessingId(id);
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+      const result = await res.json();
+      
+      if (result.success) {
+        setUsers(users.filter(u => u.id !== id));
+      } else {
+        alert(result.error || "Failed to delete user.");
+      }
+    } catch (err) {
+      alert("Network error occurred.");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleToggleStatus = async (id: number, currentStatus: string) => {
+    const nextSuspended = currentStatus === "ACTIVE"; // If active, we suspend
+    
+    setProcessingId(id);
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isSuspended: nextSuspended })
+      });
+      const result = await res.json();
+      
+      if (result.success) {
+        setUsers(users.map(u => u.id === id ? { 
+          ...u, 
+          status: nextSuspended ? "SUSPENDED" : "ACTIVE" 
+        } : u));
+      } else {
+        alert(result.error || "Failed to update status.");
+      }
+    } catch (err) {
+      alert("Network error occurred.");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const submitEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    setProcessingId(editingUser.id);
+
+    try {
+      const res = await fetch(`/api/admin/users/${editingUser.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editFormData.name, email: editFormData.email }),
+      });
+      const result = await res.json();
+      
+      if (result.success) {
+        setUsers(users.map(u => u.id === editingUser.id ? { ...u, name: editFormData.name, email: editFormData.email } : u));
+        setEditingUser(null);
+      } else {
+        alert(result.error || "Failed to update user.");
+      }
+    } catch (err) {
+      alert("Network error occurred.");
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   // Close on click outside
   useEffect(() => {
@@ -46,7 +128,7 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
   }, [showFilterPanel]);
 
   const filteredData = useMemo(() => {
-    return data.filter(u => {
+    return users.filter(u => {
       const matchesSearch = 
         u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
         u.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -58,12 +140,12 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
 
       return matchesSearch && matchesStatus && matchesContext;
     });
-  }, [data, searchTerm, statusFilter, contextFilter, roleType]);
+  }, [users, searchTerm, statusFilter, contextFilter, roleType]);
 
   const uniqueContextValues = useMemo(() => {
-    const values = data.map(u => roleType === "Founder" ? u.plan : u.specialty).filter(Boolean) as string[];
+    const values = users.map(u => roleType === "Founder" ? u.plan : u.specialty).filter(Boolean) as string[];
     return Array.from(new Set(values));
-  }, [data, roleType]);
+  }, [users, roleType]);
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 overflow-hidden text-left min-h-[400px]">
@@ -226,19 +308,42 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                     <button className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
                       <Eye className="w-4 h-4" />
                     </button>
-                    <button className="p-2 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-colors">
+                    <button 
+                      className="p-2 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-colors"
+                      title="Edit Profile"
+                      onClick={() => {
+                        setEditingUser(user);
+                        setEditFormData({ name: user.name, email: user.email });
+                      }}
+                    >
                       <Edit className="w-4 h-4" />
                     </button>
-                    {user.status === "ACTIVE" ? (
-                      <button className="p-2 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors" title="Suspend User">
+                    
+                    <button 
+                      onClick={() => handleToggleStatus(user.id, user.status)}
+                      disabled={processingId === user.id}
+                      className={`p-2 rounded-lg transition-all ${
+                        user.status === "ACTIVE" 
+                          ? "text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20" 
+                          : "text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                      }`}
+                      title={user.status === "ACTIVE" ? "Suspend Account" : "Activate Account"}
+                    >
+                      {processingId === user.id ? (
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent animate-spin rounded-full" />
+                      ) : user.status === "ACTIVE" ? (
                         <UserX className="w-4 h-4" />
-                      </button>
-                    ) : (
-                      <button className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors" title="Activate User">
+                      ) : (
                         <UserCheck className="w-4 h-4" />
-                      </button>
-                    )}
-                    <button className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                      )}
+                    </button>
+
+                    <button 
+                      onClick={() => handleDelete(user.id)}
+                      disabled={processingId === user.id}
+                      className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      title="Delete Permanently"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -255,6 +360,61 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
           </tbody>
         </table>
       </div>
+
+      {/* Edit User Modal */}
+      <AnimatePresence>
+        {editingUser && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setEditingUser(null)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
+            >
+              <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Edit User Profile</h2>
+                <button onClick={() => setEditingUser(null)} className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={submitEdit} className="p-6 space-y-4">
+                <div className="space-y-2 text-left">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Full Name</label>
+                  <input
+                    type="text" required
+                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-slate-900 dark:text-white"
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2 text-left">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Email Address</label>
+                  <input
+                    type="email" required
+                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-slate-900 dark:text-white"
+                    value={editFormData.email}
+                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                  />
+                </div>
+
+                <div className="pt-4 flex gap-3">
+                  <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-50 transition-colors">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={processingId === editingUser.id} className="flex-1 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors flex justify-center items-center">
+                    {processingId === editingUser.id ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

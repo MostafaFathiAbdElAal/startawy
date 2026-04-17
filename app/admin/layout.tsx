@@ -17,10 +17,10 @@ export default async function AdminLayout({
   if (!userPayload) redirect('/login');
 
   const user = await prisma.user.findUnique({
-    where: { id: parseInt(userPayload.id as string) }
+    where: { id: userPayload.id } // Use standardized numeric ID
   });
 
-  const isOwner = user?.email === process.env.NEXT_PUBLIC_OWNER_EMAIL;
+  const isOwner = !!userPayload.isOwner;
 
   if (!user || (user.type !== 'ADMIN' && !isOwner)) {
     return (
@@ -34,18 +34,17 @@ export default async function AdminLayout({
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-slate-900 overflow-hidden text-gray-900 dark:text-gray-100">
-      <Sidebar userRole="ADMIN" userEmail={user?.email} />
-      <div className="flex-1 flex flex-col min-w-0 transition-all duration-300">
+      <Sidebar userRole="ADMIN" userEmail={user?.email} isOwner={isOwner} />
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar 
           userRole="ADMIN" 
           userName={user?.name} 
           userEmail={user?.email} 
           isVerified={user?.isEmailVerified}
+          isOwner={isOwner}
         />
-        <main className="flex-1 overflow-y-auto w-full transition-all duration-300 relative">
-          <div className="absolute inset-0 max-w-7xl mx-auto w-full">
-            {children}
-          </div>
+        <main className="flex-1 overflow-y-auto w-full">
+          {children}
         </main>
       </div>
     </div>

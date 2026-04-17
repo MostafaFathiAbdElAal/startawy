@@ -1,4 +1,4 @@
-import { Users, UserCheck, Package, DollarSign } from "lucide-react";
+import { Users, UserCheck, Package, DollarSign, Star } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { AdminRevenueChart } from "@/components/admin/AdminRevenueChart"; // We will create this client component next
@@ -78,12 +78,19 @@ export default async function AdminDashboardPage() {
     }
   });
 
+  // Fetch recent feedbacks
+  const recentFeedbacks = await prisma.feedback.findMany({
+    take: 3,
+    orderBy: { createdAt: 'desc' },
+    include: { user: true }
+  });
+
   return (
     <div className="p-6 lg:p-8">
       {/* Welcome Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Platform Overview</h1>
-        <p className="text-gray-600 dark:text-gray-400">Here&apos;s your system status and top metrics today.</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 uppercase tracking-tight">Platform Overview</h1>
+        <p className="text-gray-600 dark:text-gray-400 font-medium">Here&apos;s your system status and top metrics today.</p>
       </div>
 
       {/* Stats Grid */}
@@ -100,61 +107,111 @@ export default async function AdminDashboardPage() {
                   <Icon className={`w-6 h-6 ${stat.iconColor}`} />
                 </div>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stat.value}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{stat.label}</p>
-              <p className="text-xs text-teal-600 dark:text-teal-400 font-medium">{stat.trend}</p>
+              <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-1 tracking-tight">{stat.value}</h3>
+              <p className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">{stat.label}</p>
+              <p className="text-[11px] text-teal-600 dark:text-teal-400 font-bold mt-2 uppercase tracking-wider">{stat.trend}</p>
             </div>
           );
         })}
       </div>
 
-      {/* Revenue Area Chart Component */}
-      <AdminRevenueChart data={chartData} />
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        {/* Revenue Area Chart Component - Left Column (Large) */}
+        <div className="xl:col-span-2">
+          <AdminRevenueChart data={chartData} />
 
-      {/* Recent Users Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 overflow-hidden mb-8">
-        <div className="p-6 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Recent Registrations</h2>
-          <Link href="/admin/founders" className="text-sm text-teal-600 hover:text-teal-700 font-medium">
-            View All Founders
-          </Link>
+          {/* Recent Users Table */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 overflow-hidden mt-8">
+            <div className="p-6 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/10">
+              <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">Recent Registrations</h2>
+              <Link href="/admin/founders" className="text-xs font-black text-teal-600 hover:text-teal-700 uppercase tracking-widest bg-teal-50 dark:bg-teal-900/20 px-3 py-1.5 rounded-lg transition-colors">
+                View All
+              </Link>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-slate-800/50 border-b border-gray-200 dark:border-slate-800">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400">User</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400">Role</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400">Joined</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+                  {recentUsers.map((u) => (
+                    <tr key={u.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="font-bold text-gray-900 dark:text-white text-sm uppercase tracking-tight">{u.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex px-2.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-md text-[10px] font-black uppercase tracking-wider">
+                          {u.type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                          u.isEmailVerified 
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" 
+                            : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                        }`}>
+                          {u.isEmailVerified ? "ACTIVE" : "PENDING"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-xs font-bold text-gray-400 font-mono">
+                        {new Intl.DateTimeFormat('en-GB').format(new Date(u.createdAt))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-slate-800/50 border-b border-gray-200 dark:border-slate-800">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400">User</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400">Role</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400">Joined</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-slate-800">
-              {recentUsers.map((u) => (
-                <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">{u.name}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{u.email}</p>
+
+        {/* Recent Feedbacks - Right Column (Narrow) */}
+        <div className="xl:col-span-1">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 h-full">
+            <div className="p-6 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/10">
+              <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">Recent Signals</h2>
+              <Link href="/admin/feedback" className="text-xs font-black text-teal-600 hover:text-teal-700 uppercase tracking-widest bg-teal-50 dark:bg-teal-900/20 px-3 py-1.5 rounded-lg transition-colors">
+                All
+              </Link>
+            </div>
+            <div className="p-6 space-y-6">
+              {recentFeedbacks.length === 0 ? (
+                <p className="text-center text-gray-500 dark:text-gray-400 text-sm py-12">No signals received yet.</p>
+              ) : (
+                recentFeedbacks.map((f) => (
+                  <div key={f.id} className="space-y-3 pb-6 border-b border-gray-100 dark:border-slate-800 last:border-0 last:pb-0">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 rounded-lg flex items-center justify-center font-bold text-xs uppercase">
+                          {f.user.name.charAt(0)}
+                        </div>
+                        <p className="font-bold text-gray-900 dark:text-white text-xs uppercase">{f.user.name}</p>
+                      </div>
+                      <div className="flex items-center gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className={`w-3 h-3 ${i < f.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200 dark:text-gray-800'}`} />
+                        ))}
+                      </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-xs font-medium">
-                      {u.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-medium">
-                      {u.isEmailVerified ? "ACTIVE" : "PENDING"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {new Intl.DateTimeFormat('en-GB').format(new Date(u.createdAt))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed font-medium italic">
+                      &ldquo;{f.comment}&rdquo;
+                    </p>
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                      {new Date(f.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

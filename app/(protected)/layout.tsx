@@ -8,13 +8,13 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   const profile = await getProfileData();
 
   if (!profile) {
-    redirect('/login');
+    redirect('/logout');
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { user } = profile as { user: any }; // Using any to simplify relation access for validation
 
-  const isOwner = user.email === process.env.NEXT_PUBLIC_OWNER_EMAIL;
+  const isOwner = !!user.isOwner;
 
   // Profile Completion Guard (Exclude Owner)
   if (!isOwner) {
@@ -25,6 +25,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
       (user.type === 'ADMIN' && !user.admin);
 
     if (isProfileIncomplete) {
+      console.log(`[LAYOUT] Profile incomplete in DB -> Redirecting to /complete-profile`);
       redirect('/complete-profile');
     }
   }
@@ -32,13 +33,14 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   return (
     <AuthGuard>
       <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-slate-900">
-        <Sidebar userRole={user.type as "FOUNDER" | "CONSULTANT" | "ADMIN"} userEmail={user.email} />
+        <Sidebar userRole={user.type as "FOUNDER" | "CONSULTANT" | "ADMIN"} userEmail={user.email} isOwner={isOwner} />
         <div className="flex-1 flex flex-col overflow-hidden transition-all duration-200 ease-in-out">
           <TopBar 
             userRole={user.type as "FOUNDER" | "CONSULTANT" | "ADMIN"} 
             userName={user.name} 
             userEmail={user.email}
             isVerified={user.isEmailVerified && user.isPhoneVerified}
+            isOwner={isOwner}
           />
           <main className="flex-1 overflow-y-auto overflow-x-hidden p-0">
             {children}

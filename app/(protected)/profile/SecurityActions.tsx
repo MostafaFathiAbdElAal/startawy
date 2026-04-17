@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UserWithRelations } from '@/app/actions/user';
+import { UserWithRelations } from '@/lib/types/user';
 import { Mail, Phone, ShieldCheck, CheckCircle2, Loader2, AlertCircle, Lock, Smartphone, ChevronRight, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { sendVerificationOTP, verifyPhone } from '@/app/actions/auth';
 import OTPInput from '@/components/ui/OTPInput';
@@ -9,6 +9,7 @@ import GoogleLoginButton from '@/components/GoogleLoginButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useSocket } from '@/lib/hooks/useSocket';
+import { useToast } from '@/components/providers/ToastProvider';
 
 interface SecurityActionsProps {
   user: UserWithRelations;
@@ -23,6 +24,7 @@ interface WhatsAppMessage {
 export default function SecurityActions({ user: initialUser }: SecurityActionsProps) {
   const router = useRouter();
   const { socket, botStatus, otpEvent } = useSocket('http://localhost:3001');
+  const { showToast } = useToast();
   const [user, setUser] = useState(initialUser);
   const [showOtpView, setShowOtpView] = useState(false);
   const [otpValue, setOtpValue] = useState('');
@@ -120,16 +122,26 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
     try {
       const res = await verifyPhone(otpValue);
       if (res.success) {
+        // Show Toast immediately — visible even after the OTP view closes
+        showToast({
+          type: 'success',
+          title: 'Phone Verified',
+          message: 'Your phone number has been verified successfully.',
+        });
         setSuccess('Phone number verified successfully!');
         setUser({ ...user, isPhoneVerified: true });
         setShowOtpView(false);
         router.refresh();
       } else {
-        setOtpError(res.error || 'Invalid verification code');
+        const errMsg = res.error || 'Invalid verification code. Please try again.';
+        setOtpError(errMsg);
+        showToast({ type: 'error', title: 'Verification Failed', message: errMsg });
       }
     } catch (err) {
       console.error('[CLIENT] Verification failed:', err);
-      setOtpError('Verification failed. Please try again.');
+      const errMsg = 'Verification failed. Please try again.';
+      setOtpError(errMsg);
+      showToast({ type: 'error', title: 'Verification Failed', message: errMsg });
     } finally {
       setOtpLoading(false);
     }
@@ -160,11 +172,14 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
       });
       const data = await res.json();
       if (data.success) {
+        showToast({ type: 'success', title: 'Password Updated', message: 'Your password has been changed successfully.' });
         setSuccess('Password updated successfully!');
         setShowPasswordModal(false);
         setPassForm({ current: '', next: '', confirm: '' });
       } else {
-        setPassError(data.error || 'Failed to update password');
+        const errMsg = data.error || 'Failed to update password.';
+        setPassError(errMsg);
+        showToast({ type: 'error', title: 'Update Failed', message: errMsg });
       }
     } catch (err) {
       console.error('Password change error:', err);
@@ -191,13 +206,16 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
       });
       const data = await res.json();
       if (data.success) {
+        showToast({ type: 'warning', title: 'Account Deleted', message: 'Your account has been permanently deleted. Redirecting...' });
         setSuccess('Account deleted successfully. Redirecting...');
         setTimeout(() => {
           router.push('/login');
           router.refresh();
         }, 2000);
       } else {
-        setDeleteError(data.error || 'Failed to delete account');
+        const errMsg = data.error || 'Failed to delete account.';
+        setDeleteError(errMsg);
+        showToast({ type: 'error', title: 'Deletion Failed', message: errMsg });
       }
     } catch {
       setDeleteError('An error occurred. Please try again.');

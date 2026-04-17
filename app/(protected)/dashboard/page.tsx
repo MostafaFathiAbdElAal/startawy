@@ -18,10 +18,27 @@ export default async function DashboardPage() {
   const data = await getDashboardData();
 
   if (!data) {
-    redirect("/login");
+    redirect("/logout");
   }
 
   const { stats, recentActivities, upcomingSessions, revenueData, growthData, user } = data;
+
+  const renderIndicator = (growth: number) => {
+    if (growth === 0) {
+      return (
+        <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 text-sm font-medium">
+          <span>0.0%</span>
+        </div>
+      );
+    }
+    const isPositive = growth > 0;
+    return (
+      <div className={`flex items-center gap-1 text-sm font-medium ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+        {isPositive ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+        <span>{isPositive ? '+' : ''}{growth.toFixed(2)}%</span>
+      </div>
+    );
+  };
 
   return (
     <div className="p-4 sm:p-8">
@@ -41,10 +58,7 @@ export default async function DashboardPage() {
             <div className="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-teal-600 dark:text-teal-400" />
             </div>
-            <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm font-medium">
-              <ArrowUpRight className="w-4 h-4" />
-              <span>+12.5%</span>
-            </div>
+            {renderIndicator(stats.revenueGrowth)}
           </div>
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">${stats.totalRevenue.toLocaleString()}</h3>
           <p className="text-gray-600 dark:text-gray-400 text-sm">Total Revenue</p>
@@ -56,10 +70,7 @@ export default async function DashboardPage() {
             <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
-            <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm font-medium">
-              <ArrowUpRight className="w-4 h-4" />
-              <span>+8.2%</span>
-            </div>
+            {renderIndicator(stats.profitGrowth)}
           </div>
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">${stats.monthlyProfit.toLocaleString()}</h3>
           <p className="text-gray-600 dark:text-gray-400 text-sm">Monthly Profit</p>
@@ -71,10 +82,7 @@ export default async function DashboardPage() {
             <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
               <Users className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
-            <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm font-medium">
-              <ArrowUpRight className="w-4 h-4" />
-              <span>+15.3%</span>
-            </div>
+            {renderIndicator(stats.clientsGrowth)}
           </div>
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.activeClients}</h3>
           <p className="text-gray-600 dark:text-gray-400 text-sm">Active Clients</p>
@@ -86,12 +94,9 @@ export default async function DashboardPage() {
             <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
               <Target className="w-6 h-6 text-orange-600 dark:text-orange-400" />
             </div>
-            <div className="flex items-center gap-1 text-red-600 dark:text-red-400 text-sm font-medium">
-              <ArrowDownRight className="w-4 h-4" />
-              <span>-2.4%</span>
-            </div>
+            {renderIndicator(stats.targetGrowth)}
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.targetAchievement}%</h3>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{(stats.targetAchievement || 0).toFixed(2)}%</h3>
           <p className="text-gray-600 dark:text-gray-400 text-sm">Target Achievement</p>
         </div>
       </div>

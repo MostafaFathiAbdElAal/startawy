@@ -12,7 +12,7 @@ export async function GET() {
     const token = cookieStore.get('auth-token')?.value;
     const userPayload = await verifyAuth(token);
 
-    if (!userPayload || userPayload.email !== process.env.NEXT_PUBLIC_OWNER_EMAIL) {
+    if (!userPayload || !userPayload.isOwner) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
