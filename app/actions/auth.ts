@@ -134,7 +134,8 @@ export async function sendPasswordResetOTP(phone: string) {
     });
 
     // 4. Call WhatsApp Microservice
-    const response = await fetch('http://localhost:3001/api/send-otp', {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+    const response = await fetch(`${backendUrl}/api/send-otp`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -157,7 +158,7 @@ export async function sendPasswordResetOTP(phone: string) {
         email: obscureEmail(user.email)
       }
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('OTP Send Error:', error);
     return { error: 'Internal server error' };
   }
@@ -178,7 +179,7 @@ export async function verifyOTP(phone: string, otp: string) {
     }
 
     return { success: true };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Verify OTP Error:', error);
     return { error: 'Internal server error' };
   }
@@ -215,7 +216,7 @@ export async function resetPassword(phone: string, otp: string, newPassword: str
     await prisma.oTP.deleteMany({ where: { phone } });
 
     return { success: true };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Reset Password Error:', error);
     return { error: 'Internal server error' };
   }
@@ -223,7 +224,7 @@ export async function resetPassword(phone: string, otp: string, newPassword: str
 export async function logout() {
   const cookieStore = await cookies();
   cookieStore.delete('auth-token');
-  redirect('/login');
+  redirect('/login?loggedOut=true');
 }
 
 export async function sendVerificationOTP() {
@@ -262,13 +263,14 @@ export async function sendVerificationOTP() {
     });
 
     console.log('[OTP] sending WhatsApp code:', otp, 'to:', user.phone);
-    
+
     // Create an AbortController for timeout
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
     try {
-      const response = await fetch('http://localhost:3001/api/send-otp', {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      const response = await fetch(`${backendUrl}/api/send-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -294,7 +296,7 @@ export async function sendVerificationOTP() {
     } finally {
       clearTimeout(timeout);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Send Verification OTP Error:', error);
     return { error: 'Internal server error' };
   }
@@ -355,7 +357,7 @@ export async function verifyPhone(otp: string) {
     revalidatePath('/profile');
 
     return { success: true };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Verify Phone Error:', error);
     return { error: 'Internal server error' };
   }

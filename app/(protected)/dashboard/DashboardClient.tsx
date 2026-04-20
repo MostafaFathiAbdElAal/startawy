@@ -145,7 +145,7 @@ export default function DashboardClient({ data }: DashboardClientProps) {
                  <Tooltip 
                   contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#f9fafb' }}
                   itemStyle={{ color: '#f9fafb' }}
-                  formatter={(value: any) => `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  formatter={(value: number | string | readonly (string | number)[] | undefined) => `$${Number(Array.isArray(value) ? value[0] : (value || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 />
                 <Line 
                   type="monotone" 
@@ -182,7 +182,7 @@ export default function DashboardClient({ data }: DashboardClientProps) {
                  <Tooltip 
                     contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#f9fafb' }}
                     itemStyle={{ color: '#f9fafb' }}
-                    formatter={(value: any) => `${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}
+                    formatter={(value: number | string | readonly (string | number)[] | undefined) => `${Number(Array.isArray(value) ? value[0] : (value || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}
                  />
                 <Area 
                   type="monotone" 

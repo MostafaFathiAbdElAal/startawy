@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     // Upload to Cloudinary using a Promise to handle the stream
-    const result: any = await new Promise((resolve, reject) => {
+    const result = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: "startawy_library",
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
         },
         (error, result) => {
           if (error) reject(error);
-          else resolve(result);
+          else resolve(result as { secure_url: string; public_id: string });
         }
       );
       uploadStream.end(buffer);
@@ -45,8 +45,9 @@ export async function POST(req: NextRequest) {
       public_id: result.public_id
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Cloudinary Upload Error:", error);
-    return NextResponse.json({ error: error.message || "Failed to upload file" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Failed to upload file";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

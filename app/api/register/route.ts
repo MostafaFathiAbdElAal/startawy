@@ -11,9 +11,10 @@ export async function POST(req: NextRequest) {
     // 1. Validation
     try {
       await RegisterSchema.validate(body, { abortEarly: false });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const validationErrors = (error as { errors?: string[] }).errors?.join(', ') || "Validation failed";
       return NextResponse.json(
-        { error: error.errors.join(', ') },
+        { error: validationErrors },
         { status: 400 }
       );
     }
@@ -26,11 +27,12 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Registration API Error:', error);
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
     return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
-      { status: error.message ? 400 : 500 }
+      { error: errorMessage },
+      { status: error instanceof Error ? 400 : 500 }
     );
   }
 }

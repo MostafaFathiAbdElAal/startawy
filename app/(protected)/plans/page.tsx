@@ -68,11 +68,49 @@ const defaultPlans = [
   },
 ];
 
+import { cookies } from "next/headers";
+import { verifyAuth } from "@/lib/auth-utils";
+import { redirect } from "next/navigation";
+
 export default async function PlansPage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth-token')?.value;
+  const userPayload = await verifyAuth(token);
+
+  if (!userPayload) redirect('/login');
+
+  const user = await prisma.user.findUnique({
+    where: { id: userPayload.id },
+    include: {
+      founder: {
+        include: {
+          payments: {
+            include: { subscription: true },
+            orderBy: { transDate: 'desc' },
+            take: 1
+          }
+        }
+      }
+    }
+  });
+
+  const latestPayment = user?.founder?.payments?.[0];
+  const subscription = latestPayment?.subscription;
+  const isActive = subscription?.status === 'ACTIVE' && new Date() < new Date(subscription.endDate);
+  
+  // Strict plan name detection to avoid inconsistencies
+  const currentPlanName = (() => {
+    if (!isActive || (latestPayment?.amount || 0) === 0) return 'Free Trial';
+    if ((latestPayment?.amount || 0) >= 299) return 'Premium';
+    if ((latestPayment?.amount || 0) === 99) return 'Basic';
+    return 'Free Trial';
+  })();
+
+
   const dbPackages = await prisma.package.findMany();
 
   // If DB has packages, map them. Otherwise use realistic defaults.
-  const plans = dbPackages.length > 0 ? dbPackages.map((pkg) => {
+  const plans = (dbPackages.length > 0 ? dbPackages.map((pkg) => {
     // Attempt to match with default visual styles based on package type
     const basePlan = defaultPlans.find(p => p.name.toLowerCase() === pkg.type.toLowerCase()) || defaultPlans[1];
     
@@ -82,8 +120,12 @@ export default async function PlansPage() {
       price: `$${pkg.price}`,
       period: `/${pkg.duration.toLowerCase()}`,
       description: pkg.description || basePlan.description,
+      isCurrent: isActive && pkg.type === currentPlanName
     };
-  }) : defaultPlans;
+  }) : defaultPlans.map(p => ({
+    ...p,
+    isCurrent: (p.name === currentPlanName)
+  })));
 
   return (
     <div className="p-8">
@@ -123,16 +165,22 @@ export default async function PlansPage() {
               </div>
 
               {/* Subscribe Button */}
-              <Link
-                href={`/payment?plan=${encodeURIComponent(plan.name)}`}
-                className={`w-full py-3 rounded-lg font-semibold transition-all mb-8 block text-center ${
-                  plan.popular
-                    ? "bg-linear-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700 shadow-md hover:shadow-lg"
-                    : "bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-slate-700"
-                }`}
-              >
-                {plan.price === "$0" ? "Get Started" : "Subscribe Now"}
-              </Link>
+              {plan.isCurrent ? (
+                <div className="w-full py-4 px-6 rounded-2xl font-black transition-all mb-8 block text-center bg-slate-50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 select-none">
+                  Current Active Plan
+                </div>
+              ) : (
+                <Link
+                  href={`/payment?plan=${encodeURIComponent(plan.name)}`}
+                  className={`w-full py-4 px-6 rounded-2xl font-black transition-all mb-8 block text-center shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:scale-95 ${
+                    plan.popular
+                      ? "bg-linear-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700"
+                      : "bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-slate-700"
+                  }`}
+                >
+                  {plan.price === "$0" ? "Get Started" : "Subscribe Now"}
+                </Link>
+              )}
 
               {/* Features */}
               <div className="space-y-4">
@@ -163,25 +211,6 @@ export default async function PlansPage() {
         ))}
       </div>
 
-      {/* FAQ or Additional Info */}
-      <div className="max-w-3xl mx-auto mt-16 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Need a custom plan?</h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          Contact our sales team for enterprise solutions and custom pricing tailored to your needs.
-        </p>
-        <button className="px-8 py-3 bg-white dark:bg-slate-900 border-2 border-teal-500 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all font-semibold">
-          Contact Sales
-        </button>
-      </div>
-
-      {/* Money Back Guarantee */}
-      <div className="max-w-3xl mx-auto mt-12 bg-linear-to-r from-teal-50 to-blue-50 dark:from-teal-900/20 dark:to-blue-900/20 rounded-2xl p-8 text-center">
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">30-Day Money-Back Guarantee</h3>
-        <p className="text-gray-700 dark:text-gray-300">
-          Try any paid plan risk-free. If you&apos;re not satisfied within the first 30 days,
-          we&apos;ll refund your payment—no questions asked.
-        </p>
-      </div>
     </div>
   );
 }

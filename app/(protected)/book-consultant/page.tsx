@@ -9,93 +9,8 @@ import Link from "next/link";
 import NextImage from "next/image";
 import { ConsultationFilter } from "@/components/consultants/ConsultationFilter";
 import { prisma } from "@/lib/prisma";
+import UserAvatar from "@/components/ui/UserAvatar";
 
-const dummyConsultants = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    specialization: "Budget Optimization & Financial Planning",
-    rating: 4.9,
-    reviews: 127,
-    experience: "12 years",
-    price: 150,
-    location: "New York, USA",
-    certifications: ["CFA", "CFP"],
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop",
-    availability: "Available Today",
-    availableColor: "green",
-  },
-  {
-    id: 2,
-    name: "Michael Chen",
-    specialization: "Growth Strategy & Revenue Optimization",
-    rating: 4.8,
-    reviews: 98,
-    experience: "10 years",
-    price: 180,
-    location: "San Francisco, USA",
-    certifications: ["MBA", "CPA"],
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
-    availability: "Available Tomorrow",
-    availableColor: "blue",
-  },
-  {
-    id: 3,
-    name: "Emily Rodriguez",
-    specialization: "Startup Financial Management",
-    rating: 5.0,
-    reviews: 156,
-    experience: "15 years",
-    price: 200,
-    location: "Austin, USA",
-    certifications: ["CFA", "MBA"],
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop",
-    availability: "Available Today",
-    availableColor: "green",
-  },
-  {
-    id: 4,
-    name: "David Thompson",
-    specialization: "Risk Management & Compliance",
-    rating: 4.7,
-    reviews: 82,
-    experience: "8 years",
-    price: 140,
-    location: "Boston, USA",
-    certifications: ["CRM", "CFP"],
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop",
-    availability: "Available in 2 days",
-    availableColor: "gray",
-  },
-  {
-    id: 5,
-    name: "Lisa Anderson",
-    specialization: "Investment Strategy & Portfolio Management",
-    rating: 4.9,
-    reviews: 143,
-    experience: "14 years",
-    price: 190,
-    location: "Chicago, USA",
-    certifications: ["CFA", "FRM"],
-    avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400&h=400&fit=crop",
-    availability: "Available Today",
-    availableColor: "green",
-  },
-  {
-    id: 6,
-    name: "James Wilson",
-    specialization: "M&A Advisory & Valuations",
-    rating: 4.8,
-    reviews: 91,
-    experience: "11 years",
-    price: 220,
-    location: "Los Angeles, USA",
-    certifications: ["CFA", "CVA"],
-    avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=400&fit=crop",
-    availability: "Available Tomorrow",
-    availableColor: "blue",
-  },
-];
 
 export default async function BookConsultantPage({
   searchParams,
@@ -108,24 +23,31 @@ export default async function BookConsultantPage({
   const ratingFilter = resolvedParams.rating as string;
   const availability = resolvedParams.availability as string;
 
+  // Fetch real consultants from DB with user details
   const dbConsultants = await prisma.consultant.findMany({
-    include: { user: true }
+    include: { 
+        user: {
+            select: { name: true, image: true }
+        } 
+    }
   });
 
-  let consultants = dbConsultants.length > 0 ? dbConsultants.map(c => ({
+  // Map DB records to UI-friendly format
+  let consultants = dbConsultants.map(c => ({
     id: c.id,
     name: c.user.name,
     specialization: c.specialization,
-    rating: 5.0, // Mock fallback as rating is not in Prisma model directly yet
-    reviews: 0,
+    rating: c.rating,
+    reviews: c.reviewCount,
     experience: `${c.yearsOfExp} years`,
-    price: 150, // Real version should query packages or consultant set price
+    price: c.sessionRate,
     location: "Global",
-    certifications: c.certificate ? [c.certificate] : [],
-    avatar: c.user.image || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop",
-    availability: c.availability || "Available Today",
+    certifications: c.certifications ? c.certifications.split(';') : [],
+    avatar: c.user.image,
+    availability: c.availability || "Check Profile",
     availableColor: "green",
-  })) : dummyConsultants;
+    bio: c.bio || "No biography provided.",
+  }));
 
   if (specialization && specialization !== "All Specializations") {
     consultants = consultants.filter(c => c.specialization?.includes(specialization));
@@ -174,15 +96,14 @@ export default async function BookConsultantPage({
             key={consultant.id}
             className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 overflow-hidden hover:shadow-lg transition-all flex flex-col h-full"
           >
-            {/* Consultant Header */}
             <div className="p-6 bg-gradient-to-r from-teal-50 to-blue-50 dark:from-teal-900/20 dark:to-blue-900/20">
               <div className="flex items-center gap-4 mb-4">
-                <div className="relative w-20 h-20 shrink-0">
-                  <NextImage
-                    src={consultant.avatar}
-                    alt={consultant.name}
-                    fill
-                    className="rounded-full object-cover border-4 border-white dark:border-slate-800 shadow-md"
+                <div className="relative shrink-0">
+                  <UserAvatar
+                    name={consultant.name}
+                    image={consultant.avatar}
+                    size="lg"
+                    isVerified={true} // Consultants are verified by default in this view
                   />
                 </div>
                 <div className="flex-1">

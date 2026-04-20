@@ -35,9 +35,9 @@ export default async function StartawyLibraryPage() {
     redirect('/login');
   }
 
-  // Determine user tier
+  // Plan calculation for UI display (Access handled by proxy.ts)
   const lastPayment = user.founder.payments[0];
-  const userPlan = lastPayment?.amount === 299 ? 'Premium' : (lastPayment?.amount === 99 ? 'Basic' : 'Free');
+  const userPlan = lastPayment?.amount >= 299 ? 'Premium' : (lastPayment?.amount === 99 ? 'Basic' : 'Free');
   const userIndustry = user.founder.businessSector || "Startup";
 
   // Fetch real reports from DB
@@ -68,7 +68,7 @@ export default async function StartawyLibraryPage() {
       description: metadata.description,
       image: metadata.image,
       pages: metadata.pages,
-      downloads: Math.floor(Math.random() * 500) + 100, // Mock downloads count
+      downloads: (r.id % 400) + 100, // Stable mock downloads count based on ID
       category: r.industry,
       tags: [r.industry, "Market Research"],
     };
@@ -94,7 +94,7 @@ export default async function StartawyLibraryPage() {
   return (
     <LibraryClient 
       reports={finalReports} 
-      featuredReport={featuredReport as any} 
+      featuredReport={featuredReport} 
       categories={categories}
       userPlan={userPlan}
       userIndustry={userIndustry}

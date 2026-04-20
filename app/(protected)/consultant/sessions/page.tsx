@@ -13,7 +13,9 @@ interface Session {
   notes: string | null;
   paymentStatus: string;
   amount: number;
+  meetingLink: string | null;
 }
+
 
 // ─── Sub-Components ──────────────────────────────────────────────────────────
 
@@ -67,7 +69,8 @@ const SessionCard = ({
   setEditNotes: (notes: string) => void;
   handleUpdateNotes: (id: number) => void;
 }) => {
-  const isCompleted = new Date(s.date) <= now;
+  const isUpcoming = new Date(s.date) > now;
+  const isCompleted = !isUpcoming;
   const isEditing = editingId === s.id;
 
   return (
@@ -104,6 +107,18 @@ const SessionCard = ({
           </div>
         )}
       </div>
+
+      {isUpcoming && s.meetingLink && (
+        <a 
+          href={s.meetingLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full mb-4 flex items-center justify-center gap-2 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-xl transition-all duration-300 font-bold text-xs shadow-lg shadow-teal-500/25"
+        >
+          <Loader2 className="w-4 h-4 animate-pulse" />
+          Join Meeting
+        </a>
+      )}
 
       <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between mb-2">

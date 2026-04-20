@@ -32,12 +32,27 @@ const CompleteProfileSchema = Yup.object().shape({
   }),
   specialization: Yup.string().when('role', {
     is: 'CONSULTANT',
-    then: (schema) => schema.required('Specialization is required'),
+    then: (schema) => schema.required('Specialization/Title is required'),
     otherwise: (schema) => schema.optional(),
   }),
   yearsOfExp: Yup.number().when('role', {
     is: 'CONSULTANT',
     then: (schema) => schema.min(0, 'Must be positive').required('Years of experience is required'),
+    otherwise: (schema) => schema.optional(),
+  }),
+  sessionRate: Yup.number().when('role', {
+    is: 'CONSULTANT',
+    then: (schema) => schema.min(10, 'Minimum price is $10').required('Session rate is required'),
+    otherwise: (schema) => schema.optional(),
+  }),
+  bio: Yup.string().when('role', {
+    is: 'CONSULTANT',
+    then: (schema) => schema.min(50, 'Bio should be at least 50 characters').required('Bio is required'),
+    otherwise: (schema) => schema.optional(),
+  }),
+  expertise: Yup.array().of(Yup.string()).when('role', {
+    is: 'CONSULTANT',
+    then: (schema) => schema.min(1, 'Add at least one expertise tag').required(),
     otherwise: (schema) => schema.optional(),
   }),
   availability: Yup.string().when('role', {
@@ -49,6 +64,7 @@ const CompleteProfileSchema = Yup.object().shape({
 
 export default function CompleteProfileForm() {
     const [serverError, setServerError] = useState<string | null>(null);
+    const [currentTag, setCurrentTag] = useState('');
     const router = useRouter();
 
     const formik = useFormik({
@@ -61,6 +77,9 @@ export default function CompleteProfileForm() {
             specialization: '',
             yearsOfExp: 0,
             availability: '',
+            sessionRate: 150,
+            bio: '',
+            expertise: [] as string[],
         },
         validationSchema: CompleteProfileSchema,
         onSubmit: async (values, { setSubmitting }) => {
@@ -71,6 +90,7 @@ export default function CompleteProfileForm() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(values),
                 });
+// ... (rest of onSubmit remains same)
 
                 const result = await response.json();
 
@@ -190,7 +210,7 @@ export default function CompleteProfileForm() {
                     {formik.values.role === 'CONSULTANT' && (
                         <div className="space-y-6">
                             <div className="space-y-2">
-                                <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Specialization</label>
+                                <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Specialization/Title</label>
                                 <input
                                     name="specialization"
                                     type="text"
@@ -198,22 +218,92 @@ export default function CompleteProfileForm() {
                                     onBlur={formik.handleBlur}
                                     value={formik.values.specialization}
                                     className={`auth-input px-5 py-4 ${formik.touched.specialization && formik.errors.specialization ? 'auth-input-error' : ''}`}
-                                    placeholder="e.g. Financial Consultant"
+                                    placeholder="e.g. Senior Financial Advisor"
                                 />
                                 {formik.touched.specialization && formik.errors.specialization && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold">{formik.errors.specialization}</p>}
                             </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Years of Exp</label>
+                                    <input
+                                        name="yearsOfExp"
+                                        type="number"
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        value={formik.values.yearsOfExp}
+                                        className={`auth-input px-5 py-4 ${formik.touched.yearsOfExp && formik.errors.yearsOfExp ? 'auth-input-error' : ''}`}
+                                    />
+                                    {formik.touched.yearsOfExp && formik.errors.yearsOfExp && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold">{formik.errors.yearsOfExp}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Session Rate ($)</label>
+                                    <input
+                                        name="sessionRate"
+                                        type="number"
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        value={formik.values.sessionRate}
+                                        className={`auth-input px-5 py-4 ${formik.touched.sessionRate && formik.errors.sessionRate ? 'auth-input-error' : ''}`}
+                                    />
+                                    {formik.touched.sessionRate && formik.errors.sessionRate && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold">{formik.errors.sessionRate}</p>}
+                                </div>
+                            </div>
+
                             <div className="space-y-2">
-                                <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Years of Experience</label>
-                                <input
-                                    name="yearsOfExp"
-                                    type="number"
+                                <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Expertise Tags (Press Enter)</label>
+                                <div className={`auth-input p-2 flex flex-wrap gap-2 min-h-[56px] focus-within:ring-2 focus-within:ring-teal-500 ${formik.touched.expertise && formik.errors.expertise ? 'border-red-500' : ''}`}>
+                                    {formik.values.expertise.map((tag, index) => (
+                                        <span key={index} className="px-3 py-1 bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 rounded-lg text-xs font-bold flex items-center gap-1 group">
+                                            {tag}
+                                            <button 
+                                                type="button"
+                                                onClick={() => {
+                                                    const newTags = [...formik.values.expertise];
+                                                    newTags.splice(index, 1);
+                                                    formik.setFieldValue('expertise', newTags);
+                                                }}
+                                                className="hover:text-teal-900 dark:hover:text-teal-100"
+                                            >
+                                                ×
+                                            </button>
+                                        </span>
+                                    ))}
+                                    <input
+                                        type="text"
+                                        value={currentTag}
+                                        onChange={(e) => setCurrentTag(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if ((e.key === 'Enter' || e.key === ',') && currentTag.trim()) {
+                                                e.preventDefault();
+                                                const tag = currentTag.trim().replace(',', '');
+                                                if (!formik.values.expertise.includes(tag)) {
+                                                    formik.setFieldValue('expertise', [...formik.values.expertise, tag]);
+                                                }
+                                                setCurrentTag('');
+                                            }
+                                        }}
+                                        className="flex-1 bg-transparent border-none outline-none text-sm text-gray-900 dark:text-white min-w-[120px] px-2"
+                                        placeholder={formik.values.expertise.length === 0 ? "e.g. Budgeting, Tax" : ""}
+                                    />
+                                </div>
+                                {formik.touched.expertise && formik.errors.expertise && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold">{formik.errors.expertise as string}</p>}
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Professional Bio</label>
+                                <textarea
+                                    name="bio"
                                     onChange={formik.handleChange}
                                     onBlur={formik.handleBlur}
-                                    value={formik.values.yearsOfExp}
-                                    className={`auth-input px-5 py-4 ${formik.touched.yearsOfExp && formik.errors.yearsOfExp ? 'auth-input-error' : ''}`}
+                                    value={formik.values.bio}
+                                    rows={4}
+                                    className={`auth-input px-5 py-4 min-h-[120px] resize-none ${formik.touched.bio && formik.errors.bio ? 'auth-input-error' : ''}`}
+                                    placeholder="Tell founders about your experience and how you can help..."
                                 />
-                                {formik.touched.yearsOfExp && formik.errors.yearsOfExp && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold">{formik.errors.yearsOfExp}</p>}
+                                {formik.touched.bio && formik.errors.bio && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold">{formik.errors.bio}</p>}
                             </div>
+
                             <div className="space-y-2">
                                 <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Availability</label>
                                 <input

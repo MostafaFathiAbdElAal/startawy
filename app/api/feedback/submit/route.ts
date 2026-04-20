@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await req.json();
+    const category = data.category || 'GENERAL';
 
     if (!data.rating || data.rating < 1 || data.rating > 5) {
       return NextResponse.json({ success: false, error: 'Rating must be between 1 and 5 stars.' }, { status: 400 });
@@ -26,8 +27,10 @@ export async function POST(req: NextRequest) {
         userId: Number(userPayload.id),
         rating: data.rating,
         comment: data.comment.trim(),
+        category: category,
       },
     });
+
 
     return NextResponse.json({ success: true, message: 'Thank you for your feedback! We truly appreciate your support.' }, { status: 201 });
   } catch (error) {

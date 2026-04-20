@@ -35,6 +35,7 @@ export async function GET() {
         duration: true,
         notes: true,
         paymentStatus: true,
+        meetingLink: true,
         founder: {
           select: {
             businessName: true,
@@ -51,19 +52,20 @@ export async function GET() {
           },
         },
       },
-      orderBy: { date: 'desc' },
+      orderBy: { date: "desc" },
     });
 
     // Map data to a clean JSON structure
     const formattedSessions = sessions.map((s) => ({
       id: s.id,
-      founderName: s.founder?.user?.name || 'Unknown',
-      businessName: s.founder?.businessName || 'N/A',
+      founderName: s.founder?.user?.name || "Unknown",
+      businessName: s.founder?.businessName || "N/A",
       date: s.date,
       duration: s.duration,
       notes: s.notes,
       paymentStatus: s.paymentStatus,
       amount: s.payment?.amount ?? 0,
+      meetingLink: s.meetingLink,
     }));
 
     return NextResponse.json(formattedSessions);

@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { BudgetDashboard } from "@/components/analysis/BudgetDashboard";
 import { prisma } from "@/lib/prisma";
+import { BudgetAnalysisDetails } from "@/lib/services/budgetService";
 
 export const metadata: Metadata = {
   title: "Budget Analysis",
@@ -19,12 +20,27 @@ export default async function BudgetAnalysisPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: userPayload.id },
-    include: { founder: true }
+    include: { 
+      founder: {
+        include: {
+          payments: {
+            include: { subscription: true },
+            orderBy: { transDate: 'desc' },
+            take: 1
+          }
+        }
+      } 
+    }
   });
 
   if (!user || user.type !== 'FOUNDER' || !user.founder) {
     return <div className="p-8 text-center text-red-500">Access denied. Founders only.</div>;
   }
+
+  // Subscription Guard: Handled by proxy.ts centrally
+  const latestPayment = user.founder.payments?.[0];
+  const subscription = latestPayment?.subscription;
+  const isPaid = subscription?.status === 'ACTIVE' && new Date() < new Date(subscription.endDate);
 
   // Get the last two analyses to calculate growth
   const budgetAnalyses = await prisma.budgetAnalysis.findMany({
@@ -37,16 +53,17 @@ export default async function BudgetAnalysisPage() {
   const prevAnalysis = budgetAnalyses[1];
 
   // Calculate or mock metrics based on DB state
-  const analysisData = currentAnalysis?.analysisData as any;
+  const analysisData = (currentAnalysis?.analysisData as unknown as BudgetAnalysisDetails) || null;
   const hasData = !!currentAnalysis;
-  
+
   // Real Growth Calculation
   let incomeGrowth = 0;
   let expenseGrowth = 0;
 
   if (currentAnalysis && prevAnalysis) {
     const currentIncome = analysisData?.income || currentAnalysis.totalBudget;
-    const prevIncome = (prevAnalysis?.analysisData as any)?.income || prevAnalysis.totalBudget;
+    const prevAnalysisData = prevAnalysis?.analysisData as unknown as BudgetAnalysisDetails | null;
+    const prevIncome = prevAnalysisData?.income || prevAnalysis.totalBudget;
     const currentExp = currentAnalysis.fixedCost + currentAnalysis.variableCost;
     const prevExp = prevAnalysis.fixedCost + prevAnalysis.variableCost;
 
@@ -55,7 +72,7 @@ export default async function BudgetAnalysisPage() {
   }
 
   const metrics = hasData ? {
-    income: analysisData?.income || currentAnalysis.totalBudget, 
+    income: analysisData?.income || currentAnalysis.totalBudget,
     expenses: currentAnalysis.fixedCost + currentAnalysis.variableCost,
     profit: (analysisData?.income || currentAnalysis.totalBudget) - (currentAnalysis.fixedCost + currentAnalysis.variableCost),
     incomeGrowth: incomeGrowth || 0,
@@ -73,11 +90,15 @@ export default async function BudgetAnalysisPage() {
   const recommendations = hasData ? (analysisData?.recommendations || []) : [];
 
   return (
-    <BudgetDashboard 
+    <BudgetDashboard
       metrics={metrics}
       expenseData={expenseData}
       monthlyData={monthlyData}
       recommendations={recommendations}
+      founderInfo={{
+        name: user.founder.businessName || "N/A",
+        industry: user.founder.businessSector || "N/A",
+      }}
     />
   );
 }

@@ -7,7 +7,7 @@ import { BudgetAIAnalyst } from "@/lib/ai-analyst";
 export async function POST(req: NextRequest) {
   try {
     const auth = await authorizeUser(req, ["FOUNDER"]);
-    if (!auth.authorized) return NextResponse.json({ error: auth.error }, { status: auth.status });
+    if (!auth.authorized || !auth.user) return NextResponse.json({ error: auth.error || "Unauthorized" }, { status: auth.status });
 
     const founder = await UserService.getFounderByUserId(auth.user.id);
     if (!founder) {
@@ -38,8 +38,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, analysis });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Budget API Error:", error);
-    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

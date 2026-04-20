@@ -6,7 +6,7 @@ import { MessageCircle, Clock, User, Send, CheckCircle2, ShieldCheck, Search, Ac
 import { clsx } from 'clsx';
 import { formatChatDate, isSameDay } from '@/lib/utils/date-formatter';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
+const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
 
 interface ChatSession {
   sessionId: string;

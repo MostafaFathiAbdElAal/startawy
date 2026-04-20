@@ -1,10 +1,21 @@
 import { prisma } from '@/lib/prisma';
 
+export type BudgetAnalysisDetails = {
+  income: number;
+  metrics: {
+    incomeGrowth: number;
+    expenseGrowth: number;
+  };
+  recommendations: { title: string; description: string; type: "marketing" | "revenue" | "expense" | "health" }[];
+  expenseBreakdown: { category: string; amount: number; percentage: number }[];
+  monthlyTrend: { month: string; income: number; expenses: number }[];
+};
+
 export interface BudgetAnalysisData {
   fixedCost: number;
   variableCost: number;
   totalBudget: number;
-  analysisData?: any;
+  analysisData?: BudgetAnalysisDetails;
 }
 
 export class BudgetService {

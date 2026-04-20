@@ -33,9 +33,11 @@ import {
 interface SidebarProps {
   userRole?: "FOUNDER" | "CONSULTANT" | "ADMIN";
   isOwner?: boolean;
+  hasPaidPlan?: boolean;
+  hasPremiumPlan?: boolean;
 }
 
-export function Sidebar({ userRole: rawRole = "FOUNDER", isOwner: propIsOwner }: SidebarProps) {
+export function Sidebar({ userRole: rawRole = "FOUNDER", isOwner: propIsOwner, hasPaidPlan = false, hasPremiumPlan = false }: SidebarProps) {
   const userRole = rawRole || "FOUNDER";
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -57,9 +59,9 @@ export function Sidebar({ userRole: rawRole = "FOUNDER", isOwner: propIsOwner }:
 
   const founderMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-    { icon: TrendingUp, label: "Budget Analysis", path: "/budget-analysis" },
+    ...(hasPaidPlan ? [{ icon: TrendingUp, label: "Budget Analysis", path: "/budget-analysis" }] : []),
     { icon: MessageSquare, label: "StartBot", path: "/ai-chatbot" },
-    { icon: FileText, label: "Startawy Library", path: "/startawy-library" },
+    ...(hasPremiumPlan ? [{ icon: FileText, label: "Startawy Library", path: "/startawy-library" }] : []),
     { icon: Calendar, label: "Book Consultant", path: "/book-consultant" },
     { icon: BarChart3, label: "My Sessions", path: "/my-sessions" },
     { icon: Package, label: "My Startawy Plan", path: "/my-plan" },

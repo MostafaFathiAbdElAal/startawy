@@ -16,10 +16,17 @@ export class UserService {
                 transDate: 'desc'
               },
               take: 1
-            }
+            },
+            sessions: true,
+            reports: true,
+            budgetAnalyses: true
           }
         },
-        consultant: true,
+        consultant: {
+          include: {
+            sessions: true
+          }
+        },
         admin: true
       }
     });
@@ -48,11 +55,21 @@ export class UserService {
       data: {
         name: data.name,
         email: data.email,
-        founder: data.businessName ? {
+        phone: data.phone,
+        founder: (data.businessName || data.businessSector || data.foundingDate) ? {
           update: {
             businessName: data.businessName,
             businessSector: data.businessSector,
-            description: data.description
+            foundingDate: data.foundingDate ? new Date(data.foundingDate) : undefined,
+            description: data.description || data.bio
+          }
+        } : undefined,
+        consultant: data.specialization ? {
+          update: {
+            specialization: data.specialization,
+            yearsOfExp: Number(data.yearsOfExp) || 0,
+            sessionRate: Number(data.sessionRate) || 150.0,
+            availability: data.bio || ""
           }
         } : undefined
       }

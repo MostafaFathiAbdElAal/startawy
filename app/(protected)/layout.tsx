@@ -5,14 +5,31 @@ import { getProfileData } from '@/app/actions/user';
 import { redirect } from 'next/navigation';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const profile = await getProfileData();
+  interface ProfileData {
+    user: {
+      id: number;
+      email: string;
+      name: string | null;
+      type: "FOUNDER" | "CONSULTANT" | "ADMIN";
+      image: string | null;
+      isEmailVerified: boolean;
+      isPhoneVerified: boolean;
+      isOwner: boolean;
+      founder?: unknown;
+      consultant?: unknown;
+      admin?: unknown;
+    };
+    hasPaidPlan: boolean;
+    hasPremiumPlan: boolean;
+  }
+
+  const profile = (await getProfileData()) as ProfileData | null;
 
   if (!profile) {
     redirect('/logout');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { user } = profile as { user: any }; // Using any to simplify relation access for validation
+  const { user } = profile;
 
   const isOwner = !!user.isOwner;
 
@@ -21,8 +38,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     const isProfileIncomplete = 
       !user.type || 
       (user.type === 'FOUNDER' && !user.founder) ||
-      (user.type === 'CONSULTANT' && !user.consultant) ||
-      (user.type === 'ADMIN' && !user.admin);
+      (user.type === 'CONSULTANT' && !user.consultant);
 
     if (isProfileIncomplete) {
       console.log(`[LAYOUT] Profile incomplete in DB -> Redirecting to /complete-profile`);
@@ -30,15 +46,23 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     }
   }
 
+  const { hasPaidPlan, hasPremiumPlan } = profile;
+
   return (
     <AuthGuard>
       <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-slate-900">
-        <Sidebar userRole={user.type as "FOUNDER" | "CONSULTANT" | "ADMIN"} isOwner={isOwner} />
+        <Sidebar 
+          userRole={user.type as "FOUNDER" | "CONSULTANT" | "ADMIN"} 
+          isOwner={isOwner} 
+          hasPaidPlan={hasPaidPlan}
+          hasPremiumPlan={hasPremiumPlan}
+        />
         <div className="flex-1 flex flex-col overflow-hidden transition-all duration-200 ease-in-out">
           <TopBar 
             userRole={user.type as "FOUNDER" | "CONSULTANT" | "ADMIN"} 
-            userName={user.name} 
+            userName={user.name ?? undefined} 
             userEmail={user.email}
+            userImage={user.image}
             isVerified={user.isEmailVerified && user.isPhoneVerified}
             isOwner={isOwner}
           />

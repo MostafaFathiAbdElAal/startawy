@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { User, Mail, Smartphone, Briefcase, Save, Loader2, UserCheck } from 'lucide-react';
+import { User, Mail, Smartphone, Briefcase, Save, Loader2, UserCheck, Target } from 'lucide-react';
 import { updateProfile } from '@/app/actions/user';
 import { UserWithRelations } from '@/lib/types/user';
 import { useRouter } from 'next/navigation';
 import DateInput from '@/components/ui/DateInput';
 import { useToast } from '@/components/providers/ToastProvider';
+
+import ProfileImageUpload from '@/components/profile/ProfileImageUpload';
 
 interface ProfileEditFormProps {
   user: UserWithRelations;
@@ -51,12 +53,10 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
     <div
       className="bg-white dark:bg-slate-900 rounded-[32px] p-8 border border-teal-500/30 dark:border-teal-500/20 shadow-xl shadow-teal-500/5 relative"
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 blur-3xl rounded-full" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 blur-3xl rounded-full opacity-60" />
 
-      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-8 flex items-center gap-3">
-        <User className="w-5 h-5 text-teal-500" />
-        Edit Your Profile
-      </h3>
+      {/* Profile Image Section */}
+      <ProfileImageUpload currentImage={user.image} userName={user.name} />
 
       {/* Inline error — displayed from the backend's English error message */}
       {error && (
@@ -133,6 +133,22 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
                   />
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Business Sector / Industry</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Target className="h-5 w-5 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
+                  </div>
+                  <input
+                    name="businessSector"
+                    type="text"
+                    defaultValue={user.founder?.businessSector ?? ''}
+                    placeholder="e.g. Fintech, E-commerce, AI"
+                    className="w-full h-14 pl-12 pr-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all font-semibold text-sm text-slate-900 dark:text-white outline-hidden focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500"
+                  />
+                </div>
+              </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Founding Date</label>
                 <DateInput 
@@ -171,6 +187,20 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
                     name="specialization"
                     type="text"
                     defaultValue={user.consultant?.specialization ?? ''}
+                    className="w-full h-14 pl-12 pr-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all font-semibold text-sm text-slate-900 dark:text-white outline-hidden focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Session Rate ($)</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span className="h-5 w-5 text-slate-400 group-focus-within:text-teal-500 transition-colors font-bold flex items-center justify-center">$</span>
+                  </div>
+                  <input
+                    name="sessionRate"
+                    type="number"
+                    defaultValue={user.consultant?.sessionRate ?? 150}
                     className="w-full h-14 pl-12 pr-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all font-semibold text-sm text-slate-900 dark:text-white outline-hidden focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500"
                   />
                 </div>

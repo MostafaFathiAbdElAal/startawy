@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyAuth } from './lib/auth-utils';
+import { prisma } from './lib/prisma';
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -56,11 +57,20 @@ export async function proxy(request: NextRequest) {
   // 5. Role-Based Access Control (RBAC) - [NEW]
   // Stops Founders from entering Consultant areas & prevents infinite Loops
   if (!isOwner && user && user.role) {
-    const isConsultantRoute = pathname.startsWith('/consultant');
+    const isConsultantPrivateZone = [
+      '/consultant/dashboard',
+      '/consultant/sessions',
+      '/consultant/earnings',
+      '/consultant/clients',
+      '/consultant/availability',
+      '/consultant/follow-up-plans',
+      '/consultant/recommendations'
+    ].some(path => pathname.startsWith(path));
+    
     const isAdminRoute = pathname.startsWith('/admin');
     
-    // If a Founder tries to access Consultant or Admin routes -> Kick to dashboard
-    if (user.role === 'FOUNDER' && (isConsultantRoute || isAdminRoute)) {
+    // If a Founder tries to access Consultant Private areas or Admin routes -> Kick to dashboard
+    if (user.role === 'FOUNDER' && (isConsultantPrivateZone || isAdminRoute)) {
       console.log(`[PROXY] RBAC Violation: FOUNDER on ${pathname} -> Redirecting to /dashboard`);
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
@@ -69,6 +79,53 @@ export async function proxy(request: NextRequest) {
     if (user.role === 'CONSULTANT' && isAdminRoute) {
       console.log(`[PROXY] RBAC Violation: CONSULTANT on ${pathname} -> Redirecting to /dashboard`);
       return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+
+    // 6. Plan-Based Access Control (PBAC) - [NEW]
+    // Restrict Startawy Library to Premium users only
+    if (user.role === 'FOUNDER' && pathname.startsWith('/startawy-library')) {
+      const founder = await prisma.startupFounder.findUnique({
+        where: { userId: user.id },
+        include: { 
+          payments: {
+            include: { subscription: true },
+            orderBy: { transDate: 'desc' },
+            take: 1
+          }
+        }
+      });
+
+      const latestPayment = founder?.payments[0];
+      const subscription = latestPayment?.subscription;
+      const isPremium = (latestPayment?.amount || 0) >= 299 && subscription?.status === 'ACTIVE';
+
+      if (!isPremium) {
+        console.log(`[PROXY] PBAC Violation: NON-PREMIUM on ${pathname} -> Redirecting to /my-plan`);
+        return NextResponse.redirect(new URL('/my-plan', request.url));
+      }
+    }
+
+    // 7. Budget Analysis Access Control - [NEW]
+    if (user.role === 'FOUNDER' && pathname.startsWith('/budget-analysis')) {
+      const founder = await prisma.startupFounder.findUnique({
+        where: { userId: user.id },
+        include: { 
+          payments: {
+            include: { subscription: true },
+            orderBy: { transDate: 'desc' },
+            take: 1
+          }
+        }
+      });
+
+      const latestPayment = founder?.payments[0];
+      const subscription = latestPayment?.subscription;
+      const isPaid = subscription?.status === 'ACTIVE' && new Date() < new Date(subscription.endDate) && (latestPayment?.amount || 0) > 0;
+
+      if (!isPaid) {
+        console.log(`[PROXY] PBAC Violation: NON-PAID on ${pathname} -> Redirecting to /my-plan`);
+        return NextResponse.redirect(new URL('/my-plan', request.url));
+      }
     }
   }
 

@@ -112,6 +112,6 @@ export async function getFounderSessions() {
     consultantName: s.consultant.user.name,
     date: s.date,
     status: s.paymentStatus,
-    meetingLink: s.notes // Temporarily repurposing notes for link if URL model absent
+    meetingLink: s.meetingLink
   }));
 }

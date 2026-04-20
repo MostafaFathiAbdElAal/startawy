@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import GoogleLoginButton from './GoogleLoginButton';
 import PhoneInput from './ui/PhoneInput';
 import DateInput from './ui/DateInput';
+import { useToast } from './providers/ToastProvider';
 
 // Reusable input class builder
 const inputCls = (hasError: boolean) =>
@@ -22,6 +23,7 @@ export default function RegisterForm() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [serverError, setServerError] = useState<string | null>(null);
     const router = useRouter();
+    const { showToast } = useToast();
 
     const formik = useFormik({
         initialValues: {
@@ -53,13 +55,22 @@ export default function RegisterForm() {
                 const result = await response.json();
 
                 if (!response.ok) {
-                    setServerError(result.error || 'Something went wrong');
+                    const errMsg = result.error || 'Something went wrong';
+                    setServerError(errMsg);
+                    showToast({ type: 'error', title: 'Registration Failed', message: errMsg });
                 } else {
+                    showToast({ 
+                        type: 'success', 
+                        title: 'Account Created', 
+                        message: 'Welcome to Startawy! Your account has been created successfully.' 
+                    });
                     router.refresh();
                     router.push('/login?registered=true');
                 }
             } catch (err) {
-                setServerError('Network error. Please try again.');
+                const errMsg = 'Network error. Please try again.';
+                setServerError(errMsg);
+                showToast({ type: 'error', title: 'Error', message: errMsg });
                 console.error(err);
             }
             setSubmitting(false);

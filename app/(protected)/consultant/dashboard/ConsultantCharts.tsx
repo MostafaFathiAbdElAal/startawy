@@ -26,7 +26,7 @@ export function ConsultantCharts({ earningsData }: { earningsData: EarningsData[
               <Tooltip
                 contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#f9fafb' }}
                 itemStyle={{ color: '#f9fafb' }}
-                formatter={(val: any) => `$${Number(val).toFixed(2)}`}
+                formatter={(val: number | string | readonly (string | number)[] | undefined) => `$${Number(Array.isArray(val) ? val[0] : (val || 0)).toFixed(2)}`}
               />
               <Line type="monotone" dataKey="gross" stroke="#14b8a6" strokeWidth={3} name="Gross" dot={{ fill: '#14b8a6', r: 4 }} isAnimationActive={false} />
               <Line type="monotone" dataKey="net" stroke="#3b82f6" strokeWidth={3} name="Net" dot={{ fill: '#3b82f6', r: 4 }} isAnimationActive={false} />
@@ -47,7 +47,7 @@ export function ConsultantCharts({ earningsData }: { earningsData: EarningsData[
               <Tooltip
                 contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#f9fafb' }}
                 itemStyle={{ color: '#f9fafb' }}
-                formatter={(val: any) => `$${Number(val).toFixed(2)}`}
+                formatter={(val: number | string | readonly (string | number)[] | undefined) => `$${Number(Array.isArray(val) ? val[0] : (val || 0)).toFixed(2)}`}
               />
               <Area type="monotone" dataKey="net" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.15} strokeWidth={3} name="Net Earnings" isAnimationActive={false} />
             </AreaChart>

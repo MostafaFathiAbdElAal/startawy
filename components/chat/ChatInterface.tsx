@@ -56,12 +56,27 @@ export function ChatInterface({ initialHistory }: ChatInterfaceProps) {
         }),
       });
 
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "API error");
-      }
-      
       const data = await res.json();
+
+      if (!res.ok) {
+        if (data.error === "Plan Limit Reached") {
+          showToast({
+            type: "warning",
+            title: "Plan Limit Reached",
+            message: data.message || "Please upgrade your plan to continue using AI advisory."
+          });
+          
+          const limitMsg: Message = {
+            id: Date.now() + 1,
+            role: "assistant",
+            content: "✨ You've reached your free plan limit. Please upgrade to a Basic or Premium plan to unlock unlimited financial guidance!",
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, limitMsg]);
+          return;
+        }
+        throw new Error(data.error || "API error");
+      }
       
       const aiResponse: Message = {
         id: Date.now() + 1,
@@ -70,19 +85,19 @@ export function ChatInterface({ initialHistory }: ChatInterfaceProps) {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiResponse]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Chat error:", error);
       
       showToast({
           type: "error",
-          title: "فشل الاتصال بـ StartBot",
-          message: "حدث خطأ أثناء محاولة جلب الرد. يرجى المحاولة مرة أخرى لاحقاً."
+          title: "Connection Failed",
+          message: "An error occurred while fetching the response. Please try again later."
       });
 
       const errorMsg: Message = {
         id: Date.now() + 1,
         role: "assistant",
-        content: "عذراً، أواجه صعوبة في الاتصال حالياً. يرجى المحاولة مرة أخرى لاحقاً.",
+        content: "Sorry, I'm having trouble connecting right now. Please try again later.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMsg]);

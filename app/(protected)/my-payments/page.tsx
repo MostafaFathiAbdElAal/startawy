@@ -47,20 +47,25 @@ export default async function MyPaymentsPage({
   });
 
   const payments = dbPayments.map((p) => {
-    const isPlan = p.paymentType === 'Subscription';
+    const isPlan = p.paymentType === 'Subscription' || p.paymentType?.includes('Plan');
+    const paymentMethodLabel = p.paymentMethod === 'Stripe' ? 'Stripe / Card' : 
+                               p.paymentMethod === 'card' ? 'Visa •••• 4242' : 
+                               'Mobile Billing';
+
     return {
       id: p.id,
       type: isPlan ? "plan" : "session",
-      plan: isPlan ? (p.amount === 299 ? 'Premium Plan' : 'Basic Plan') : null,
+      plan: isPlan ? p.paymentType : null,
       consultant: !isPlan && p.session?.consultant?.user?.name ? p.session.consultant.user.name : "Consultant",
-      sessionType: !isPlan && p.session?.consultant?.specialization ? p.session.consultant.specialization : "Session",
+      sessionType: !isPlan ? `${p.session?.consultant?.specialization || "Consultation"} Session` : "Plan Subscription",
       amount: `$${p.amount.toFixed(2)}`,
       date: new Date(p.transDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
       status: "Completed",
-      paymentMethod: p.paymentMethod === 'card' ? 'Visa •••• 4242' : 'Mobile Billing',
+      paymentMethod: paymentMethodLabel,
       invoice: `INV-${new Date(p.transDate).getFullYear()}-${String(p.id).padStart(3, '0')}`,
     };
   });
+
 
   const filteredPayments = filterType === "all" 
     ? payments 

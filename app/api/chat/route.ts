@@ -40,6 +40,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // --- PLAN LIMIT CHECK (Chapter 3 Compliance) ---
+    // Fetch last payment to determine plan
+    const lastPayment = await prisma.payment.findFirst({
+      where: { founderId: user.founder.id },
+      orderBy: { transDate: 'desc' },
+      include: { subscription: true }
+    });
+
+    const isPaidPlan = lastPayment && lastPayment.subscription && lastPayment.amount >= 99;
+    
+    if (!isPaidPlan) {
+      // Count messages for free trial
+      const messageCount = await prisma.aIChatbot.count({
+        where: { founderId: user.founder.id }
+      });
+
+      const FREE_LIMIT = 10;
+      if (messageCount >= FREE_LIMIT) {
+        return NextResponse.json({ 
+          error: "Plan Limit Reached", 
+          message: "You've reached the free limit of 10 AI interactions. Please upgrade to a Basic or Premium plan for unlimited financial advisory.",
+          limitReached: true
+        }, { status: 403 });
+      }
+    }
+    // -----------------------------------------------
+
     const { message, isSuggestion } = await req.json();
     if (!message) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
@@ -85,11 +112,11 @@ export async function POST(req: NextRequest) {
     const latestAnalysis = user.founder.budgetAnalyses[0];
     let analysisContext = "No budget analysis data available.";
     if (latestAnalysis) {
-      const data = latestAnalysis.analysisData as any;
+      const data = latestAnalysis.analysisData as Record<string, unknown>;
       analysisContext = `LATEST BUDGET: Total:${latestAnalysis.totalBudget}, Fixed:${latestAnalysis.fixedCost}, Variable:${latestAnalysis.variableCost}. Income:${data?.income || "N/A"}`;
     }
 
-    const systemPrompt = `You are StartBot for "${user.founder.businessName}". Provide professional financial advice. CONTEXT: ${analysisContext}`;
+    const systemPrompt = `You are StartBot for "${user.founder.businessName}". Respond in English only. Provide professional financial advice. CONTEXT: ${analysisContext}`;
     const promptWithContext = `INSTRUCTIONS: ${systemPrompt}\n\nUSER: ${message}`;
 
     let aiResponse = "";
@@ -123,8 +150,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ reply: aiResponse });
-  } catch (error: any) {
-    console.error("AI Chat API Error:", error);
-    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+  } catch (error) {
+    const err = error as Error;
+    console.error("AI Chat API Error:", err);
+    return NextResponse.json({ error: err.message || "Internal Server Error" }, { status: 500 });
   }
 }

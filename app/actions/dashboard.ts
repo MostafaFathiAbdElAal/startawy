@@ -44,10 +44,6 @@ export async function getDashboardData() {
     const founderId = userData.founder.id;
 
     // 1. Stats
-    const totalPayments = await prisma.payment.aggregate({
-      where: { founderId },
-      _sum: { amount: true }
-    });
 
     const upcomingSessionsCount = await prisma.session.count({
       where: { founderId, date: { gte: new Date() } }
@@ -103,16 +99,16 @@ export async function getDashboardData() {
       else if (i === 1) prevTotal = amountSpent;
     }
 
-    const growth = prevTotal === 0 ? (currentTotal > 0 ? 100 : 0) : ((currentTotal - prevTotal) / prevTotal) * 100;
+
 
     return {
       user: userData,
       stats: {
-        totalRevenue: totalPayments._sum.amount || 0,
-        monthlyProfit: (budgetAnalyses[0]?.totalBudget || 0), // Mapping budget for founders
-        activeClients: upcomingSessionsCount, // Mapping upcoming sessions as "Active" for founders
+        totalRevenue: 0, // Founders shouldn't see subscription payments as "Revenue"
+        monthlyProfit: budgetAnalyses[0]?.totalBudget || 0,
+        activeClients: upcomingSessionsCount,
         targetAchievement: budgetAnalyses[1] ? ((budgetAnalyses[0].totalBudget / budgetAnalyses[1].totalBudget) * 100) : 100,
-        revenueGrowth: Number(growth.toFixed(1)),
+        revenueGrowth: 0,
         profitGrowth: 0,
         clientsGrowth: upcomingSessionsCount > 0 ? 100 : 0,
         targetGrowth: 0

@@ -10,6 +10,7 @@ export default function FeedbackPage() {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState('');
+  const [category, setCategory] = useState('POSITIVE');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,7 +31,7 @@ export default function FeedbackPage() {
       const response = await fetch('/api/feedback/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating, comment }),
+        body: JSON.stringify({ rating, comment, category }),
       });
       const res = await response.json();
       
@@ -40,14 +41,16 @@ export default function FeedbackPage() {
         showToast({ type: 'success', title: 'Thank You!', message: res.message });
         setRating(0);
         setComment('');
+        setCategory('POSITIVE');
       } else {
         showToast({ type: 'error', title: 'Submission Failed', message: res.error || 'Failed to send feedback.' });
       }
-    } catch (error) {
+    } catch (_error) {
       setIsSubmitting(false);
       showToast({ type: 'error', title: 'Submission Failed', message: 'An unexpected error occurred.' });
     }
   };
+
 
   return (
     <div className="min-h-[calc(100vh-85px)] p-6 md:p-10 bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden">
@@ -108,16 +111,47 @@ export default function FeedbackPage() {
             </div>
           </div>
 
+          {/* Category Section */}
+          <div className="flex flex-col items-center gap-4">
+            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Feedback Type</span>
+            <div className="flex flex-wrap justify-center gap-3">
+              {[
+                { id: 'SUGGESTION', label: 'Suggestion', icon: Sparkles, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                { id: 'COMPLAINT', label: 'Complaint', icon: MessageCircle, color: 'text-red-500', bg: 'bg-red-500/10' },
+                { id: 'POSITIVE', label: 'Positive', icon: Heart, color: 'text-teal-500', bg: 'bg-teal-500/10' },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setCategory(item.id)}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all border ${
+                    category === item.id 
+                      ? `${item.bg} ${item.color} border-${item.color.split('-')[1]}-500/50 shadow-lg shadow-${item.color.split('-')[1]}-500/10 scale-105` 
+                      : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border-transparent hover:border-slate-200 dark:hover:border-slate-700'
+                  }`}
+                >
+                  <item.icon className="w-4 h-4" />
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Comment Section */}
           <div className="space-y-3">
             <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-2">Message</label>
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Tell us what you loved or what we can improve..."
-              className="w-full min-h-[160px] p-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl outline-none focus:border-teal-500/50 focus:ring-4 focus:ring-teal-500/5 transition-all text-slate-900 dark:text-white font-medium resize-none shadow-inner"
+              placeholder={
+                category === 'SUGGESTION' ? "What's your brilliant idea?" :
+                category === 'COMPLAINT' ? "We're sorry to hear this. Tell us what happened..." :
+                "Tell us what you loved or what we can improve..."
+              }
+              className="w-full min-h-[140px] p-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl outline-none focus:border-teal-500/50 focus:ring-4 focus:ring-teal-500/5 transition-all text-slate-900 dark:text-white font-medium resize-none shadow-inner"
             />
           </div>
+
 
           {/* Submit Button */}
           <button

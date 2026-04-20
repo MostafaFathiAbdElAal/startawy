@@ -73,6 +73,12 @@ model Consultant {
   certificate      String?
   specialization   String
   availability     String             @db.Text
+  sessionRate      Float              @default(150.0) // [NEW] Added for Chapter 3 requirements
+  bio              String?            @db.Text        // [NEW] Added for Profile Bio
+  expertise        String?            @db.Text        // [NEW] Added for Skills/Expertise list
+  rating           Float              @default(5.0)   // [NEW] Added for real rating
+  reviewCount      Int                @default(0)     // [NEW] Added for real review count
+  certifications   String?            @db.Text        // [NEW] Semicolon separated list
 
   sessions         Session[]          // Restored name
   recommendations  Recommendation[]   // Added for API
@@ -131,6 +137,7 @@ model Session {
   duration         String
   notes            String?            @db.Text
   paymentStatus    String             @default("PENDING")
+  meetingLink      String?            @db.VarChar(512)
 
   payment          Payment?
 }
@@ -188,8 +195,11 @@ model Feedback {
   user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   rating           Int
   comment          String             @db.Text
+  category         String             @default("GENERAL") // SUGGESTION, COMPLAINT, GENERAL
+  status           String             @default("PENDING")    // PENDING, REVIEWED, ACTION_TAKEN
   createdAt        DateTime           @default(now())
 }
+
 
 model Recommendation {
   id               Int                @id @default(autoincrement())

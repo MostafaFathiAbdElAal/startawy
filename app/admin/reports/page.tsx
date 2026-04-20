@@ -44,8 +44,9 @@ export default function AdminReportsPage() {
       if (type === 'image') setUploadedImage(json.url);
       else setUploadedPdf(json.url);
 
-    } catch (err: any) {
-      setError(`Failed to upload ${type}: ${err.message}`);
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(`Failed to upload ${type}: ${error.message}`);
     } finally {
       setIsUploading(prev => ({ ...prev, [type]: false }));
     }
@@ -81,8 +82,9 @@ export default function AdminReportsPage() {
       setFormData({ title: "", industry: "Fintech", description: "", pages: "" });
       setUploadedImage("");
       setUploadedPdf("");
-    } catch (err: any) {
-      setError(err.message || "Failed to publish report");
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || "Failed to publish report");
     } finally {
       setIsSubmitting(false);
     }
@@ -118,7 +120,7 @@ export default function AdminReportsPage() {
             {success && (
               <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl text-sm border border-green-200 dark:border-green-900/50 flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                Report published to Cloud successfully! It's now live in the Library.
+                Report published to Cloud successfully! It&apos;s now live in the Library.
               </div>
             )}
 
@@ -303,7 +305,7 @@ export default function AdminReportsPage() {
                     <Link className="w-4 h-4" /> Cloud Storage Notice
                 </h4>
                 <p className="text-amber-700 dark:text-amber-500 text-[10px] leading-relaxed">
-                    All reports and images are directly streamed to Cloudinary's secure servers. The database only stores the secure metadata and public links.
+                    All reports and images are directly streamed to Cloudinary&apos;s secure servers. The database only stores the secure metadata and public links.
                 </p>
            </div>
         </div>

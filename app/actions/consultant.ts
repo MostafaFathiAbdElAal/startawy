@@ -258,3 +258,43 @@ export async function updateSessionNotes(sessionId: number, notes: string): Prom
     return { success: false, error: 'Failed to save notes.' };
   }
 }
+
+// ─── Public Consultant Profile (For Founders) ─────────────────────────────────
+
+export async function getPublicConsultantProfile(id: number) {
+  try {
+    const consultant = await prisma.consultant.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+            image: true,
+          }
+        },
+        _count: {
+          select: { sessions: { where: { paymentStatus: 'PAID' } } }
+        }
+      }
+    });
+
+    if (!consultant) return null;
+
+    // Process availability: if it's stored as plain text, we might need to parse it later
+    // but for now we return the whole object safely
+    return {
+      ...consultant,
+      sessionsCompleted: consultant._count.sessions,
+      // Fallbacks for missing data to maintain UI stability
+      rating: consultant.rating ?? 5.0,
+      reviewCount: consultant.reviewCount ?? 0,
+      bio: consultant.bio || "No biography available yet.",
+      expertise: consultant.expertise ? consultant.expertise.split(';') : [],
+      certifications: consultant.certifications ? consultant.certifications.split(';') : [],
+    };
+  } catch (error) {
+    console.error(`[ACTION] Error fetching public consultant profile:`, error);
+    return null;
+  }
+}

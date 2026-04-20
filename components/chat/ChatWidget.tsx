@@ -10,11 +10,10 @@ interface ChatWidgetProps {
   userRole?: string;
   userName?: string;
   isPhoneVerified: boolean;
-  userEmail?: string;
   isOwner?: boolean;
 }
 
-export const ChatWidget = ({ isAuthenticated, userRole, userEmail, userName, isPhoneVerified, isOwner: propIsOwner }: ChatWidgetProps) => {
+export const ChatWidget = ({ isAuthenticated, userRole, userName, isPhoneVerified, isOwner: propIsOwner }: ChatWidgetProps) => {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 

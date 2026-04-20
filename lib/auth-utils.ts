@@ -1,6 +1,5 @@
 import { jwtVerify, SignJWT } from 'jose';
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
 import { prisma } from './prisma';
 
 // Use same secret pattern as proxy.ts
@@ -13,6 +12,25 @@ export interface SessionPayload {
   role: string | null;
   isPhoneVerified: boolean;
   isOwner: boolean;
+}
+
+export interface AuthResult {
+  authorized: boolean;
+  error: string | null;
+  status: number;
+  user: {
+    id: number;
+    email: string;
+    name: string;
+    role: string | null;
+    isOwner: boolean;
+  } | null;
+  id?: number;
+  userId?: number;
+  role?: string | null;
+  email?: string;
+  name?: string;
+  isOwner?: boolean;
 }
 
 export async function verifyAuth(token: string | undefined) {
@@ -36,7 +54,7 @@ export async function verifyAuth(token: string | undefined) {
  * Returns a result that allows both destructuring { error, user } 
  * and direct property access (auth.id, auth.role).
  */
-export async function authorizeUser(request?: any, allowedRoles?: string[]): Promise<any> {
+export async function authorizeUser(_request?: unknown, allowedRoles?: string[]): Promise<AuthResult> {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
   const decoded = await verifyAuth(token);
@@ -129,7 +147,7 @@ export async function createSession(user: { id: number; role?: string | null; ty
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
       }
     });
-  } catch (e) {
+  } catch {
     // Ignore DB session errors
   }
 
@@ -145,7 +163,7 @@ export async function deleteSession() {
       await prisma.accountSession.deleteMany({
         where: { token: { startsWith: token.substring(0, 20) } }
       });
-    } catch (e) {}
+    } catch {}
   }
   
   cookieStore.delete('auth-token');

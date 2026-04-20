@@ -16,7 +16,7 @@ const prismaClientSingleton = () => {
   } as ConstructorParameters<typeof PrismaMariaDb>[0])
   return new PrismaClient({
     adapter,
-    log: ['query'],
+    log: ['query', 'error', 'warn'],
   })
 }
 
@@ -24,9 +24,11 @@ declare global {
   var prisma: undefined | ReturnType<typeof prismaClientSingleton>
 }
 
+// Ensuring we don't create multiple instances in dev
 const prisma = globalThis.prisma ?? prismaClientSingleton()
 
 export default prisma
 export { prisma }
 
 if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma
+

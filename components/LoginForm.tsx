@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import GoogleLoginButton from './GoogleLoginButton';
+import { useToast } from './providers/ToastProvider';
+import { useEffect, useRef } from 'react';
 
 // Reusable input class builder
 const inputCls = (hasError: boolean) =>
@@ -18,6 +20,30 @@ export default function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const registered = searchParams.get('registered');
+    const loggedOut = searchParams.get('loggedOut');
+    const { showToast } = useToast();
+    const hasShownToast = useRef(false);
+
+    // Show toasts based on query params (only once)
+    useEffect(() => {
+        if (hasShownToast.current) return;
+
+        if (registered) {
+            showToast({ 
+                type: 'success', 
+                title: 'Account Created', 
+                message: 'Your account has been created successfully! Please sign in.' 
+            });
+            hasShownToast.current = true;
+        } else if (loggedOut) {
+            showToast({ 
+                type: 'success', 
+                title: 'Logged Out', 
+                message: 'You have been logged out successfully.' 
+            });
+            hasShownToast.current = true;
+        }
+    }, [registered, loggedOut, showToast]);
 
     const formik = useFormik({
         initialValues: {
@@ -37,13 +63,22 @@ export default function LoginForm() {
                 const result = await response.json();
 
                 if (!response.ok) {
-                    setServerError(result.error || 'Invalid credentials');
+                    const errMsg = result.error || 'Invalid credentials';
+                    setServerError(errMsg);
+                    showToast({ type: 'error', title: 'Login Failed', message: errMsg });
                 } else {
+                    showToast({ 
+                        type: 'success', 
+                        title: 'Welcome Back', 
+                        message: `Welcome back, ${result.user?.name || 'User'}!` 
+                    });
                     router.refresh();
                     router.push('/dashboard');
                 }
             } catch {
-                setServerError('Network error. Please try again.');
+                const errMsg = 'Network error. Please try again.';
+                setServerError(errMsg);
+                showToast({ type: 'error', title: 'Error', message: errMsg });
             }
             setSubmitting(false);
         },
@@ -56,11 +91,7 @@ export default function LoginForm() {
                 <p className="text-gray-600 dark:text-gray-400">Sign in to your Startawy account</p>
             </div>
 
-            {registered && !serverError && (
-                <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl border border-green-100 dark:border-green-900/30 text-sm text-center font-medium">
-                    Account created successfully! Please sign in.
-                </div>
-            )}
+            {/* Query-param based messages are now shown via Toasts */}
 
             {serverError && (
                 <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl border border-red-100 dark:border-red-900/30 text-sm text-center font-medium">

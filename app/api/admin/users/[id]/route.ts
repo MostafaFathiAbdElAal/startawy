@@ -16,19 +16,20 @@ export async function PATCH(
     const result = await UserService.updateUserProfile(parseInt(id), body);
 
     return NextResponse.json({ success: true, user: result });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[ADMIN_USER_PATCH_ERROR]", error);
-    return NextResponse.json({ error: error.message || "Failed to update user." }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Failed to update user.";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<NextResponse> {
   try {
-    const { error, user, isOwner } = await authorizeUser(req, ["ADMIN", "SYSTEM_ADMIN"]);
-    if (error) return error;
+    const auth = await authorizeUser(req, ["ADMIN", "SYSTEM_ADMIN"]);
+    if (!auth.authorized) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
     const { id } = await params;
     const targetUserId = parseInt(id);
@@ -40,8 +41,9 @@ export async function DELETE(
     await UserService.deleteUser(targetUserId);
 
     return NextResponse.json({ success: true, message: "User deleted successfully via cascade." });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[ADMIN_USER_DELETE_ERROR]", error);
-    return NextResponse.json({ error: error.message || "Failed to delete user." }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Failed to delete user.";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

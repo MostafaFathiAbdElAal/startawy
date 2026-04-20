@@ -89,4 +89,30 @@ export class ConsultantService {
 
     return Array.from(foundersMap.values());
   }
+
+  /**
+   * Check if a founder has an upcoming PAID session with a specific consultant
+   */
+  static async getUserSessionWithConsultant(founderUserId: number, consultantId: number) {
+    const founder = await prisma.startupFounder.findUnique({
+      where: { userId: founderUserId },
+      select: { id: true }
+    });
+
+    if (!founder) return null;
+
+    return await prisma.session.findFirst({
+      where: {
+        founderId: founder.id,
+        consultantId,
+        paymentStatus: 'PAID',
+        date: {
+          gte: new Date() // Future sessions only
+        }
+      },
+      orderBy: {
+        date: 'asc'
+      }
+    });
+  }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createSession, verifyAuth } from '@/lib/auth-utils';
+import { UserType } from '@prisma/client';
 
 export const runtime = 'nodejs';
 
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
       const updatedUser = await tx.user.update({
         where: { id: userId },
         data: { 
-            type: role as any, // Cast to any to avoid TS mismatch with string
+            type: role as UserType,
             phone: phone
         },
       });
@@ -68,24 +69,36 @@ export async function POST(req: NextRequest) {
             },
           });
         } else if (role === 'CONSULTANT') {
+          const sessionRate = parseFloat(roleData.sessionRate) || 150.0;
+          const expertiseString = Array.isArray(roleData.expertise) 
+            ? roleData.expertise.join(';') 
+            : (roleData.expertise || '');
+
           await tx.consultant.upsert({
             where: { userId: userId },
             update: {
               specialization: roleData.specialization || '',
               yearsOfExp: parseInt(roleData.yearsOfExp) || 0,
               availability: roleData.availability || 'NOT_SPECIFIED',
+              bio: roleData.bio || '',
+              sessionRate: sessionRate,
+              expertise: expertiseString,
             },
             create: {
               userId: userId,
               specialization: roleData.specialization || '',
               yearsOfExp: parseInt(roleData.yearsOfExp) || 0,
               availability: roleData.availability || 'NOT_SPECIFIED',
+              bio: roleData.bio || '',
+              sessionRate: sessionRate,
+              expertise: expertiseString,
             },
           });
         }
-      } catch (dbError: any) {
-        console.error('[API] DB Operation failed during profile completion:', dbError.message);
-        if (dbError.code !== 'P2002') throw dbError;
+      } catch (dbError: unknown) {
+        const errorMsg = dbError instanceof Error ? dbError.message : String(dbError);
+        console.error('[API] DB Operation failed during profile completion:', errorMsg);
+        if (typeof dbError === 'object' && dbError !== null && 'code' in dbError && dbError.code !== 'P2002') throw dbError;
       }
 
       return updatedUser;
@@ -112,14 +125,13 @@ export async function POST(req: NextRequest) {
       },
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Complete Profile Error:', error);
-    // Log Prisma specific errors if applicable
-    if (error.code) console.error('[API] Prisma Error Code:', error.code);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     
     return NextResponse.json({ 
         error: 'Internal Server Error',
-        details: error.message 
+        details: errorMessage 
     }, { status: 500 });
   }
 }

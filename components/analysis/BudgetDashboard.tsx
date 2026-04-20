@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { TrendingUp, TrendingDown, DollarSign, Upload, Sparkles, BarChart3 } from "lucide-react";
+import { useState, useRef } from "react";
+import { TrendingUp, TrendingDown, DollarSign, Upload, Sparkles, BarChart3, FileDown, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -19,30 +19,172 @@ type BudgetDashboardProps = {
     expenseGrowth: number;
   };
   recommendations: { title: string; description: string; type: "marketing" | "revenue" | "expense" | "health" }[];
+  founderInfo: {
+    name: string;
+    industry: string;
+  };
 };
 
-export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendations }: BudgetDashboardProps) {
+export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendations, founderInfo }: BudgetDashboardProps) {
   const router = useRouter();
   const { showToast } = useToast();
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  const chartRef1 = useRef(null);
+  const chartRef2 = useRef(null);
+
+  const generatePDF = async () => {
+    if (!metrics) return;
+    setIsGenerating(true);
+    
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const doc = new jsPDF("p", "mm", "a4");
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      
+      const primaryColor = [46, 189, 166]; // #2ebda6
+      const secondaryColor = [29, 100, 193]; // #1d64c1
+
+      // Top Teal Bar
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.rect(0, 0, pageWidth, 30, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.text("STARTAWY BUDGET REPORT", 12, 20);
+
+      // Info Section
+      doc.setTextColor(80, 80, 80);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("Business:", 12, 45);
+      doc.text("Industry:", 12, 51);
+
+      doc.setFont("helvetica", "normal");
+      doc.text(founderInfo.name, 35, 45);
+      doc.text(founderInfo.industry, 35, 51);
+
+      doc.setFont("helvetica", "normal");
+      const formattedDate = new Date().toLocaleDateString('en-GB'); // dd/mm/yyyy
+      doc.text(`Generated on: ${formattedDate}`, pageWidth - 12, 45, { align: "right" });
+
+      // Table 1: Financial Summary
+      let currentY = 80;
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Financial Summary (Monthly)", 12, currentY);
+      currentY += 6;
+
+      const drawTableRow = (y: number, label: string, value: string, isHeader = false, customColor?: number[]) => {
+        const rowHeight = 10;
+        if (isHeader) {
+          doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+          doc.rect(12, y, pageWidth - 24, rowHeight, "F");
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "bold");
+        } else {
+          doc.setDrawColor(243, 244, 246);
+          doc.line(12, y + rowHeight, pageWidth - 12, y + rowHeight);
+          doc.setTextColor(80, 80, 80);
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "normal");
+        }
+        
+        if (customColor && !isHeader) doc.setTextColor(customColor[0], customColor[1], customColor[2]);
+        
+        doc.text(label, 16, y + 6.5);
+        doc.text(value, pageWidth / 2 + 4, y + 6.5);
+        return rowHeight;
+      };
+
+      currentY += drawTableRow(currentY, "Metric", "Value", true);
+      const profitMargin = metrics.income > 0 ? ((metrics.profit / metrics.income) * 100).toFixed(1) : "0";
+      
+      currentY += drawTableRow(currentY, "Total Revenue", `$${metrics.income.toLocaleString()}`);
+      currentY += drawTableRow(currentY, "Total Expenses", `$${metrics.expenses.toLocaleString()}`);
+      currentY += drawTableRow(currentY, "Net Profit", `$${metrics.profit.toLocaleString()}`);
+      currentY += drawTableRow(currentY, "Profit Margin", `${profitMargin}%`);
+      currentY += drawTableRow(currentY, "Monthly Burn Rate", `$${metrics.expenses.toLocaleString()}`);
+
+      // Table 2: Expense Breakdown
+      currentY += 20;
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Expense Breakdown", 12, currentY);
+      currentY += 6;
+
+      const drawBreakdownRow = (y: number, label: string, value: string, isHeader = false) => {
+        const rowHeight = 10;
+        if (isHeader) {
+          doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+          doc.rect(12, y, pageWidth - 24, rowHeight, "F");
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "bold");
+        } else {
+          doc.setDrawColor(243, 244, 246);
+          doc.line(12, y + rowHeight, pageWidth - 12, y + rowHeight);
+          doc.setTextColor(80, 80, 80);
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "normal");
+        }
+        doc.text(label, 16, y + 6.5);
+        doc.text(value, pageWidth - 16, y + 6.5, { align: "right" });
+        return rowHeight;
+      };
+
+      currentY += drawBreakdownRow(currentY, "Category", "Monthly Amount", true);
+      expenseData.forEach((item) => {
+        currentY += drawBreakdownRow(currentY, item.category, `$${item.amount.toLocaleString()}`);
+      });
+
+      // Total Expenses Row
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.line(12, currentY, pageWidth - 12, currentY);
+      doc.setTextColor(29, 100, 193); // Blue
+      doc.setFont("helvetica", "bold");
+      doc.text("Total Expenses:", pageWidth - 60, currentY + 7, { align: "right" });
+      doc.text(`$${metrics.expenses.toLocaleString()}`, pageWidth - 16, currentY + 7, { align: "right" });
+
+      // Footer
+      doc.setTextColor(180, 180, 180);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text("CONFIDENTIAL - Startawy Internal Report", pageWidth / 2, 285, { align: "center" });
+      doc.text("Page 1 of 1", pageWidth / 2, 290, { align: "center" });
+
+      doc.save(`Startawy_Report_${founderInfo.name.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
+      showToast({ type: "success", title: "Report Generated", message: "PDF report has been created successfully." });
+    } catch (err) {
+      console.error(err);
+      showToast({ type: "error", title: "Generation Failed", message: "Failed to produce the PDF report." });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setIsUploading(true);
-      
       const reader = new FileReader();
       reader.onload = async (event) => {
         const text = event.target?.result as string;
         try {
-          const res = await fetch("/api/budget/analyze", { 
+          const res = await fetch("/api/budget/analyze", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ csvText: text })
           });
-          
+
           if (res.ok) {
             setUploadedFile(file.name);
             showToast({
@@ -78,9 +220,11 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
   return (
     <div className="p-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Budget Analysis</h1>
-        <p className="text-gray-600 dark:text-gray-400">Comprehensive financial insights and AI-powered recommendations</p>
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Budget Analysis</h1>
+          <p className="text-gray-600 dark:text-gray-400">Comprehensive financial insights and AI-powered recommendations</p>
+        </div>
       </div>
 
       {/* Upload Section */}
@@ -94,16 +238,29 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
             <p className="text-teal-100 mb-6 max-w-lg">
               Upload your financial statements or spreadsheets to get AI-powered insights, categorizations, and growth recommendations instantly.
             </p>
-            <label className="inline-flex items-center gap-2 px-6 py-3 bg-white text-teal-600 rounded-xl hover:bg-teal-50 transition-all cursor-pointer font-semibold shadow-lg hover:-translate-y-1">
-              <Upload className={`w-5 h-5 ${isUploading ? 'animate-bounce' : ''}`} />
-              {isUploading ? "Analyzing..." : uploadedFile ? `Updated: ${uploadedFile}` : "Choose File (.csv, .xlsx)"}
-              <input type="file" className="hidden" accept=".csv,.xlsx,.pdf" onChange={handleFileUpload} disabled={isUploading} />
-            </label>
+            <div className="flex flex-wrap items-center gap-4">
+              <label className="inline-flex items-center gap-2 px-6 py-3 bg-white text-teal-600 rounded-xl hover:bg-teal-50 transition-all cursor-pointer font-bold shadow-lg hover:-translate-y-1">
+                <Upload className={`w-5 h-5 ${isUploading ? 'animate-bounce' : ''}`} />
+                {isUploading ? "Analyzing..." : uploadedFile ? `Updated: ${uploadedFile}` : "Choose File (.csv, .xlsx)"}
+                <input type="file" className="hidden" accept=".csv,.xlsx,.pdf" onChange={handleFileUpload} disabled={isUploading} />
+              </label>
+
+              {metrics.income > 0 && (
+                <button 
+                  onClick={generatePDF}
+                  disabled={isGenerating || isUploading}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-linear-to-r from-slate-800 to-slate-900 text-white rounded-xl hover:from-slate-900 hover:to-black transition-all font-bold shadow-xl hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed group"
+                >
+                  {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileDown className="w-5 h-5 group-hover:bounce" />}
+                  {isGenerating ? "Preparing Report..." : "Generate Detailed PDF"}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Key Metrics */}
+      {/* Stats and Charts */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
@@ -142,7 +299,6 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
         </div>
       </div>
 
-      {/* Charts Section */}
       {metrics.income === 0 && metrics.expenses === 0 ? (
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 border border-dashed border-gray-300 dark:border-slate-800 text-center mb-8">
           <div className="w-20 h-20 bg-teal-50 dark:bg-teal-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -150,7 +306,7 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
           </div>
           <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Ready to analyze your first file?</h3>
           <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-8">
-            Upload your financial statements to see real-time income vs expense trends, breakdown by categories, 
+            Upload your financial statements to see real-time income vs expense trends, breakdown by categories,
             and customized AI recommendations.
           </p>
           <label className="inline-flex items-center gap-2 px-8 py-4 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-all cursor-pointer font-bold shadow-xl shadow-teal-500/20">
@@ -161,8 +317,7 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Income vs Expenses Bar Chart */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800">
+          <div ref={chartRef1} className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Income vs Expenses (6 Months)</h3>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -170,7 +325,7 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                   <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `$${Math.round(val / 1000)}k`} />
-                  <Tooltip 
+                  <Tooltip
                     cursor={{ fill: 'rgba(20, 184, 166, 0.05)' }}
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
@@ -204,8 +359,7 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
             </div>
           </div>
 
-          {/* Expense Breakdown Pie Chart */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800">
+          <div ref={chartRef2} className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Expense Breakdown</h3>
             <div className="h-[300px] w-full relative">
               <ResponsiveContainer width="100%" height="100%">
@@ -223,38 +377,31 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
                     onMouseLeave={() => setActiveIndex(null)}
                   >
                     {expenseData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={COLORS[index % COLORS.length]} 
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
                         style={{ outline: activeIndex === index ? 'none' : 'none', opacity: activeIndex === null || activeIndex === index ? 1 : 0.6 }}
-                        className="transition-opacity duration-300 cursor-pointer"
                       />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    content={() => null} // Correct way to hide default tooltip without causing React errors
-                  />
+                  <Tooltip content={() => null} />
                 </PieChart>
               </ResponsiveContainer>
-              {/* Center Text for Donut - Dynamic content */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-all duration-300">
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 {activeIndex !== null && expenseData[activeIndex] ? (
                   <>
-                    <span className="text-xs font-black text-teal-600 dark:text-teal-400 uppercase tracking-widest mb-1 animate-in fade-in slide-in-from-bottom-2">
+                    <span className="text-xs font-black text-teal-600 dark:text-teal-400 uppercase tracking-widest mb-1">
                       {expenseData[activeIndex].category}
                     </span>
-                    <span className="text-2xl font-black text-gray-900 dark:text-white animate-in zoom-in-95 duration-300">
-                      ${expenseData[activeIndex].amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
-                    <span className="text-[10px] font-bold text-gray-400 mt-1">
-                      {expenseData[activeIndex].percentage}% of budget
+                    <span className="text-2xl font-black text-gray-900 dark:text-white">
+                      ${expenseData[activeIndex].amount.toLocaleString()}
                     </span>
                   </>
                 ) : (
                   <>
                     <span className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Total Expenses</span>
                     <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                      ${metrics.expenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ${metrics.expenses.toLocaleString()}
                     </span>
                   </>
                 )}
@@ -264,59 +411,42 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
         </div>
       )}
 
-      {/* AI Recommendations */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 overflow-hidden">
-        <div className="p-8 border-b border-gray-200 dark:border-slate-800 bg-gradient-to-r from-purple-50 to-white dark:from-purple-900/10 dark:to-slate-900">
+      {/* Strategic Management Recommendations */}
+      <div className="mt-12 bg-white dark:bg-slate-900 rounded-[32px] shadow-xl border border-gray-100 dark:border-slate-800 overflow-hidden">
+        <div className="p-8 border-b border-gray-100 dark:border-slate-800 bg-linear-to-r from-slate-50 to-white dark:from-slate-900/50 dark:to-slate-900">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+            <div className="w-12 h-12 bg-teal-500 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/20">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">AI-Powered Recommendations</h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Based on your recent financial data analysis and local market trends</p>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Strategic Recommendations</h2>
+              <p className="text-slate-500 dark:text-gray-400 text-sm font-medium">Data-driven actions optimized for your current fiscal month.</p>
             </div>
           </div>
         </div>
 
         <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {(recommendations.length > 0 ? recommendations : [
-            {
-              title: "Optimize Marketing Spend",
-              description: `Your marketing expenses are significant. Consider reallocating 10% to digital 
-              channels with higher ROI based on industry benchmarks.`,
-              type: "marketing" as const
-            },
-            {
-              title: "Revenue Growth Opportunity",
-              description: `Your revenue has grown ${metrics.incomeGrowth}% this month. Maintain this momentum by investing in customer 
-              retention programs.`,
-              type: "revenue" as const
-            },
-            {
-              title: "Expense Trend Alert",
-              description: `Operational expenses increased by ${metrics.expenseGrowth}% last month. Review vendor contracts before the quarter ends.`,
-              type: "expense" as const
-            },
-            {
-              title: "Cash Flow Health is Strong",
-              description: `Your profit margin is healthy at ${Math.round((metrics.profit / metrics.income) * 100)}%. Consider setting aside reserves.`,
-              type: "health" as const
-            }
-          ]).map((rec, idx) => {
-            const colors = {
-              marketing: "bg-teal-50/50 dark:bg-teal-900/10 border-teal-100 dark:border-teal-900/30 border-l-teal-500",
-              revenue: "bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30 border-l-blue-500",
-              expense: "bg-orange-50/50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-900/30 border-l-orange-500",
-              health: "bg-green-50/50 dark:bg-green-900/10 border-green-100 dark:border-green-900/30 border-l-green-500"
+          {(recommendations.length > 0 ? recommendations : []).map((rec, idx) => {
+            const themes = {
+              marketing: { color: "teal", icon: <TrendingUp className="w-5 h-5" />, bg: "bg-teal-50/30", darkBg: "dark:bg-teal-900/10", border: "border-teal-100", darkBorder: "dark:border-teal-900/30", text: "text-teal-600" },
+              revenue: { color: "blue", icon: <DollarSign className="w-5 h-5" />, bg: "bg-blue-50/30", darkBg: "dark:bg-blue-900/10", border: "border-blue-100", darkBorder: "dark:border-blue-900/30", text: "text-blue-600" },
+              expense: { color: "orange", icon: <TrendingDown className="w-5 h-5" />, bg: "bg-orange-50/30", darkBg: "dark:bg-orange-900/10", border: "border-orange-100", darkBorder: "dark:border-orange-900/30", text: "text-orange-600" },
+              health: { color: "emerald", icon: <Sparkles className="w-5 h-5" />, bg: "bg-emerald-50/30", darkBg: "dark:bg-emerald-900/10", border: "border-emerald-100", darkBorder: "dark:border-emerald-900/30", text: "text-emerald-600" }
             };
-            const icons = { marketing: "💡", revenue: "📊", expense: "⚠️", health: "✅" };
-            
+            const theme = themes[rec.type] || themes.marketing;
+
             return (
-              <div key={idx} className={`${colors[rec.type]} border p-6 rounded-2xl relative overflow-hidden border-l-4 transition-colors`}>
-                <h4 className="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="text-xl">{icons[rec.type]}</span> {rec.title}
-                </h4>
-                <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
+              <div 
+                key={idx} 
+                className={`p-6 rounded-2xl border ${theme.border} ${theme.darkBorder} ${theme.bg} ${theme.darkBg} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group`}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`p-2 rounded-lg ${theme.bg} ${theme.text} border ${theme.border} ${theme.darkBorder}`}>
+                    {theme.icon}
+                  </div>
+                  <h4 className="font-bold text-slate-900 dark:text-white">{rec.title}</h4>
+                </div>
+                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed font-medium">
                   {rec.description}
                 </p>
               </div>

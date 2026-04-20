@@ -18,11 +18,34 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-02-25.clover",
 });
 
+import { Suspense } from "react";
+import { MyPlanSkeleton } from "@/components/plans/MyPlanSkeleton";
+
 export default async function MyPlanPage({ 
   searchParams 
 }: { 
   searchParams: Promise<{ [key: string]: string | string[] | undefined }> 
 }) {
+  return (
+    <div className="p-8">
+      {/* Toast Notifier for Payment Success */}
+      <PaymentSuccessToast />
+
+      {/* Header - Renders immediately */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Startawy Plan</h1>
+        <p className="text-gray-600 dark:text-gray-400">Manage your subscription and explore upgrade options</p>
+      </div>
+
+      {/* Main Content with Suspense and Skeleton */}
+      <Suspense fallback={<MyPlanSkeleton />}>
+        <PlanContent searchParams={searchParams} />
+      </Suspense>
+    </div>
+  );
+}
+
+async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
   const userPayload = await verifyAuth(token);
@@ -71,8 +94,16 @@ export default async function MyPlanPage({
   });
 
   const subscription = latestPayment?.subscription;
-  const planName = subscription?.trialType === 'TRIAL' ? 'Free Trial' : (latestPayment?.amount === 99 ? 'Basic' : 'Premium');
   const isActive = subscription?.status === 'ACTIVE' && new Date() < new Date(subscription.endDate);
+  
+  // Standardized plan name logic
+  const planName = (() => {
+    if (!isActive || (latestPayment?.amount || 0) === 0) return 'Free Trial';
+    if ((latestPayment?.amount || 0) >= 299) return 'Premium';
+    if ((latestPayment?.amount || 0) === 99) return 'Basic';
+    return 'Free Trial';
+  })();
+
 
   const defaultPlans = [
     {
@@ -133,16 +164,7 @@ export default async function MyPlanPage({
   const currentPlanDetails = defaultPlans.find(p => p.isCurrent) || defaultPlans[0];
 
   return (
-    <div className="p-8">
-      {/* Toast Notifier for Payment Success */}
-      <PaymentSuccessToast />
-
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Startawy Plan</h1>
-        <p className="text-gray-600 dark:text-gray-400">Manage your subscription and explore upgrade options</p>
-      </div>
-
+    <>
       {/* Current Plan Card */}
       <div className="bg-linear-to-br from-teal-500 to-teal-600 rounded-2xl shadow-lg p-8 text-white mb-8">
         <div className="flex items-start justify-between mb-6">
@@ -285,6 +307,6 @@ export default async function MyPlanPage({
           })}
         </div>
       </div>
-    </div>
+    </>
   );
 }

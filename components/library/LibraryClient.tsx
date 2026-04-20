@@ -55,7 +55,7 @@ export function LibraryClient({ reports, featuredReport, categories, userPlan, u
         title: "Download Started",
         message: "Your report is being downloaded securely.",
       });
-    } catch (error) {
+    } catch {
         showToast({
             type: "error",
             title: "Download Failed",
@@ -320,7 +320,7 @@ export function LibraryClient({ reports, featuredReport, categories, userPlan, u
                     Extended Preview Summary
                  </h4>
                  <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed italic">
-                    "This report provides an exhaustive deep dive into the {previewReport.category} sector during early 2026. Key coverage includes emerging trends, market disruption vectors, and strategic scaling frameworks tailored for startups looking to dominate the digital landscape. Note: Standard users can only view this summary. Upgrade to Premium for the full 50+ page PDF analysis."
+                    &quot;This report provides an exhaustive deep dive into the {previewReport.category} sector during early 2026. Key coverage includes emerging trends, market disruption vectors, and strategic scaling frameworks tailored for startups looking to dominate the digital landscape. Note: Standard users can only view this summary. Upgrade to Premium for the full 50+ page PDF analysis.&quot;
                  </p>
               </div>
 

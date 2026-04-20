@@ -4,10 +4,9 @@ import Image from 'next/image';
 interface BrandLogoProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg';
-  textClassName?: string;
 }
 
-export default function BrandLogo({ className = '', size = 'md', textClassName = '' }: BrandLogoProps) {
+export default function BrandLogo({ className = '', size = 'md' }: BrandLogoProps) {
   const sizeClasses = {
     sm: 'w-10 h-10',
     md: 'w-14 h-14',

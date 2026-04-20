@@ -1,15 +1,16 @@
 'use client';
 
-import React from 'react';
 import { ShieldCheck, AlertCircle } from 'lucide-react';
+import Image from 'next/image';
 
 interface UserAvatarProps {
   name?: string;
+  image?: string | null;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   isVerified?: boolean;
 }
 
-export default function UserAvatar({ name = 'User', size = 'md', isVerified = false }: UserAvatarProps) {
+export default function UserAvatar({ name = 'User', image, size = 'md', isVerified = false }: UserAvatarProps) {
   // Extract initials (First part + Last part)
   const getInitials = (fullName: string) => {
     const parts = fullName.trim().split(/\s+/);
@@ -19,6 +20,9 @@ export default function UserAvatar({ name = 'User', size = 'md', isVerified = fa
   };
 
   const initials = getInitials(name);
+  
+  // Safety check: Don't render Google images (redundant filter)
+  const finalImage = image?.includes('googleusercontent') ? null : image;
 
   // Size mappings
   const sizes = {
@@ -26,6 +30,14 @@ export default function UserAvatar({ name = 'User', size = 'md', isVerified = fa
     md: 'w-12 h-12 text-base',
     lg: 'w-24 h-24 text-2xl',
     xl: 'w-32 h-32 text-3xl',
+  };
+
+  // Pixel size mappings for Next.js Image
+  const pixelSizes = {
+    sm: 40,
+    md: 48,
+    lg: 96,
+    xl: 128,
   };
 
   // Dot size mappings
@@ -46,8 +58,22 @@ export default function UserAvatar({ name = 'User', size = 'md', isVerified = fa
 
   return (
     <div className="relative inline-block">
-      <div className={`${sizes[size]} rounded-full bg-linear-to-br from-violet-500 via-purple-600 to-indigo-600 flex items-center justify-center text-white font-black shadow-xl shadow-purple-500/20 border-2 border-white dark:border-slate-900 overflow-hidden`}>
-        {initials}
+      <div className={`${sizes[size]} rounded-full flex items-center justify-center text-white font-black border-2 border-white dark:border-slate-900 overflow-hidden relative ${
+        !finalImage 
+          ? 'bg-linear-to-br from-violet-500 via-purple-600 to-indigo-600 shadow-xl shadow-purple-500/20' 
+          : 'bg-transparent shadow-md'
+      }`}>
+        {finalImage ? (
+          <Image
+            src={finalImage}
+            alt={name}
+            width={pixelSizes[size]}
+            height={pixelSizes[size]}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          initials
+        )}
       </div>
       
       {/* Status/Verification Dot in Top Right */}

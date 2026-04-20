@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OAuth2Client } from 'google-auth-library';
 import { prisma } from '@/lib/prisma';
-import { SignJWT } from 'jose';
 import { createSession } from '@/lib/auth-utils';
 
 const client = new OAuth2Client(
@@ -41,7 +40,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid Google Token' }, { status: 401 });
     }
 
-    const { email, name, sub: googleId, picture: image } = payload;
+    const { email, name, sub: googleId } = payload;
 
     // 2. Find or Create User
     let user = await prisma.user.findUnique({
@@ -63,7 +62,6 @@ export async function POST(req: NextRequest) {
           where: { id: user.id },
           data: { 
             googleId: googleId, 
-            image: image || user.image,
             isEmailVerified: true // Account linked via Google is verified
           },
         });
@@ -78,7 +76,6 @@ export async function POST(req: NextRequest) {
           email: email,
           name: name || 'Google User',
           googleId: googleId,
-          image: image,
           phone: extraData?.phone,
           type: userType,
           isEmailVerified: true, // Google email is inherently verified

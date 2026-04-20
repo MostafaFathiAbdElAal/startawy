@@ -73,7 +73,7 @@ export default async function DashboardPage() {
             {renderIndicator(stats.revenueGrowth)}
           </div>
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">${stats.totalRevenue.toLocaleString()}</h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">{user.type === 'CONSULTANT' ? 'Total Earnings' : 'Total Revenue'}</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">{user.type === 'CONSULTANT' ? 'Total Earnings' : 'Business Revenue'}</p>
         </div>
 
         {/* Monthly Profit */}
@@ -87,7 +87,7 @@ export default async function DashboardPage() {
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
             {user.type === 'CONSULTANT' ? stats.monthlyProfit : `$${stats.monthlyProfit.toLocaleString()}`}
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">{user.type === 'CONSULTANT' ? 'Sessions Completed' : 'Monthly Profit'}</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">{user.type === 'CONSULTANT' ? 'Sessions Completed' : 'Operating Budget'}</p>
         </div>
 
         {/* Active Clients */}
@@ -99,7 +99,7 @@ export default async function DashboardPage() {
             {renderIndicator(stats.clientsGrowth)}
           </div>
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.activeClients}</h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">{user.type === 'CONSULTANT' ? 'Active Founders' : 'Active Clients'}</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">{user.type === 'CONSULTANT' ? 'Active Founders' : 'Scheduled Sessions'}</p>
         </div>
 
         {/* Growth Rate */}

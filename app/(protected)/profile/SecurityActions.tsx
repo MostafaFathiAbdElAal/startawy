@@ -23,7 +23,7 @@ interface WhatsAppMessage {
 
 export default function SecurityActions({ user: initialUser }: SecurityActionsProps) {
   const router = useRouter();
-  const { socket, botStatus, otpEvent } = useSocket('http://localhost:3001');
+  const { socket, botStatus, otpEvent } = useSocket(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001');
   const { showToast } = useToast();
   const [user, setUser] = useState(initialUser);
   const [showOtpView, setShowOtpView] = useState(false);
@@ -244,11 +244,10 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
         {/* Real-time Bot Status Indicator */}
         {!!botStatus && !user.isPhoneVerified && (
           <div className="md:col-span-2 mb-2">
-            <div className={`flex items-center gap-3 p-4 rounded-2xl border transition-all duration-500 ${
-              botStatus.ready 
-                ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30' 
+            <div className={`flex items-center gap-3 p-4 rounded-2xl border transition-all duration-500 ${botStatus.ready
+                ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30'
                 : 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30'
-            }`}>
+              }`}>
               <div className={`w-3 h-3 rounded-full ${botStatus.ready ? 'bg-emerald-500 animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.6)]' : 'bg-amber-500'}`} />
               <div className="flex-1">
                 <p className={`text-[11px] font-black uppercase tracking-widest ${botStatus.ready ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
@@ -282,7 +281,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span> Identity Validated
             </div>
           ) : (
-             <div className="mt-auto">
+            <div className="mt-auto">
               <GoogleLoginButton mode="login" />
             </div>
           )}
@@ -299,7 +298,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Phone Number</span>
             {!user.isPhoneVerified && (
-              <button 
+              <button
                 onClick={() => router.push('?edit=true')}
                 className="text-[10px] font-bold text-teal-500 hover:text-teal-600 underline uppercase tracking-tighter"
               >
@@ -334,7 +333,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
       <div className="mt-10 pt-10 border-t border-slate-100 dark:border-slate-800 relative">
         <AnimatePresence>
           {isSwitching && (
-            <motion.div 
+            <motion.div
               initial={{ width: "0%" }}
               animate={{ width: "100%" }}
               exit={{ opacity: 0 }}
@@ -374,12 +373,12 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                 <form onSubmit={handleChangePassword} className="space-y-6">
                   <div className="relative">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Current Password</label>
-                    <input type={showPass ? "text" : "password"} required autoComplete="new-password" value={passForm.current} onChange={(e) => setPassForm({...passForm, current: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-teal-500/50 transition-all text-sm font-medium dark:text-white" placeholder="••••••••" />
+                    <input type={showPass ? "text" : "password"} required autoComplete="new-password" value={passForm.current} onChange={(e) => setPassForm({ ...passForm, current: e.target.value })} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-teal-500/50 transition-all text-sm font-medium dark:text-white" placeholder="••••••••" />
                     <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 bottom-4 p-1 text-slate-400 hover:text-teal-500">{showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
                   </div>
                   <div className="relative">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">New Password</label>
-                    <input type={showPassNew ? "text" : "password"} required minLength={8} autoComplete="new-password" value={passForm.next} onChange={(e) => setPassForm({...passForm, next: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-teal-500/50 transition-all text-sm font-medium dark:text-white" placeholder="Write your new password" />
+                    <input type={showPassNew ? "text" : "password"} required minLength={8} autoComplete="new-password" value={passForm.next} onChange={(e) => setPassForm({ ...passForm, next: e.target.value })} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-teal-500/50 transition-all text-sm font-medium dark:text-white" placeholder="Write your new password" />
                     <button type="button" onClick={() => setShowPassNew(!showPassNew)} className="absolute right-4 bottom-4 p-1 text-slate-400 hover:text-teal-500">{showPassNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
                     <div className="mt-4 grid grid-cols-2 gap-3 px-1">
                       {[{ key: 'length', label: '8+ Characters' }, { key: 'upper', label: 'Upper Case' }, { key: 'lower', label: 'Lower Case' }, { key: 'special', label: 'Number/Special' }].map((item) => (
@@ -392,7 +391,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                   </div>
                   <div className="relative">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Confirm New Password</label>
-                    <input type={showConfirmPass ? "text" : "password"} required autoComplete="new-password" value={passForm.confirm} onChange={(e) => setPassForm({...passForm, confirm: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-teal-500/50 transition-all text-sm font-medium dark:text-white" placeholder="Repeat your new password" />
+                    <input type={showConfirmPass ? "text" : "password"} required autoComplete="new-password" value={passForm.confirm} onChange={(e) => setPassForm({ ...passForm, confirm: e.target.value })} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-teal-500/50 transition-all text-sm font-medium dark:text-white" placeholder="Repeat your new password" />
                     <button type="button" onClick={() => setShowConfirmPass(!showConfirmPass)} className="absolute right-4 bottom-4 p-1 text-slate-400 hover:text-teal-500">{showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
                   </div>
                   <button type="submit" disabled={passLoading || !isPassValid || passForm.next !== passForm.confirm} className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[20px] font-black hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-3">
@@ -433,7 +432,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white">Verify Phone</h3>
                 </div>
                 <div className="mb-0 p-6 bg-teal-50/50 dark:bg-teal-900/10 rounded-[28px] border border-teal-100 dark:border-teal-900/30 text-center relative overflow-hidden">
-                   <div className="relative z-10 flex flex-col items-center">
+                  <div className="relative z-10 flex flex-col items-center">
                     <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-sm border border-teal-100 dark:border-teal-800 mb-4 text-teal-600"><Smartphone className="w-8 h-8" /></div>
                     <h4 className="text-sm font-black text-slate-900 dark:text-white mb-1">Check your WhatsApp</h4>
                     <p className="text-[11px] font-medium text-slate-500 max-w-[200px]">We&apos;ve sent a 6-digit secure code to your number.</p>
@@ -474,7 +473,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                       </div>
                     </button>
                   )}
-                  
+
                   <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between p-5 bg-white dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-teal-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all group hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none">
                     <div className="flex items-center gap-5 w-full">
                       <div className="w-14 h-14 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center border border-slate-100 dark:border-slate-800 shadow-xs text-slate-500 group-hover:text-teal-500 transition-all group-hover:rotate-12 group-hover:scale-110">

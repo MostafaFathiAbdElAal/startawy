@@ -26,6 +26,7 @@ export default function ProfileHeader({ user, isEditing }: ProfileHeaderProps) {
             <div className="relative">
               <UserAvatar 
                 name={user.name || 'User'} 
+                image={user.image}
                 size="xl" 
                 isVerified={isFullyVerified} 
               />

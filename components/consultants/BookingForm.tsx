@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar, Clock, FileText } from "lucide-react";
+import { useToast } from "@/components/providers/ToastProvider";
 
 type ConsultantProps = {
   id: number;
@@ -17,19 +18,18 @@ type ConsultantProps = {
 
 export function BookingForm({ consultant }: { consultant: ConsultantProps }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [notes, setNotes] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const availableDates = [
-    "2026-03-10",
-    "2026-03-11",
-    "2026-03-12",
-    "2026-03-13",
-    "2026-03-14",
-    "2026-03-17",
-    "2026-03-18",
-  ];
+  // Generate dynamic available dates for the next 7 days starting from tomorrow
+  const availableDates = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i + 1);
+    return d.toISOString().split('T')[0];
+  });
 
   const availableTimes = [
     "09:00 AM",
@@ -41,19 +41,43 @@ export function BookingForm({ consultant }: { consultant: ConsultantProps }) {
     "04:00 PM",
   ];
 
-  const handleBookSession = () => {
-    // In a real app we'd save the session via a server action or API route.
-    // For now we navigate to the payment page.
-    // Next.js App Router doesn't support complex state in router.push like React Router.
-    // We typically use URL params or a state management store (like Zustand) for checkout flows.
-    const searchParams = new URLSearchParams({
-      consultantId: consultant.id.toString(),
-      date: selectedDate,
-      time: selectedTime,
-      amount: consultant.hourlyRate.toString(),
-      returnTo: "/my-sessions",
-    });
-    router.push(`/payment?${searchParams.toString()}`);
+  const handleBookSession = async () => {
+    if (!selectedDate || !selectedTime) return;
+
+    setIsProcessing(true);
+    try {
+      const response = await fetch('/api/payments/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: consultant.hourlyRate,
+          itemName: `Session with ${consultant.name}`,
+          returnTo: "/my-sessions",
+          metadata: {
+            type: 'consultation',
+            consultantId: consultant.id,
+            date: selectedDate,
+            time: selectedTime,
+            notes: notes
+          }
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to initiate booking");
+      
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("[BOOKING_ERROR]", error);
+      setIsProcessing(false);
+      showToast({
+        type: "error",
+        title: "Booking Failed",
+        message: error.message || "Something went wrong while initiating your booking."
+      });
+    }
   };
 
   return (
@@ -83,6 +107,7 @@ export function BookingForm({ consultant }: { consultant: ConsultantProps }) {
               return (
                 <button
                   key={date}
+                  type="button"
                   onClick={() => setSelectedDate(date)}
                   className={`p-4 border-2 rounded-lg transition-all ${
                     selectedDate === date
@@ -115,6 +140,7 @@ export function BookingForm({ consultant }: { consultant: ConsultantProps }) {
             {availableTimes.map((time) => (
               <button
                 key={time}
+                type="button"
                 onClick={() => setSelectedTime(time)}
                 disabled={!selectedDate}
                 className={`py-3 px-4 border-2 rounded-lg font-medium transition-all ${
@@ -178,7 +204,7 @@ export function BookingForm({ consultant }: { consultant: ConsultantProps }) {
                 <strong className="text-gray-900 dark:text-white">Duration:</strong> 1 Hour
               </p>
               <p>
-                <strong className="text-gray-900 dark:text-white">Rate:</strong> ${consultant.hourlyRate}/hour
+                <strong className="text-gray-900 dark:text-white">Rate:</strong> ${consultant.hourlyRate}/session
               </p>
             </div>
           </div>
@@ -188,14 +214,26 @@ export function BookingForm({ consultant }: { consultant: ConsultantProps }) {
         <div className="flex flex-col sm:flex-row gap-4 pt-4">
           <button
             onClick={handleBookSession}
-            disabled={!selectedDate || !selectedTime}
-            className="flex-1 px-8 py-4 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg hover:shadow-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!selectedDate || !selectedTime || isProcessing}
+            className="flex-1 px-8 py-4 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg hover:shadow-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            Confirm Booking
+            {isProcessing ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+              </>
+            ) : (
+              "Confirm & Pay"
+            )}
           </button>
           <button 
-            onClick={() => router.push(`/consultant/${consultant.id}`)}
-            className="px-8 py-4 border-2 border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors font-semibold"
+            type="button"
+            onClick={() => router.back()}
+            disabled={isProcessing}
+            className="px-8 py-4 border-2 border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors font-semibold disabled:opacity-50"
           >
             Cancel
           </button>

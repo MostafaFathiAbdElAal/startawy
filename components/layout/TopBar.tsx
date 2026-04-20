@@ -10,11 +10,12 @@ interface TopBarProps {
   userRole?: "FOUNDER" | "CONSULTANT" | "ADMIN";
   userName?: string;
   userEmail?: string;
+  userImage?: string | null;
   isVerified?: boolean;
   isOwner?: boolean;
 }
 
-export function TopBar({ userRole: rawRole = "FOUNDER", userName = "User", userEmail, isVerified = true, isOwner = false }: TopBarProps) {
+export function TopBar({ userRole: rawRole = "FOUNDER", userName = "User", userEmail, userImage, isVerified = true, isOwner = false }: TopBarProps) {
   const userRole = rawRole || "FOUNDER";
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -78,6 +79,7 @@ export function TopBar({ userRole: rawRole = "FOUNDER", userName = "User", userE
           <LinkNext href="/profile" className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors group">
             <UserAvatar
               name={userName || 'User'}
+              image={userImage}
               size="md"
               isVerified={isVerified}
             />

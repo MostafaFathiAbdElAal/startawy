@@ -133,8 +133,8 @@ export default function ForgotPasswordForm() {
                 <p className="text-gray-600 dark:text-gray-400 mb-8 font-bold">
                     Your password has been successfully updated. You can now log in with your new password.
                 </p>
-                <Link 
-                    href="/login" 
+                <Link
+                    href="/login"
                     className="w-full flex justify-center py-3 px-4 rounded-xl text-white bg-teal-600 hover:bg-teal-700 transition-colors font-bold shadow-lg shadow-teal-500/20"
                 >
                     Back to Login
@@ -149,8 +149,8 @@ export default function ForgotPasswordForm() {
             <div className="flex items-center justify-between mb-12 relative px-4">
                 {/* Connection Lines */}
                 <div className="absolute top-5 left-8 right-8 h-[2px] bg-gray-200 dark:bg-gray-800 -z-10">
-                    <div 
-                        className="h-full bg-teal-600 transition-all duration-500" 
+                    <div
+                        className="h-full bg-teal-600 transition-all duration-500"
                         style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
                     />
                 </div>
@@ -162,20 +162,18 @@ export default function ForgotPasswordForm() {
 
                     return (
                         <div key={idx} className="flex flex-col items-center">
-                            <div 
-                                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-                                    isActive 
-                                        ? 'bg-teal-600 text-white shadow-lg shadow-teal-500/30 scale-110' 
-                                        : isCompleted 
-                                            ? 'bg-teal-500 text-white' 
+                            <div
+                                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${isActive
+                                        ? 'bg-teal-600 text-white shadow-lg shadow-teal-500/30 scale-110'
+                                        : isCompleted
+                                            ? 'bg-teal-500 text-white'
                                             : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-400'
-                                }`}
+                                    }`}
                             >
                                 {isCompleted ? <CheckCircle2 size={20} /> : <Icon size={20} />}
                             </div>
-                            <span className={`text-[10px] uppercase tracking-wider mt-2 font-bold ${
-                                isActive ? 'text-teal-600 dark:text-teal-400' : 'text-gray-400 dark:text-gray-600'
-                            }`}>
+                            <span className={`text-[10px] uppercase tracking-wider mt-2 font-bold ${isActive ? 'text-teal-600 dark:text-teal-400' : 'text-gray-400 dark:text-gray-600'
+                                }`}>
                                 {step.title}
                             </span>
                         </div>
@@ -205,7 +203,7 @@ export default function ForgotPasswordForm() {
                         </div>
                         <div className="auth-field">
                             <label className="auth-label font-bold text-gray-700 dark:text-gray-100">Phone Number</label>
-                            <PhoneInput 
+                            <PhoneInput
                                 value={formik.values.phone}
                                 onChange={(val) => formik.setFieldValue('phone', val)}
                                 error={!!(formik.touched.phone && formik.errors.phone)}
@@ -246,14 +244,14 @@ export default function ForgotPasswordForm() {
                                     <span>{formatTime(timeLeft)}</span>
                                 </div>
                             </div>
-                            
-                            <OTPInput 
+
+                            <OTPInput
                                 value={formik.values.otp}
                                 onChange={handleOTPChange}
                                 length={6}
                                 error={!!(formik.errors.otp)}
                             />
-                            
+
                             {formik.touched.otp && formik.errors.otp && (
                                 <p className="text-red-500 text-xs mt-2 text-center font-bold">{formik.errors.otp}</p>
                             )}
@@ -265,11 +263,10 @@ export default function ForgotPasswordForm() {
                                         type="button"
                                         onClick={handleResendOTP}
                                         disabled={timeLeft > 0 || loading}
-                                        className={`font-black underline transition-colors ${
-                                            timeLeft > 0 
-                                                ? 'text-gray-400 cursor-not-allowed' 
+                                        className={`font-black underline transition-colors ${timeLeft > 0
+                                                ? 'text-gray-400 cursor-not-allowed'
                                                 : 'text-teal-600 hover:text-teal-700 dark:text-teal-400'
-                                        }`}
+                                            }`}
                                     >
                                         Resend now
                                     </button>
@@ -354,8 +351,8 @@ export default function ForgotPasswordForm() {
                 </div>
 
                 <div className="text-center pt-6">
-                    <Link 
-                        href="/login" 
+                    <Link
+                        href="/login"
                         className="text-sm font-bold text-gray-500 hover:text-teal-600 dark:text-gray-400 dark:hover:text-teal-400 transition-colors flex items-center justify-center gap-2"
                     >
                         <ArrowLeft size={14} />
