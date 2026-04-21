@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "@/lib/prisma";
-import fs from "fs";
-import path from "path";
 
 const generateMeetingLink = () => {
   const chars = "abcdefghijklmnopqrstuvwxyz";
@@ -12,9 +10,7 @@ const generateMeetingLink = () => {
 };
 
 function logFulfillment(message: string) {
-  const logPath = path.join(process.cwd(), "fulfillment_debug.log");
-  const timestamp = new Date().toISOString();
-  fs.appendFileSync(logPath, `[${timestamp}] ${message}\n`);
+  console.log(`[FULFILLMENT] ${message}`);
 }
 
 export async function fulfillPayment(session: any) {

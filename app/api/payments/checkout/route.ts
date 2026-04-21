@@ -42,11 +42,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Sanitize origin if it's 0.0.0.0 (happens in dev with -H 0.0.0.0)
-    let origin = req.nextUrl.origin;
-    if (origin.includes("0.0.0.0")) {
-      origin = origin.replace("0.0.0.0", "localhost");
-    }
+    // Dynamically determine the correct origin from the request's Host header.
+    // This correctly handles ALL environments without any hardcoded values:
+    //   - http://localhost:3000       → returns http://localhost:3000
+    //   - http://192.168.1.10:3000   → returns http://192.168.1.10:3000
+    //   - https://your-app.vercel.app → returns https://your-app.vercel.app
+    const host = req.headers.get('host') || 'localhost:3000';
+    const protocol = req.headers.get('x-forwarded-proto') || 'http';
+    const origin = `${protocol}://${host}`;
+
 
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
