@@ -24,16 +24,22 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    // Detect file type to set correct resource_type
+    // PDFs must be uploaded as 'raw', images as 'image'
+    const isPDF = file.type === 'application/pdf' || file.name.endsWith('.pdf');
+    const uploadResourceType = isPDF ? 'raw' : 'image';
+
     // Upload to Cloudinary using a Promise to handle the stream
-    const result = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
+    const result = await new Promise<{ secure_url: string; public_id: string; pages?: number }>((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: "startawy_library",
-          resource_type: "auto", // Automatically detect if image or pdf
+          resource_type: uploadResourceType,
+          pages: true, // Request page count for PDFs
         },
         (error, result) => {
           if (error) reject(error);
-          else resolve(result as { secure_url: string; public_id: string });
+          else resolve(result as { secure_url: string; public_id: string; pages?: number });
         }
       );
       uploadStream.end(buffer);
@@ -42,7 +48,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       url: result.secure_url,
-      public_id: result.public_id
+      public_id: result.public_id,
+      pages: result.pages
     });
 
   } catch (error: unknown) {

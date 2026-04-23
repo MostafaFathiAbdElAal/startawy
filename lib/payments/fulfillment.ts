@@ -156,7 +156,25 @@ export async function fulfillPayment(session: any) {
       // 2. Create Subscription
       const startDate = new Date();
       const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + 1);
+
+      // Fetch package details to get the correct duration
+      const pkg = await prisma.package.findFirst({
+        where: { type: planName }
+      });
+
+      const duration = pkg?.duration || "month";
+
+      if (duration === "month") {
+        endDate.setMonth(endDate.getMonth() + 1);
+      } else if (duration === "year") {
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      } else if (duration === "once" || duration === "forever") {
+        // Effective "Forever" (100 years)
+        endDate.setFullYear(endDate.getFullYear() + 100);
+      } else {
+        // Default fallback
+        endDate.setMonth(endDate.getMonth() + 1);
+      }
 
       await prisma.subscription.create({
         data: {

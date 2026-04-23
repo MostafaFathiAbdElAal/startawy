@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { Users, CheckCircle, Calendar, DollarSign, Plus } from "lucide-react";
+import { Users, CheckCircle, Calendar, DollarSign } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Manage Consultants",
@@ -21,11 +21,14 @@ export default async function ManageConsultantsPage() {
     name: u.name || "Unknown",
     email: u.email,
     specialty: u.consultant?.specialization || "Consulting",
-    status: u.isEmailVerified ? "ACTIVE" : "PENDING",
+    status: u.isSuspended ? "SUSPENDED" : "ACTIVE",
     joinedDate: new Intl.DateTimeFormat('en-GB').format(new Date(u.createdAt)),
     sessions: 0,
     revenue: "$0",
-    rating: 0
+    rating: 0,
+    yearsOfExp: u.consultant?.yearsOfExp || 0,
+    sessionRate: u.consultant?.sessionRate || 150,
+    image: u.image || undefined
   }));
 
   return (

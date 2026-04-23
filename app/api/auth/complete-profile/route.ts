@@ -51,8 +51,8 @@ export async function POST(req: NextRequest) {
 
       try {
         if (role === 'FOUNDER') {
-          const fDate = roleData.foundingDate ? new Date(roleData.foundingDate) : new Date();
-          const validDate = isNaN(fDate.getTime()) ? new Date() : fDate;
+          const foundingDate = roleData.foundingDate ? new Date(roleData.foundingDate) : null;
+          const validDate = foundingDate && !isNaN(foundingDate.getTime()) ? foundingDate : null;
 
           await tx.startupFounder.upsert({
             where: { userId: userId },

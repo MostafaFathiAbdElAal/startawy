@@ -105,61 +105,26 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
   })();
 
 
-  const defaultPlans = [
-    {
-      id: 1,
-      name: "Free Trial",
-      price: "$0",
-      period: "/forever",
-      description: "Perfect for exploring our platform",
-      features: [
-        "Limited access to reports",
-        "Basic AI chatbot access",
-        "Limited consultations",
-        "Community support",
-      ],
-      color: "gray",
-      isCurrent: !isActive || planName === "Free Trial",
-      recommended: false,
-    },
-    {
-      id: 2,
-      name: "Basic",
-      price: "$99",
-      period: "/month",
-      description: "Ideal for growing startups",
-      features: [
-        "Full access to market reports",
-        "Budget analysis tools",
-        "AI advisory chatbot",
-        "Request marketing research template",
-        "Email support",
-        "Monthly financial reviews",
-      ],
-      color: "teal",
-      isCurrent: isActive && planName === "Basic",
-      recommended: false,
-    },
-    {
-      id: 3,
-      name: "Premium",
-      price: "$299",
-      period: "/month",
-      description: "Best for scaling businesses",
-      features: [
-        "All Basic features",
-        "Private consultant sessions",
-        "Financial performance dashboard",
-        "One-year follow-up support",
-        "Dedicated account manager",
-        "24/7 priority support",
-        "Quarterly strategy sessions",
-      ],
-      color: "gold",
-      isCurrent: isActive && planName === "Premium",
-      recommended: true,
-    },
-  ];
+  const dbPackages = await prisma.package.findMany({
+    orderBy: { price: 'asc' }
+  });
+
+  const defaultPlans = dbPackages.map(pkg => {
+    const isPremium = pkg.price >= 299;
+    const isBasic = pkg.price === 99;
+    
+    return {
+      id: pkg.id,
+      name: pkg.type,
+      price: `$${pkg.price}`,
+      period: `/${pkg.duration}`,
+      description: pkg.type === 'Premium' ? "Best for scaling businesses" : (pkg.type === 'Basic' ? "Ideal for growing startups" : "Perfect for exploring our platform"),
+      features: pkg.description.split(',').map(f => f.trim()),
+      color: isPremium ? "gold" : (isBasic ? "teal" : "gray"),
+      isCurrent: isActive ? (planName === pkg.type) : (pkg.price === 0),
+      recommended: isPremium
+    };
+  });
 
   const currentPlanDetails = defaultPlans.find(p => p.isCurrent) || defaultPlans[0];
 

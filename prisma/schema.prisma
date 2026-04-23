@@ -1,3 +1,7 @@
+// generator erd {
+//   provider = "prisma-erd-generator"
+//   output   = "./ERD.svg"
+// }
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -26,6 +30,7 @@ model User {
   phone            String?
   isEmailVerified  Boolean            @default(false) // [NEW] Email verification status
   isPhoneVerified  Boolean            @default(false) // [NEW] Phone verification status
+  isSuspended      Boolean            @default(false) // [NEW] Suspension status
   type             UserType?          // [CHANGE] Optional to allow role selection after Google login
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
@@ -35,6 +40,7 @@ model User {
   consultant       Consultant?
   feedbacks        Feedback[]
   authSessions     AccountSession[]   // Updated relation name
+  reportViews      ReportView[]       // [NEW] Added for tracking unique report views
 }
 
 model Admin {
@@ -176,7 +182,21 @@ model StartawyReport {
   id               Int                @id @default(autoincrement())
   industry         String
   uploadDate       DateTime           @default(now())
-  link             String
+  link             String             @db.Text
+  views            Int                @default(0)
+  uniqueViews      ReportView[]
+}
+
+model ReportView {
+  id               Int                @id @default(autoincrement())
+  reportId         Int
+  userId           Int
+  viewedAt         DateTime           @default(now())
+
+  report           StartawyReport     @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, userId])
 }
 
 model OTP {
@@ -195,8 +215,8 @@ model Feedback {
   user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   rating           Int
   comment          String             @db.Text
-  category         String             @default("GENERAL") // SUGGESTION, COMPLAINT, GENERAL
-  status           String             @default("PENDING")    // PENDING, REVIEWED, ACTION_TAKEN
+  category         String             @default("POSITIVE") // POSITIVE, SUGGESTION, COMPLAINT
+  status           String             @default("PENDING")  // PENDING, REVIEWED, ACTION_TAKEN
   createdAt        DateTime           @default(now())
 }
 

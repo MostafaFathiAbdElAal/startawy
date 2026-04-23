@@ -31,6 +31,22 @@ export async function proxy(request: NextRequest) {
 
   const isOwner = !!user?.isOwner;
 
+  // 1.5 Immediate Suspension Check
+  // Check the DB on every protected request for suspended users
+  if (user && !isHomePage && !pathname.startsWith('/api')) {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { isSuspended: true }
+    });
+    
+    if (dbUser?.isSuspended) {
+      console.log(`[PROXY] Suspended user detected -> Forcing logout and redirecting to /login`);
+      const response = NextResponse.redirect(new URL('/login?suspended=true', request.url));
+      response.cookies.delete('auth-token');
+      return response;
+    }
+  }
+
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forgot-password');
   const isCompleteProfile = pathname.startsWith('/complete-profile');
   if (!user && !isAuthPage) {
@@ -38,10 +54,25 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // 2. If user is logged in and trying to access auth pages -> Dashboard
+  // 2. If user is logged in and trying to access auth pages -> Dashboard based on role
   if (user && isAuthPage) {
-    console.log(`[PROXY] Logged in user on auth page -> Redirecting to /dashboard`);
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    console.log(`[PROXY] Logged in user on auth page -> Redirecting to dashboard`);
+    let target = '/dashboard';
+    if (user.role === 'ADMIN') target = '/admin/dashboard';
+    else if (user.role === 'CONSULTANT') target = '/consultant/dashboard';
+    return NextResponse.redirect(new URL(target, request.url));
+  }
+
+  // 2.5 Ensure users on generic /dashboard are routed correctly based on their role
+  if (user && pathname === '/dashboard') {
+    if (user.role === 'ADMIN') {
+      console.log(`[PROXY] ADMIN on /dashboard -> Redirecting to /admin/dashboard`);
+      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+    }
+    if (user.role === 'CONSULTANT') {
+      console.log(`[PROXY] CONSULTANT on /dashboard -> Redirecting to /consultant/dashboard`);
+      return NextResponse.redirect(new URL('/consultant/dashboard', request.url));
+    }
   }
 
   // 3. Removed: We no longer redirect users away from /complete-profile just because they have a role.
@@ -81,51 +112,17 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
-    // 6. Plan-Based Access Control (PBAC) - [NEW]
-    // Restrict Startawy Library to Premium users only
+    // 6. Plan-Based Access Control (PBAC) - [RELAXED FOR PREVIEWS]
+    // Allow all Founders to enter the library to see previews (Chapter 3 compliance).
+    // Download restrictions are handled in LibraryClient.tsx and /api/reports/download.
     if (user.role === 'FOUNDER' && pathname.startsWith('/startawy-library')) {
-      const founder = await prisma.startupFounder.findUnique({
-        where: { userId: user.id },
-        include: { 
-          payments: {
-            include: { subscription: true },
-            orderBy: { transDate: 'desc' },
-            take: 1
-          }
-        }
-      });
-
-      const latestPayment = founder?.payments[0];
-      const subscription = latestPayment?.subscription;
-      const isPremium = (latestPayment?.amount || 0) >= 299 && subscription?.status === 'ACTIVE';
-
-      if (!isPremium) {
-        console.log(`[PROXY] PBAC Violation: NON-PREMIUM on ${pathname} -> Redirecting to /my-plan`);
-        return NextResponse.redirect(new URL('/my-plan', request.url));
-      }
+      console.log(`[PROXY] Allowing FOUNDER to view Library Previews: ${pathname}`);
     }
 
-    // 7. Budget Analysis Access Control - [NEW]
+    // 7. Budget Analysis Access Control - [RELAXED]
+    // All users (Free, Basic, Premium) get access to budget analysis (Free gets basic version).
     if (user.role === 'FOUNDER' && pathname.startsWith('/budget-analysis')) {
-      const founder = await prisma.startupFounder.findUnique({
-        where: { userId: user.id },
-        include: { 
-          payments: {
-            include: { subscription: true },
-            orderBy: { transDate: 'desc' },
-            take: 1
-          }
-        }
-      });
-
-      const latestPayment = founder?.payments[0];
-      const subscription = latestPayment?.subscription;
-      const isPaid = subscription?.status === 'ACTIVE' && new Date() < new Date(subscription.endDate) && (latestPayment?.amount || 0) > 0;
-
-      if (!isPaid) {
-        console.log(`[PROXY] PBAC Violation: NON-PAID on ${pathname} -> Redirecting to /my-plan`);
-        return NextResponse.redirect(new URL('/my-plan', request.url));
-      }
+        console.log(`[PROXY] Allowing FOUNDER to access Budget Analysis: ${pathname}`);
     }
   }
 

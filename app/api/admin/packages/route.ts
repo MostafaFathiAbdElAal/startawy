@@ -46,6 +46,38 @@ export async function POST(req: Request) {
   }
 }
 
+export async function PATCH(req: Request) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value;
+    const userPayload = await verifyAuth(token);
+
+    if (!userPayload || userPayload.role !== 'ADMIN') {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { id, type, price, duration, description } = body;
+
+    if (!id) return NextResponse.json({ error: "Package ID required" }, { status: 400 });
+
+    const updatedPackage = await prisma.package.update({
+      where: { id: parseInt(id) },
+      data: {
+        type,
+        price: parseFloat(price.toString()),
+        duration,
+        description
+      }
+    });
+
+    return NextResponse.json(updatedPackage);
+  } catch (error) {
+    console.error("Update Error:", error);
+    return NextResponse.json({ error: "Failed to update package" }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: Request) {
     try {
       const { searchParams } = new URL(req.url);

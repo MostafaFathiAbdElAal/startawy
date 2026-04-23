@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { useToast } from './providers/ToastProvider';
+
 interface GoogleLoginButtonProps {
   onBeforeClick?: () => boolean;
   extraData?: Record<string, string | number | boolean | null | undefined>;
@@ -11,6 +13,7 @@ interface GoogleLoginButtonProps {
 
 export default function GoogleLoginButton({ onBeforeClick, extraData, mode = 'login' }: GoogleLoginButtonProps) {
   const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(false);
   const [client, setClient] = useState<{ requestCode: () => void } | null>(null);
@@ -43,6 +46,11 @@ export default function GoogleLoginButton({ onBeforeClick, extraData, mode = 'lo
       const data = await res.json();
 
       if (data.success) {
+        showToast({ 
+          type: 'success', 
+          title: 'Welcome Back', 
+          message: `Welcome back, ${data.user?.name || 'User'}!` 
+        });
         router.refresh();
         if (data.requiresRole) {
           router.push('/complete-profile');
@@ -50,10 +58,14 @@ export default function GoogleLoginButton({ onBeforeClick, extraData, mode = 'lo
           router.push('/dashboard');
         }
       } else {
-        setError(data.error || 'Google login failed');
+        const errMsg = data.error || 'Google login failed';
+        setError(errMsg);
+        showToast({ type: 'error', title: 'Login Error', message: errMsg });
       }
     } catch (err) {
-      setError('Network error during Google login');
+      const errMsg = 'Network error during Google login';
+      setError(errMsg);
+      showToast({ type: 'error', title: 'Error', message: errMsg });
       console.error(err);
     } finally {
       setLoading(false);

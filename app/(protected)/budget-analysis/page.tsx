@@ -40,7 +40,6 @@ export default async function BudgetAnalysisPage() {
   // Subscription Guard: Handled by proxy.ts centrally
   const latestPayment = user.founder.payments?.[0];
   const subscription = latestPayment?.subscription;
-  const isPaid = subscription?.status === 'ACTIVE' && new Date() < new Date(subscription.endDate);
 
   // Get the last two analyses to calculate growth
   const budgetAnalyses = await prisma.budgetAnalysis.findMany({

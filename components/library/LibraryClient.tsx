@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Download, FileText, Calendar, BarChart2, Sparkles, X, Lock } from "lucide-react";
+import { Download, FileText, Calendar, BarChart2, Sparkles, X, Lock, Eye, BookOpen } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useToast } from "@/components/providers/ToastProvider";
 
@@ -15,6 +16,7 @@ type LibraryReport = {
   category: string;
   tags: string[];
   date?: string;
+  pdfUrl?: string;
 };
 
 type LibraryClientProps = {
@@ -22,47 +24,105 @@ type LibraryClientProps = {
   featuredReport: LibraryReport;
   categories: string[];
   userPlan: string;
-  userIndustry: string;
 };
 
-export function LibraryClient({ reports, featuredReport, categories, userPlan, userIndustry }: LibraryClientProps) {
+export function LibraryClient({ reports, featuredReport, categories, userPlan }: LibraryClientProps) {
   const { showToast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState("All Reports");
   const [isDownloading, setIsDownloading] = useState<number | null>(null);
   const [previewReport, setPreviewReport] = useState<LibraryReport | null>(null);
+  const [localReports, setLocalReports] = useState<LibraryReport[]>(reports);
 
   const isPremium = userPlan === "Premium";
+  
+  // Use the latest data from localReports for the featured section if it matches
+  const currentFeatured = localReports.find(r => r.id === featuredReport.id) || featuredReport;
 
   const filteredReports = selectedCategory === "All Reports"
-    ? reports
-    : reports.filter((report) => report.category === selectedCategory);
+    ? localReports
+    : localReports.filter((report) => report.category === selectedCategory);
+
+  const handlePreview = async (report: LibraryReport) => {
+    setPreviewReport(report);
+    
+    // Increment view via API
+    try {
+      const response = await fetch('/api/reports/view', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportId: report.id })
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        // Update local state so the view count reflects immediately
+        setLocalReports(prev => prev.map(r => 
+          r.id === report.id ? { ...r, downloads: data.views } : r
+        ));
+      }
+    } catch (error) {
+      console.error("Failed to track view:", error);
+    }
+  };
 
   const handleDownload = async (id: number) => {
     if (!isPremium) {
       showToast({
         type: "error",
-        title: "Access Denied",
-        message: "Report downloads are exclusive to Premium Plan members. Please upgrade to access full reports.",
+        title: "Premium Required",
+        message: "Unlock Premium to download full reports."
       });
       return;
     }
 
     setIsDownloading(id);
+    
     try {
-      window.location.href = `/api/reports/download?type=library&id=${id}`;
       showToast({
         type: "success",
-        title: "Download Started",
-        message: "Your report is being downloaded securely.",
+        title: "Preparing Download",
+        message: "Fetching your report securely...",
       });
-    } catch {
-        showToast({
-            type: "error",
-            title: "Download Failed",
-            message: "An error occurred while starting your download.",
-        });
-    } finally {
-      setTimeout(() => setIsDownloading(null), 1500);
+
+      // API now proxies the PDF directly — read as blob
+      const response = await fetch(`/api/reports/download?type=library&id=${id}`);
+      
+      if (!response.ok) {
+        // Error responses are JSON
+        const errData = await response.json().catch(() => ({}));
+        if (response.status === 401) throw new Error("Session expired. Please login again.");
+        if (response.status === 403) throw new Error(errData.message || "Premium plan required.");
+        throw new Error(errData.error || "Download failed. Please try again.");
+      }
+
+      // Success — response is the raw PDF binary
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // Get filename from Content-Disposition header if available
+      const disposition = response.headers.get('Content-Disposition');
+      const nameMatch = disposition?.match(/filename="?([^"]+)"?/);
+      const filename = nameMatch?.[1] || `startawy-report-${id}.pdf`;
+
+      // Trigger silent download without leaving the page
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+      
+      setIsDownloading(null);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "An error occurred.";
+      console.error("Download failed:", msg);
+      showToast({
+        type: "error",
+        title: "Download Error",
+        message: msg,
+      });
+      setIsDownloading(null);
     }
   };
 
@@ -93,27 +153,27 @@ export function LibraryClient({ reports, featuredReport, categories, userPlan, u
           <span className="inline-block px-4 py-1 bg-white/20 rounded-full text-sm font-medium mb-4">
             ★ Featured Report
           </span>
-          <h2 className="text-3xl font-bold mb-3">{featuredReport.title}</h2>
+          <h2 className="text-3xl font-bold mb-3">{currentFeatured.title}</h2>
           <p className="text-teal-100 mb-6 max-w-2xl leading-relaxed">
-            {featuredReport.description}
+            {currentFeatured.description}
           </p>
           <div className="flex items-center gap-6 mb-6 text-sm">
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              <span>{featuredReport.date}</span>
+              <span>{currentFeatured.date}</span>
             </div>
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5" />
-              <span>{featuredReport.pages} pages</span>
+              <span>{currentFeatured.pages} pages</span>
             </div>
             <div className="hidden sm:flex items-center gap-2">
               <BarChart2 className="w-5 h-5" />
-              <span>{featuredReport.downloads.toLocaleString()} active readers</span>
+              <span>{currentFeatured?.downloads?.toLocaleString() || 0} views</span>
             </div>
           </div>
           <button 
-            onClick={() => handleDownload(featuredReport.id)}
-            disabled={isDownloading === featuredReport.id}
+            onClick={() => handleDownload(currentFeatured.id)}
+            disabled={isDownloading === currentFeatured.id}
             className={`px-8 py-3 bg-white text-teal-600 rounded-lg transition-all shadow-lg font-bold flex items-center gap-2 disabled:opacity-75 ${
               !isPremium ? "opacity-90" : "hover:bg-gray-50 active:scale-95"
             }`}
@@ -148,7 +208,6 @@ export function LibraryClient({ reports, featuredReport, categories, userPlan, u
             key={report.id}
             className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 overflow-hidden hover:shadow-xl transition-all group flex flex-col"
           >
-            {/* Report Image */}
             <div className="relative h-48 overflow-hidden bg-gray-100 dark:bg-slate-800 shrink-0">
               <Image
                 src={report.image}
@@ -164,7 +223,6 @@ export function LibraryClient({ reports, featuredReport, categories, userPlan, u
               </div>
             </div>
 
-            {/* Report Content */}
             <div className="p-6 flex flex-col flex-1">
               <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-2 line-clamp-2">
                 {report.title}
@@ -173,7 +231,6 @@ export function LibraryClient({ reports, featuredReport, categories, userPlan, u
                 {report.description}
               </p>
 
-              {/* Metadata */}
               <div className="flex items-center gap-4 mb-4 text-xs text-gray-500 dark:text-gray-500">
                 <div className="flex items-center gap-1">
                   <FileText className="w-4 h-4 text-teal-500" />
@@ -185,7 +242,6 @@ export function LibraryClient({ reports, featuredReport, categories, userPlan, u
                 </div>
               </div>
 
-              {/* Tags */}
               <div className="flex flex-wrap gap-2 mb-6">
                 {report.tags.map((tag, index) => (
                   <span
@@ -197,7 +253,6 @@ export function LibraryClient({ reports, featuredReport, categories, userPlan, u
                 ))}
               </div>
 
-              {/* Actions */}
               <div className="flex items-center gap-2 mt-auto">
                 <button 
                   onClick={() => handleDownload(report.id)}
@@ -210,7 +265,7 @@ export function LibraryClient({ reports, featuredReport, categories, userPlan, u
                   Download
                 </button>
                 <button 
-                  onClick={() => setPreviewReport(report)}
+                  onClick={() => handlePreview(report)}
                   className="px-4 py-2 border-2 border-gray-100 dark:border-slate-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-all font-bold text-sm active:scale-95"
                 >
                   Preview
@@ -227,132 +282,135 @@ export function LibraryClient({ reports, featuredReport, categories, userPlan, u
         )}
       </div>
 
-      {/* AI Insights Section */}
-      <div className="mt-12 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 p-8 border-l-4 border-l-purple-500">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-linear-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg transform rotate-3">
-            <Sparkles className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-display">Personalized Insights</h2>
-            <p className="text-gray-600 dark:text-gray-400">Intelligence gathered for your {userIndustry} startup</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 border border-teal-200 dark:border-teal-900/30 bg-teal-50/50 dark:bg-teal-900/10 rounded-2xl group cursor-default">
-            <h4 className="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2 transition-colors group-hover:text-teal-600">
-              <span className="text-xl">📊</span> Trending in {userIndustry}
-            </h4>
-            <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
-              Standard market analysis reports for <span className="font-bold">{userIndustry}</span> have been viewed 2.6k+ times by similar businesses this month.
-            </p>
-          </div>
-
-          <div className="p-6 border border-blue-200 dark:border-blue-900/30 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl group cursor-default">
-            <h4 className="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2 transition-colors group-hover:text-blue-600">
-              <span className="text-xl">🎯</span> Suggested for You
-            </h4>
-            <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
-              Based on your growth stage, we recommend the <b>{userIndustry} Growth Strategy</b> pack to optimize your next funding round.
-            </p>
-          </div>
-
-          <div className="p-6 border border-purple-200 dark:border-purple-900/30 bg-purple-50/50 dark:bg-purple-900/10 rounded-2xl group cursor-default">
-            <h4 className="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2 transition-colors group-hover:text-purple-600">
-              <span className="text-xl">💡</span> Competitive Edge
-            </h4>
-            <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
-              Our latest <span className="font-bold">{userIndustry}</span> regulatory report covers the new tax laws affecting your business directly.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Preview Modal */}
-      {previewReport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="relative h-64 bg-gray-100 dark:bg-slate-800">
-              <Image
-                src={previewReport.image}
-                alt={previewReport.title}
-                fill
-                className="object-cover"
-              />
-              <button 
-                onClick={() => setPreviewReport(null)}
-                className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent flex items-end p-8">
-                <div>
-                   <span className="px-3 py-1 bg-teal-500 text-white rounded-full text-[10px] font-bold uppercase mb-2 inline-block">
-                    {previewReport.category}
-                   </span>
-                   <h2 className="text-2xl font-bold text-white leading-tight">{previewReport.title}</h2>
-                </div>
-              </div>
-            </div>
+      {/* Premium Preview Modal */}
+      <AnimatePresence>
+        {previewReport && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setPreviewReport(null)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            />
             
-            <div className="p-8">
-              <div className="flex items-center gap-6 mb-8 p-4 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700">
-                 <div className="text-center">
-                    <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Total Pages</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">{previewReport.pages}</p>
-                 </div>
-                 <div className="w-px h-8 bg-gray-200 dark:bg-slate-700"></div>
-                 <div className="text-center">
-                    <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Release Date</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">Q1 2026</p>
-                 </div>
-                 <div className="w-px h-8 bg-gray-200 dark:bg-slate-700"></div>
-                 <div className="text-center">
-                    <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Global Views</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">{previewReport.downloads.toLocaleString()}+</p>
-                 </div>
-              </div>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", damping: 30, stiffness: 400 }}
+              className="relative w-full max-w-2xl bg-slate-900 rounded-[2rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] overflow-hidden border border-white/5 max-h-[90vh] flex flex-col"
+            >
+              {/* Header Image Section - Cinema Style (No Cropping) */}
+              <div className="relative h-60 md:h-64 w-full shrink-0 bg-slate-950 overflow-hidden">
+                {/* Blurred Background Layer */}
+                <div className="absolute inset-0 opacity-40 blur-2xl scale-110">
+                  <Image
+                    src={previewReport.image}
+                    alt=""
+                    fill
+                    className="object-cover"
+                  />
+                </div>
 
-              <div className="space-y-4 mb-8">
-                 <h4 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <FileText className="w-5 h-4 text-teal-500" />
-                    Extended Preview Summary
-                 </h4>
-                 <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed italic">
-                    &quot;This report provides an exhaustive deep dive into the {previewReport.category} sector during early 2026. Key coverage includes emerging trends, market disruption vectors, and strategic scaling frameworks tailored for startups looking to dominate the digital landscape. Note: Standard users can only view this summary. Upgrade to Premium for the full 50+ page PDF analysis.&quot;
-                 </p>
-              </div>
+                {/* Main Centered Image - Contain (Full Visibility) */}
+                <div className="relative h-full w-full flex items-center justify-center p-4">
+                  <div className="relative h-full w-full">
+                    <Image
+                      src={previewReport.image}
+                      alt={previewReport.title}
+                      fill
+                      className="object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
+                      priority
+                    />
+                  </div>
+                </div>
+                
+                {/* Gradients to blend */}
+                <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-transparent to-transparent" />
 
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => handleDownload(previewReport.id)}
-                  className="flex-1 py-4 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-2xl font-bold hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
-                >
-                  {isPremium ? <Download className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
-                  {isPremium ? "Confirm Full Download" : "Upgrade to Download Full PDF"}
-                </button>
+                {/* Close Button */}
                 <button 
                   onClick={() => setPreviewReport(null)}
-                  className="px-8 py-4 border-2 border-gray-100 dark:border-slate-800 text-gray-700 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                  className="absolute top-4 right-4 p-2 bg-black/40 hover:bg-black/60 backdrop-blur-xl text-white rounded-full transition-all z-20 border border-white/10"
                 >
-                  Close
+                  <X className="w-4 h-4" />
                 </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      <style jsx global>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
+                {/* Header Content Overlay */}
+                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 bg-linear-to-t from-slate-900 via-slate-900/60 to-transparent">
+                  <span className="px-3 py-1 bg-teal-500/90 backdrop-blur-sm text-white rounded-full text-[9px] font-black uppercase tracking-widest mb-2 inline-block w-fit">
+                    {previewReport.category}
+                  </span>
+                  <h2 className="text-2xl md:text-3xl font-black text-white leading-tight tracking-tight drop-shadow-sm">
+                    {previewReport.title}
+                  </h2>
+                </div>
+              </div>
+              
+              {/* Content Body - Scrollable */}
+              <div className="p-6 md:p-8 overflow-y-auto scrollbar-hide">
+                {/* Stats Grid - Compact */}
+                <div className="grid grid-cols-3 gap-3 mb-8">
+                   <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
+                      <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Pages</p>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5 text-teal-500" />
+                        <p className="text-base font-black text-white">{previewReport.pages}</p>
+                      </div>
+                   </div>
+                   <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
+                      <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Published</p>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                        <p className="text-base font-black text-white">{previewReport.date}</p>
+                      </div>
+                   </div>
+                   <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
+                      <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Views</p>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Eye className="w-3.5 h-3.5 text-purple-500" />
+                        <p className="text-base font-black text-white">
+                          {localReports.find(r => r.id === previewReport?.id)?.downloads?.toLocaleString() || 0}
+                        </p>
+                      </div>
+                   </div>
+                </div>
+
+                {/* Summary Section */}
+                <div className="space-y-3 mb-8">
+                   <h4 className="font-black text-slate-500 text-[10px] uppercase tracking-widest flex items-center gap-2">
+                      <FileText className="w-3.5 h-3.5 text-teal-500" />
+                      Executive Summary
+                   </h4>
+                   <p className="text-slate-400 text-sm leading-relaxed italic border-l-2 border-teal-500/30 pl-4">
+                     &quot;This strategic analysis covers the <strong>{previewReport.category}</strong> sector for 2026. Includes emerging trends and scaling frameworks for digital startups. Standard users view this summary; Premium members access the full report.&quot;
+                   </p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <button 
+                    onClick={() => handleDownload(previewReport.id)}
+                    className="flex-[2] py-4 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-xl font-black hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
+                  >
+                    {isPremium ? <Download className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
+                    <span className="text-sm uppercase tracking-tight">
+                      {isPremium ? "Download PDF" : "Unlock Premium"}
+                    </span>
+                  </button>
+                  <button 
+                    onClick={() => setPreviewReport(null)}
+                    className="flex-1 py-4 bg-white/5 border border-white/10 text-white rounded-xl font-black hover:bg-white/10 transition-all text-xs uppercase tracking-widest"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

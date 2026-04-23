@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { Plus, UploadCloud, CheckCircle, Image as ImageIcon, FileText, Loader2, Link } from "lucide-react";
+import { useToast } from "@/components/providers/ToastProvider";
 
 export default function AdminReportsPage() {
+  const { showToast } = useToast();
   const [formData, setFormData] = useState({
     title: "",
     industry: "Fintech",
@@ -15,8 +17,8 @@ export default function AdminReportsPage() {
   const [uploadedPdf, setUploadedPdf] = useState("");
   const [isUploading, setIsUploading] = useState<{ [key: string]: boolean }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -42,10 +44,20 @@ export default function AdminReportsPage() {
       if (!res.ok) throw new Error(json.error || "Upload failed");
 
       if (type === 'image') setUploadedImage(json.url);
-      else setUploadedPdf(json.url);
+      else {
+        setUploadedPdf(json.url);
+        if (json.pages) {
+          setFormData(prev => ({ ...prev, pages: json.pages.toString() }));
+        }
+      }
 
     } catch (err: unknown) {
       const error = err as Error;
+      showToast({
+        type: "error",
+        title: "Upload Failed",
+        message: `Failed to upload ${type}: ${error.message}`
+      });
       setError(`Failed to upload ${type}: ${error.message}`);
     } finally {
       setIsUploading(prev => ({ ...prev, [type]: false }));
@@ -79,11 +91,21 @@ export default function AdminReportsPage() {
       if (!res.ok) throw new Error(json.error || "Failed to publish report");
 
       setSuccess(true);
+      showToast({
+        type: "success",
+        title: "Report Published",
+        message: "The market research has been successfully published to the library."
+      });
       setFormData({ title: "", industry: "Fintech", description: "", pages: "" });
       setUploadedImage("");
       setUploadedPdf("");
     } catch (err: unknown) {
       const error = err as Error;
+      showToast({
+        type: "error",
+        title: "Publishing Failed",
+        message: error.message || "Failed to publish report"
+      });
       setError(error.message || "Failed to publish report");
     } finally {
       setIsSubmitting(false);
@@ -112,15 +134,16 @@ export default function AdminReportsPage() {
             </div>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-sm border border-red-200 dark:border-red-900/50">
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-xl text-red-600 dark:text-red-400 text-sm font-medium flex items-center gap-2">
+                <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
                 {error}
               </div>
             )}
-            
+
             {success && (
-              <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl text-sm border border-green-200 dark:border-green-900/50 flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                Report published to Cloud successfully! It&apos;s now live in the Library.
+              <div className="mb-6 p-4 bg-teal-50 dark:bg-teal-900/10 border border-teal-200 dark:border-teal-900/30 rounded-xl text-teal-600 dark:text-teal-400 text-sm font-medium flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-teal-500" />
+                Report published successfully to the library!
               </div>
             )}
 
@@ -163,10 +186,34 @@ export default function AdminReportsPage() {
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
+                  maxLength={500}
                   rows={4}
-                  placeholder="Describe the key value propositions of this report..."
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-teal-500 transition-all outline-none resize-none text-gray-900 dark:text-white"
+                  placeholder="Describe the key value propositions of this report. This summary will be visible to all users as a preview (Max 500 chars)..."
+                  className="w-full px-5 py-4 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-teal-500 transition-all outline-none text-gray-900 dark:text-white leading-relaxed placeholder:text-gray-400 dark:placeholder:text-gray-500 shadow-sm min-h-[120px]"
+                  style={{ resize: 'none' }}
                 />
+                <div className="flex justify-end mt-1 px-2">
+                  <span className={`text-[10px] font-bold ${formData.description.length >= 450 ? 'text-amber-500' : 'text-gray-400'}`}>
+                    {formData.description.length}/500 Characters
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Total Pages</label>
+                  <input
+                    name="pages"
+                    value={formData.pages}
+                    onChange={handleChange}
+                    type="number"
+                    placeholder="Auto-detected or manual"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-teal-500 transition-all outline-none text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div className="flex items-end pb-3 text-xs text-gray-500 italic">
+                  Tip: Uploading a PDF will automatically detect the page count.
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

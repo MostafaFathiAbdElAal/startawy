@@ -21,6 +21,7 @@ export default function LoginForm() {
     const searchParams = useSearchParams();
     const registered = searchParams.get('registered');
     const loggedOut = searchParams.get('loggedOut');
+    const suspended = searchParams.get('suspended');
     const { showToast } = useToast();
     const hasShownToast = useRef(false);
 
@@ -42,8 +43,15 @@ export default function LoginForm() {
                 message: 'You have been logged out successfully.' 
             });
             hasShownToast.current = true;
+        } else if (suspended) {
+            showToast({ 
+                type: 'error', 
+                title: 'Account Suspended', 
+                message: 'Your account has been suspended by the administrator.' 
+            });
+            hasShownToast.current = true;
         }
-    }, [registered, loggedOut, showToast]);
+    }, [registered, loggedOut, suspended, showToast]);
 
     const formik = useFormik({
         initialValues: {

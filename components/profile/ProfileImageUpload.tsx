@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, Loader2, Upload, X, Check } from 'lucide-react';
+import { Camera, Loader2 } from 'lucide-react';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { useToast } from '@/components/providers/ToastProvider';
 

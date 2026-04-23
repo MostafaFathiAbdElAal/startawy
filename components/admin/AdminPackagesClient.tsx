@@ -18,6 +18,8 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
   const [packages, setPackages] = useState<ServicePackage[]>(initialData);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [currentPkgId, setCurrentPkgId] = useState<number | null>(null);
   const [pkgToDelete, setPkgToDelete] = useState<ServicePackage | null>(null);
   const [newPkg, setNewPkg] = useState({ type: "", price: "", duration: "month", description: "" });
 
@@ -41,31 +43,54 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
     }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const openEditModal = (pkg: ServicePackage) => {
+    setNewPkg({
+      type: pkg.type,
+      price: pkg.price.toString(),
+      duration: pkg.duration,
+      description: pkg.description,
+    });
+    setCurrentPkgId(pkg.id);
+    setEditMode(true);
+    setIsModalOpen(true);
+  };
+
+  const openCreateModal = () => {
+    setNewPkg({ type: "", price: "", duration: "month", description: "" });
+    setEditMode(false);
+    setCurrentPkgId(null);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      const method = editMode ? "PATCH" : "POST";
+      const body = editMode ? { ...newPkg, id: currentPkgId } : newPkg;
+
       const res = await fetch("/api/admin/packages", {
-        method: "POST",
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newPkg),
+        body: JSON.stringify(body),
       });
+
       if (res.ok) {
         setIsModalOpen(false);
         setNewPkg({ type: "", price: "", duration: "month", description: "" });
         fetchPackages();
         showToast({
           type: "success",
-          title: "Package Created",
-          message: "New subscription package has been added successfully."
+          title: editMode ? "Package Updated" : "Package Created",
+          message: editMode ? "Package details have been updated." : "New subscription package has been added successfully."
         });
       }
     } catch (err) {
       console.error(err);
       showToast({
         type: "error",
-        title: "Creation Failed",
-        message: "Could not save the new package."
+        title: "Operation Failed",
+        message: "Could not save the package changes."
       });
     } finally {
       setLoading(false);
@@ -108,7 +133,7 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
           <p className="text-gray-600 dark:text-gray-400">Configure subscription plans and pricing for Founders</p>
         </div>
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={openCreateModal}
           className="inline-flex items-center gap-2 px-6 py-2.5 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all shadow-md font-semibold shrink-0"
         >
           <Plus className="w-5 h-5" />
@@ -154,7 +179,10 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
                 ))}
               </div>
 
-              <button className="w-full py-3 px-4 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 font-semibold text-gray-700 dark:text-gray-300 transition-all">
+              <button 
+                onClick={() => openEditModal(pkg)}
+                className="w-full py-3 px-4 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 font-semibold text-gray-700 dark:text-gray-300 transition-all"
+              >
                 Edit Details
               </button>
             </div>
@@ -182,8 +210,8 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
             className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-8 shadow-2xl border border-gray-100 dark:border-slate-800 animate-in zoom-in duration-200"
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-2xl font-bold mb-6 dark:text-white text-left">Create New Package</h2>
-            <form onSubmit={handleCreate} className="space-y-4 text-left">
+            <h2 className="text-2xl font-bold mb-6 dark:text-white text-left">{editMode ? "Edit Package" : "Create New Package"}</h2>
+            <form onSubmit={handleSubmit} className="space-y-4 text-left">
               <div>
                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">Package Title (e.g. Premium Plan)</label>
                 <input 
@@ -241,7 +269,7 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
                   disabled={loading}
                   className="flex-1 py-3 px-4 bg-teal-500 text-white rounded-xl hover:bg-teal-600 font-semibold shadow-md disabled:opacity-50"
                 >
-                  {loading ? "Creating..." : "Save Package"}
+                  {loading ? "Saving..." : (editMode ? "Update Package" : "Save Package")}
                 </button>
               </div>
             </form>

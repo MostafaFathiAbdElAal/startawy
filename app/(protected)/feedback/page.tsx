@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Send, MessageCircle, Heart, Sparkles, Loader2 } from 'lucide-react';
+import { Star, Send, MessageCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/providers/ToastProvider';
 
 export default function FeedbackPage() {
@@ -111,31 +111,6 @@ export default function FeedbackPage() {
             </div>
           </div>
 
-          {/* Category Section */}
-          <div className="flex flex-col items-center gap-4">
-            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Feedback Type</span>
-            <div className="flex flex-wrap justify-center gap-3">
-              {[
-                { id: 'SUGGESTION', label: 'Suggestion', icon: Sparkles, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-                { id: 'COMPLAINT', label: 'Complaint', icon: MessageCircle, color: 'text-red-500', bg: 'bg-red-500/10' },
-                { id: 'POSITIVE', label: 'Positive', icon: Heart, color: 'text-teal-500', bg: 'bg-teal-500/10' },
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setCategory(item.id)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all border ${
-                    category === item.id 
-                      ? `${item.bg} ${item.color} border-${item.color.split('-')[1]}-500/50 shadow-lg shadow-${item.color.split('-')[1]}-500/10 scale-105` 
-                      : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border-transparent hover:border-slate-200 dark:hover:border-slate-700'
-                  }`}
-                >
-                  <item.icon className="w-4 h-4" />
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Comment Section */}
           <div className="space-y-3">

@@ -6,7 +6,6 @@ export const metadata: Metadata = {
 };
 
 import Link from "next/link";
-import NextImage from "next/image";
 import { ConsultationFilter } from "@/components/consultants/ConsultationFilter";
 import { prisma } from "@/lib/prisma";
 import UserAvatar from "@/components/ui/UserAvatar";

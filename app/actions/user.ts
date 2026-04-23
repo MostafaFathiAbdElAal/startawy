@@ -31,6 +31,7 @@ export async function getProfileData() {
       googleId: profile.googleId,
       isEmailVerified: profile.isEmailVerified,
       isPhoneVerified: profile.isPhoneVerified,
+      isSuspended: profile.isSuspended,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,
       password: null, // Critical to satisfy UserWithRelations

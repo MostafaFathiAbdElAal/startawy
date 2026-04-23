@@ -20,7 +20,7 @@ export default function UserAvatar({ name = 'User', image, size = 'md', isVerifi
   };
 
   const initials = getInitials(name);
-  
+
   // Safety check: Don't render Google images (redundant filter)
   const finalImage = image?.includes('googleusercontent') ? null : image;
 
@@ -58,11 +58,10 @@ export default function UserAvatar({ name = 'User', image, size = 'md', isVerifi
 
   return (
     <div className="relative inline-block">
-      <div className={`${sizes[size]} rounded-full flex items-center justify-center text-white font-black border-2 border-white dark:border-slate-900 overflow-hidden relative ${
-        !finalImage 
-          ? 'bg-linear-to-br from-violet-500 via-purple-600 to-indigo-600 shadow-xl shadow-purple-500/20' 
+      <div className={`${sizes[size]} rounded-full flex items-center justify-center text-white font-black border-2 border-white dark:border-slate-900 overflow-hidden relative ${!finalImage
+          ? 'bg-linear-to-br from-violet-500 via-purple-600 to-indigo-600 shadow-xl shadow-purple-500/20'
           : 'bg-transparent shadow-md'
-      }`}>
+        }`}>
         {finalImage ? (
           <Image
             src={finalImage}
@@ -75,15 +74,14 @@ export default function UserAvatar({ name = 'User', image, size = 'md', isVerifi
           initials
         )}
       </div>
-      
+
       {/* Status/Verification Dot in Top Right */}
-      <div className={`absolute -top-1 -right-1 ${dotSizes[size]} rounded-full flex items-center justify-center shadow-lg border-white dark:border-slate-900 z-10 ${
-        isVerified ? 'bg-teal-500' : 'bg-yellow-400'
-      }`}>
+      <div className={`absolute -top-1 -right-1 ${dotSizes[size]} rounded-full flex items-center justify-center shadow-lg border-white dark:border-slate-900 z-10 ${isVerified ? 'bg-teal-500' : 'bg-yellow-400'
+        }`}>
         {isVerified ? (
-           <ShieldCheck className={`${iconSizes[size]} text-white`} strokeWidth={3} />
+          <ShieldCheck className={`${iconSizes[size]} text-white`} strokeWidth={3} />
         ) : (
-           <AlertCircle className={`${iconSizes[size]} text-white`} strokeWidth={3} />
+          <AlertCircle className={`${iconSizes[size]} text-white`} strokeWidth={3} />
         )}
       </div>
     </div>

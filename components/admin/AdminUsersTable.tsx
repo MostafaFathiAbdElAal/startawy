@@ -18,6 +18,11 @@ type UserData = {
   sessions?: number;
   revenue?: string;
   rating?: number;
+  yearsOfExp?: number;
+  sessionRate?: number;
+  image?: string;
+  businessSector?: string;
+  phone?: string;
 };
 
 type AdminUsersTableProps = {
@@ -34,8 +39,17 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [previewingUser, setPreviewingUser] = useState<UserData | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
-  const [editFormData, setEditFormData] = useState({ name: "", email: "" });
+  const [editFormData, setEditFormData] = useState({ 
+    name: "", 
+    email: "", 
+    specialization: "", 
+    yearsOfExp: "",
+    businessName: "",
+    businessSector: "",
+    phone: ""
+  });
   const filterRef = useRef<HTMLDivElement>(null);
 
   // Synchronize internal state when props change (initial load)
@@ -123,16 +137,61 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
     if (!editingUser) return;
     setProcessingId(editingUser.id);
 
+    // Basic Client Validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const phoneRegex = /^[0-9]{8,15}$/; // Flexible: 8-15 digits
+
+    if (!editFormData.name.trim() || editFormData.name.length < 3) {
+      showToast({ type: "error", title: "Invalid Name", message: "Name must be at least 3 characters." });
+      setProcessingId(null);
+      return;
+    }
+    if (!emailRegex.test(editFormData.email)) {
+      showToast({ type: "error", title: "Invalid Email", message: "Please enter a valid email address." });
+      setProcessingId(null);
+      return;
+    }
+    if (editFormData.phone && !phoneRegex.test(editFormData.phone)) {
+      showToast({ type: "error", title: "Invalid Phone", message: "Phone must be 8-15 digits (e.g. 2010...)." });
+      setProcessingId(null);
+      return;
+    }
+
     try {
       const res = await fetch(`/api/admin/users/${editingUser.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editFormData.name, email: editFormData.email }),
+        body: JSON.stringify({ 
+          name: editFormData.name, 
+          email: editFormData.email,
+          phone: editFormData.phone,
+          ...(roleType === "Consultant" && {
+            specialization: editFormData.specialization,
+            yearsOfExp: editFormData.yearsOfExp ? Number(editFormData.yearsOfExp) : undefined
+          }),
+          ...(roleType === "Founder" && {
+            businessName: editFormData.businessName,
+            businessSector: editFormData.businessSector
+          })
+        }),
       });
       const result = await res.json();
       
       if (result.success) {
-        setUsers(users.map(u => u.id === editingUser.id ? { ...u, name: editFormData.name, email: editFormData.email } : u));
+        setUsers(users.map(u => u.id === editingUser.id ? { 
+          ...u, 
+          name: editFormData.name, 
+          email: editFormData.email,
+          phone: editFormData.phone,
+          ...(roleType === "Consultant" && {
+            specialty: editFormData.specialization,
+            yearsOfExp: editFormData.yearsOfExp ? Number(editFormData.yearsOfExp) : undefined
+          }),
+          ...(roleType === "Founder" && {
+            company: editFormData.businessName,
+            businessSector: editFormData.businessSector
+          })
+        } : u));
         showToast({
           type: "success",
           title: "Profile Updated",
@@ -195,32 +254,32 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 overflow-hidden text-left min-h-[400px]">
       {/* Toolbar */}
-      <div className="p-6 border-b border-gray-200 dark:border-slate-800">
-        <div className="flex flex-col md:flex-row gap-4 items-center">
-          <div className="flex-1 relative w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl">
+        <div className="flex flex-col xl:flex-row gap-6 items-center">
+          <div className="flex-1 relative w-full group">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
             <input
               type="text"
               placeholder={`Search ${roleType.toLowerCase()}s by name or email...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-gray-900 dark:text-white outline-none"
+              className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500/50 text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400 font-medium"
             />
           </div>
           
           <div className="relative" ref={filterRef}>
             <button 
               onClick={() => setShowFilterPanel(!showFilterPanel)}
-              className={`flex items-center gap-2 px-6 py-3 border rounded-lg transition-all font-medium shrink-0 ${
+              className={`flex items-center gap-3 px-8 py-3.5 border rounded-2xl transition-all font-bold tracking-tight shrink-0 ${
                 showFilterPanel || statusFilter !== "All" || contextFilter !== "All"
-                  ? "bg-teal-50 dark:bg-teal-900/20 border-teal-500 text-teal-600 dark:text-teal-400"
-                  : "border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800"
+                  ? "bg-teal-500 text-white border-teal-500 shadow-lg shadow-teal-500/20"
+                  : "border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50 shadow-sm"
               }`}
             >
               <Filter className="w-5 h-5" />
               <span>Filters</span>
               {(statusFilter !== "All" || contextFilter !== "All") && (
-                <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
               )}
               {showFilterPanel ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
             </button>
@@ -290,75 +349,99 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead className="bg-gray-50 dark:bg-slate-800/50 border-b border-gray-200 dark:border-slate-800">
-            <tr>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
-              {roleType === "Founder" && <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Plan</th>}
-              {roleType === "Consultant" && <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Specialty</th>}
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Joined</th>
-              <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-slate-50/50 dark:bg-slate-800/30">
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">User Details</th>
+              {roleType === "Founder" && <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center border-b border-slate-100 dark:border-slate-800">Subscription</th>}
+              {roleType === "Consultant" && <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center border-b border-slate-100 dark:border-slate-800">Specialization</th>}
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center border-b border-slate-100 dark:border-slate-800">Status</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center border-b border-slate-100 dark:border-slate-800">Member Since</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-right border-b border-slate-100 dark:border-slate-800">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-slate-800">
+          <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
             {filteredData.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-full flex flex-col items-center justify-center font-bold text-sm shrink-0">
-                      {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+              <tr key={user.id} className="group hover:bg-teal-50/30 dark:hover:bg-teal-500/5 transition-all duration-300">
+                <td className="px-8 py-5">
+                  <div className="flex items-center gap-4">
+                    <div className={`relative w-12 h-12 rounded-2xl overflow-hidden shadow-sm border-2 border-white dark:border-slate-800 group-hover:border-teal-500/20 transition-colors ${!user.image ? 'bg-slate-100 dark:bg-slate-800' : ''}`}>
+                      {user.image ? (
+                        <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-teal-600 dark:text-teal-400 font-black">
+                          {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                        </div>
+                      )}
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">{user.name}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                      <p className="font-black text-slate-900 dark:text-white group-hover:text-teal-600 transition-colors uppercase tracking-tight">{user.name}</p>
+                      <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">{user.email}</p>
                     </div>
                   </div>
                 </td>
                 
                 {roleType === "Founder" && (
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  <td className="px-8 py-5 text-center">
+                    <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${
                       user.plan === "Premium"
-                        ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400"
-                        : "bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400"
+                        ? "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-800/50"
+                        : "bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 border border-teal-100 dark:border-teal-800/50"
                     }`}>
                       {user.plan}
                     </span>
                   </td>
                 )}
-
+ 
                 {roleType === "Consultant" && (
-                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                    {user.specialty || "General"}
+                  <td className="px-8 py-5 text-center">
+                    <span className="px-4 py-1.5 rounded-xl text-[10px] font-black bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase tracking-widest border border-slate-100 dark:border-slate-700/50">
+                      {user.specialty || "General"}
+                    </span>
                   </td>
                 )}
-
-                <td className="px-6 py-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wider ${
+ 
+                <td className="px-8 py-5 text-center">
+                  <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${
                     user.status === "ACTIVE"
-                      ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                      : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+                      ? "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-100 dark:border-green-800/50"
+                      : "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-800/50"
                   }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${user.status === "ACTIVE" ? 'bg-green-500' : 'bg-rose-500'}`} />
                     {user.status}
                   </span>
                 </td>
-
-                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  {user.joinedDate}
+ 
+                <td className="px-8 py-5 text-center">
+                  <div className="flex flex-col items-center">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{user.joinedDate}</span>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Verified</span>
+                  </div>
                 </td>
 
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                <td className="px-8 py-5 text-right">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button 
+                      onClick={() => setPreviewingUser(user)}
+                      className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
+                      title="View Profile"
+                    >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button 
-                      className="p-2 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-colors"
+                      className="p-2.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-xl transition-all"
                       title="Edit Profile"
                       onClick={() => {
                         setEditingUser(user);
-                        setEditFormData({ name: user.name, email: user.email });
+                        setEditFormData({ 
+                          name: user.name, 
+                          email: user.email,
+                          specialization: user.specialty || "",
+                          yearsOfExp: user.yearsOfExp?.toString() || "",
+                          businessName: user.company || "",
+                          businessSector: user.businessSector || "",
+                          phone: user.phone || ""
+                        });
                       }}
                     >
                       <Edit className="w-4 h-4" />
@@ -367,10 +450,10 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                     <button 
                       onClick={() => handleToggleStatus(user.id, user.status)}
                       disabled={processingId === user.id}
-                      className={`p-2 rounded-lg transition-all ${
+                      className={`p-2.5 rounded-xl transition-all ${
                         user.status === "ACTIVE" 
-                          ? "text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20" 
-                          : "text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                          ? "text-slate-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20" 
+                          : "text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
                       }`}
                       title={user.status === "ACTIVE" ? "Suspend Account" : "Activate Account"}
                     >
@@ -382,11 +465,11 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                         <UserCheck className="w-4 h-4" />
                       )}
                     </button>
-
+ 
                     <button 
                       onClick={() => setUserToDelete(user)}
                       disabled={processingId === user.id}
-                      className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
                       title="Delete Permanently"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -446,6 +529,61 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                     onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
                   />
                 </div>
+                <div className="space-y-2 text-left">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Phone Number</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-slate-900 dark:text-white"
+                    value={editFormData.phone}
+                    onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                  />
+                </div>
+
+                {roleType === "Founder" && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2 text-left">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Business Name</label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-slate-900 dark:text-white"
+                        value={editFormData.businessName}
+                        onChange={(e) => setEditFormData({ ...editFormData, businessName: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2 text-left">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Industry / Sector</label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-slate-900 dark:text-white"
+                        value={editFormData.businessSector}
+                        onChange={(e) => setEditFormData({ ...editFormData, businessSector: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {roleType === "Consultant" && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2 text-left">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Specialization</label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-slate-900 dark:text-white"
+                        value={editFormData.specialization}
+                        onChange={(e) => setEditFormData({ ...editFormData, specialization: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2 text-left">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Years of Exp</label>
+                      <input
+                        type="number"
+                        className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-slate-900 dark:text-white"
+                        value={editFormData.yearsOfExp}
+                        onChange={(e) => setEditFormData({ ...editFormData, yearsOfExp: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div className="pt-4 flex gap-3">
                   <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-50 transition-colors">
@@ -456,6 +594,108 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Preview User Modal */}
+      <AnimatePresence>
+        {previewingUser && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setPreviewingUser(null)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
+            >
+              <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">User Profile Details</h2>
+                <button onClick={() => setPreviewingUser(null)} className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6 text-left">
+                <div className="flex items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+                  <div className="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-full flex items-center justify-center font-bold text-2xl shrink-0 overflow-hidden">
+                    {previewingUser.image ? (
+                      <img src={previewingUser.image} alt={previewingUser.name} className="w-full h-full object-cover" />
+                    ) : (
+                      previewingUser.name ? previewingUser.name.charAt(0).toUpperCase() : "U"
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">{previewingUser.name}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{previewingUser.email}</p>
+                    <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wider ${
+                      previewingUser.status === "ACTIVE"
+                        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                        : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+                    }`}>
+                      {previewingUser.status}
+                    </span>
+                    {previewingUser.phone && (
+                      <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-400">
+                        📞 {previewingUser.phone}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Joined Date</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{previewingUser.joinedDate}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Platform Role</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{roleType}</p>
+                  </div>
+                  {roleType === "Founder" && (
+                    <>
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Subscription Plan</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{previewingUser.plan || "N/A"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Business Name</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{previewingUser.company || "N/A"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Industry / Sector</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{previewingUser.businessSector || "N/A"}</p>
+                      </div>
+                    </>
+                  )}
+                  {roleType === "Consultant" && (
+                    <>
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Specialization</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{previewingUser.specialty || "N/A"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Experience</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{previewingUser.yearsOfExp ? `${previewingUser.yearsOfExp} Years` : "N/A"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Session Rate</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">${previewingUser.sessionRate || "150"}</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="pt-4 flex justify-end">
+                  <button onClick={() => setPreviewingUser(null)} className="px-6 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-lg font-medium transition-colors">
+                    Close
+                  </button>
+                </div>
+              </div>
             </motion.div>
           </div>
         )}

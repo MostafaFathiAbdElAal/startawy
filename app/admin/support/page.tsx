@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { MessageCircle, Clock, User, Send, CheckCircle2, ShieldCheck, Search, Activity, Trash2, Ban, ArrowLeft } from 'lucide-react';
+import { MessageCircle, Clock, User, Send, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { clsx } from 'clsx';
 import { formatChatDate, isSameDay } from '@/lib/utils/date-formatter';
 

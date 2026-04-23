@@ -25,11 +25,7 @@ const CompleteProfileSchema = Yup.object().shape({
     then: (schema) => schema.required('Business Sector is required'),
     otherwise: (schema) => schema.optional(),
   }),
-  foundingDate: Yup.date().when('role', {
-    is: 'FOUNDER',
-    then: (schema) => schema.required('Founding Date is required'),
-    otherwise: (schema) => schema.optional(),
-  }),
+  foundingDate: Yup.date().optional(),
   specialization: Yup.string().when('role', {
     is: 'CONSULTANT',
     then: (schema) => schema.required('Specialization/Title is required'),

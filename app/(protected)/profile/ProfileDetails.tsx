@@ -104,17 +104,26 @@ export default function ProfileDetails({ user }: ProfileDetailsProps) {
                             <span className="text-sm font-semibold">{user.consultant?.sessionRate ?? 150} / hour</span>
                         </div>
                     </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Availability</label>
+                        <div className="flex items-center gap-4 h-14 pl-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white">
+                            <Calendar className="w-5 h-5 text-slate-400" />
+                            <span className="text-sm font-semibold">{user.consultant?.availability || 'Not specified'}</span>
+                        </div>
+                    </div>
                 </>
             )}
         </div>
 
         {/* Bio / Description */}
         {((user.type === 'FOUNDER' && user.founder?.description) || 
-          (user.type === 'CONSULTANT' && user.consultant?.specialization)) && (
+          (user.type === 'CONSULTANT' && user.consultant?.bio)) && (
             <div className="mt-8 space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Bio / Description</label>
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">
+                    {user.type === 'FOUNDER' ? 'Startup Description' : 'Professional Bio'}
+                </label>
                 <div className="p-6 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-[24px] font-medium text-sm text-slate-600 dark:text-slate-400 italic">
-                    {user.type === 'FOUNDER' ? user.founder?.description : `Professional consultant specializing in ${user.consultant?.specialization}.`}
+                    {user.type === 'FOUNDER' ? user.founder?.description : user.consultant?.bio}
                 </div>
             </div>
         )}

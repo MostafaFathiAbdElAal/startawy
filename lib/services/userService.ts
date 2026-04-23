@@ -56,20 +56,22 @@ export class UserService {
         name: data.name,
         email: data.email,
         phone: data.phone,
-        founder: (data.businessName || data.businessSector || data.foundingDate) ? {
+        isSuspended: data.isSuspended !== undefined ? data.isSuspended : undefined,
+        founder: (data.businessName || data.businessSector || data.foundingDate || data.description || data.bio) ? {
           update: {
             businessName: data.businessName,
             businessSector: data.businessSector,
             foundingDate: data.foundingDate ? new Date(data.foundingDate) : undefined,
-            description: data.description || data.bio
+            description: data.description || data.bio // Handle both naming conventions
           }
         } : undefined,
-        consultant: data.specialization ? {
+        consultant: (data.specialization || data.bio || data.availability) ? {
           update: {
             specialization: data.specialization,
-            yearsOfExp: Number(data.yearsOfExp) || 0,
-            sessionRate: Number(data.sessionRate) || 150.0,
-            availability: data.bio || ""
+            yearsOfExp: data.yearsOfExp !== undefined ? Number(data.yearsOfExp) : undefined,
+            sessionRate: data.sessionRate !== undefined ? Number(data.sessionRate) : undefined,
+            bio: data.bio,
+            availability: data.availability
           }
         } : undefined
       }

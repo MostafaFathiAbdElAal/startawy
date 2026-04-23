@@ -39,11 +39,7 @@ export const RegisterSchema = Yup.object().shape({
     .nullable()
     .transform((value, originalValue) => originalValue === "" ? null : value)
     .typeError('Invalid date format')
-    .when('role', {
-      is: 'FOUNDER',
-      then: (schema) => schema.required('Founding Date is required'),
-      otherwise: (schema) => schema.notRequired(),
-    }),
+    .optional(),
 
   // Consultant Fields
   specialization: Yup.string().when('role', {

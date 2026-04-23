@@ -14,9 +14,7 @@ export default async function ManageFoundersPage() {
       founder: {
         include: {
           payments: {
-            where: { paymentType: 'Subscription' },
-            orderBy: { transDate: 'desc' },
-            take: 1
+            orderBy: { transDate: 'desc' }
           }
         }
       } 
@@ -25,7 +23,8 @@ export default async function ManageFoundersPage() {
   });
 
   const formattedUsers = dbUsers.map(u => {
-    const latestSub = u.founder?.payments?.[0];
+    const payments = u.founder?.payments || [];
+    const latestSub = payments.find(p => p.paymentType === 'Subscription');
     const planName = latestSub ? (latestSub.amount >= 299 ? 'Premium' : 'Basic') : 'Free Trial';
     
     return {
@@ -33,13 +32,21 @@ export default async function ManageFoundersPage() {
       name: u.name || "Unknown",
       email: u.email,
       company: u.founder?.businessName || "Unknown",
+      businessSector: u.founder?.businessSector || "General",
       plan: planName,
-      status: u.isEmailVerified ? "ACTIVE" : "PENDING",
+      status: u.isSuspended ? "SUSPENDED" : (u.isEmailVerified ? "ACTIVE" : "PENDING"),
       joinedDate: new Intl.DateTimeFormat('en-GB').format(new Date(u.createdAt)),
       sessions: 0,
-      revenue: `$${u.founder?.payments?.reduce((sum, p) => sum + p.amount, 0).toFixed(2) || "0.00"}`
+      revenue: `$${payments.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}`,
+      image: u.image || undefined,
+      phone: u.phone || ""
     };
   });
+
+  const totalRevenue = formattedUsers.reduce((sum, u) => {
+    const rev = parseFloat(u.revenue.replace('$', ''));
+    return sum + (isNaN(rev) ? 0 : rev);
+  }, 0);
 
   return (
     <div className="p-6 lg:p-8">
@@ -67,7 +74,7 @@ export default async function ManageFoundersPage() {
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-800">
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Total Revenue</p>
-          <p className="text-3xl font-bold text-teal-600 dark:text-teal-400">$0</p>
+          <p className="text-3xl font-bold text-teal-600 dark:text-teal-400">${totalRevenue.toFixed(2)}</p>
         </div>
       </div>
 

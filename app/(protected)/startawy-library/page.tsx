@@ -27,18 +27,18 @@ export default async function StartawyLibraryPage() {
             take: 1
           }
         }
-      } 
+      },
+      consultant: true
     }
   });
 
-  if (!user || user.type !== 'FOUNDER' || !user.founder) {
+  if (!user || (user.type !== 'FOUNDER' && user.type !== 'CONSULTANT')) {
     redirect('/login');
   }
 
-  // Plan calculation for UI display (Access handled by proxy.ts)
-  const lastPayment = user.founder.payments[0];
-  const userPlan = lastPayment?.amount >= 299 ? 'Premium' : (lastPayment?.amount === 99 ? 'Basic' : 'Free');
-  const userIndustry = user.founder.businessSector || "Startup";
+  // Plan calculation for UI display
+  const lastPayment = user.founder?.payments?.[0];
+  const userPlan = user.type === 'CONSULTANT' ? 'Premium' : ((lastPayment?.amount || 0) >= 299 ? 'Premium' : ((lastPayment?.amount || 0) === 99 ? 'Basic' : 'Free'));
 
   // Fetch real reports from DB
   const dbReports = await prisma.startawyReport.findMany({
@@ -51,13 +51,14 @@ export default async function StartawyLibraryPage() {
         title: `Report - ${r.industry}`,
         description: "Full research data for this sector.",
         image: "https://images.unsplash.com/photo-1618044733300-9472054094ee",
-        pages: 20
+        pages: 20,
+        pdfUrl: ""
     };
 
     try {
         const parsed = JSON.parse(r.link);
         metadata = { ...metadata, ...parsed };
-    } catch (e) {
+    } catch {
         // Fallback for non-json links (legacy)
         if (r.link.startsWith('http')) metadata.image = r.link;
     }
@@ -68,9 +69,11 @@ export default async function StartawyLibraryPage() {
       description: metadata.description,
       image: metadata.image,
       pages: metadata.pages,
-      downloads: (r.id % 400) + 100, // Stable mock downloads count based on ID
+      downloads: r.views, // Using real views count from DB
       category: r.industry,
       tags: [r.industry, "Market Research"],
+      date: new Intl.DateTimeFormat('en-GB').format(new Date(r.uploadDate)),
+      pdfUrl: metadata.pdfUrl
     };
   });
 
@@ -97,7 +100,6 @@ export default async function StartawyLibraryPage() {
       featuredReport={featuredReport} 
       categories={categories}
       userPlan={userPlan}
-      userIndustry={userIndustry}
     />
   );
 }

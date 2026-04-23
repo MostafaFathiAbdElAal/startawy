@@ -33,6 +33,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 2.5 Check if Suspended
+    if (user.isSuspended) {
+      return NextResponse.json(
+        { error: 'Your account has been suspended. Please contact the administrator.' },
+        { status: 403 }
+      );
+    }
+
     // 3. Verify Password
     if (!user.password) {
       return NextResponse.json(

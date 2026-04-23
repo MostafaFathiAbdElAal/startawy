@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ShieldCheck, UserPlus, Search, User, Mail, Shield, AlertCircle, CheckCircle2, X } from 'lucide-react';
+import { ShieldCheck, UserPlus, Search, User, Mail, Shield, AlertCircle, X } from 'lucide-react';
+import { useToast } from '@/components/providers/ToastProvider';
 
 interface Admin {
   id: string;
@@ -11,10 +12,12 @@ interface Admin {
   admin?: {
     adminLevel: string;
     adminScope: string;
+    isOwner?: boolean;
   };
 }
 
 export default function ManageAdminsPage() {
+  const { showToast } = useToast();
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,8 +27,6 @@ export default function ManageAdminsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [formLoading, setFormLoading] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAdmins();
@@ -51,9 +52,7 @@ export default function ManageAdminsPage() {
   const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormLoading(true);
-    setFormError(null);
-    setSuccess(null);
-
+ 
     try {
       const res = await fetch('/api/admin/admins', {
         method: 'POST',
@@ -61,17 +60,29 @@ export default function ManageAdminsPage() {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-
+ 
       if (res.ok) {
-        setSuccess('Administrator added successfully!');
+        showToast({
+          type: 'success',
+          title: 'Admin Created',
+          message: 'The new administrator has been successfully added to the system.'
+        });
         setFormData({ name: '', email: '', password: '' });
         fetchAdmins();
-        setTimeout(() => setIsModalOpen(false), 2000);
+        setIsModalOpen(false);
       } else {
-        setFormError(data.error || 'Failed to add administrator');
+        showToast({
+          type: 'error',
+          title: 'Creation Failed',
+          message: data.error || 'Failed to add administrator'
+        });
       }
     } catch {
-      setFormError('Network error. Please try again.');
+      showToast({
+        type: 'error',
+        title: 'Network Error',
+        message: 'Could not connect to the server. Please try again.'
+      });
     } finally {
       setFormLoading(false);
     }
@@ -125,9 +136,27 @@ export default function ManageAdminsPage() {
       {/* Main Table */}
       <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-20 flex flex-col items-center justify-center gap-4">
-            <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-gray-500 font-medium">Loading administrators...</p>
+          <div className="divide-y divide-gray-50 dark:divide-slate-800/50">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="px-6 py-5 flex items-center justify-between animate-pulse">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="w-10 h-10 bg-slate-200 dark:bg-slate-800 rounded-full" />
+                  <div className="space-y-2">
+                    <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded" />
+                    <div className="h-3 w-24 bg-slate-100 dark:bg-slate-800/50 rounded" />
+                  </div>
+                </div>
+                <div className="flex-1 hidden md:block">
+                  <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded" />
+                </div>
+                <div className="flex-1 hidden md:block text-center">
+                  <div className="h-4 w-20 bg-slate-100 dark:bg-slate-800/50 rounded mx-auto" />
+                </div>
+                <div className="w-20 text-right">
+                  <div className="h-6 w-16 bg-slate-200 dark:bg-slate-800 rounded-full ml-auto" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : error ? (
           <div className="p-20 flex flex-col items-center justify-center gap-4 text-center">
@@ -160,21 +189,23 @@ export default function ManageAdminsPage() {
                           {admin.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-bold text-gray-900 dark:text-white uppercase">{admin.name}</p>
+                          <p className="font-bold text-gray-900 dark:text-white capitalize">{admin.name}</p>
                           <p className="text-xs text-gray-500">{admin.email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex flex-col gap-1">
-                        <span className="text-xs font-bold text-teal-600 flex items-center gap-1">
-                          <Shield size={12} /> GLOBAL ADMIN
+                        <span className="text-xs font-bold text-teal-600 flex items-center gap-1 uppercase tracking-tighter">
+                          <Shield size={12} /> {admin.admin?.isOwner ? 'Platform Owner' : 'System Administrator'}
                         </span>
-                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Scope: ALL SECTIONS</span>
+                        <span className="text-[9px] text-gray-400 font-black uppercase tracking-[0.15em]">
+                          {admin.admin?.adminScope === 'ALL' ? 'Full System Access' : admin.admin?.adminScope}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-6 py-5 text-sm text-gray-500">
-                      {new Date(admin.createdAt).toLocaleDateString()}
+                    <td className="px-6 py-5 text-sm font-medium text-slate-500 dark:text-slate-400">
+                      {new Intl.DateTimeFormat('en-GB').format(new Date(admin.createdAt))}
                     </td>
                     <td className="px-6 py-5 text-right">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 text-[10px] font-bold rounded-full border border-green-100 dark:border-green-900/50 uppercase tracking-wider">
@@ -208,16 +239,6 @@ export default function ManageAdminsPage() {
             </div>
 
             <form onSubmit={handleAddAdmin} className="p-8 space-y-6">
-              {formError && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/50 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-bold">
-                  <AlertCircle size={18} /> {formError}
-                </div>
-              )}
-              {success && (
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/50 rounded-2xl flex items-center gap-3 text-green-600 text-sm font-bold animate-bounce">
-                  <CheckCircle2 size={18} /> {success}
-                </div>
-              )}
 
               <div className="space-y-4">
                 <div>

@@ -35,6 +35,7 @@ export interface UpdateProfileData {
   name: string;
   email: string;
   phone?: string;
+  isSuspended?: boolean;
   // Founder fields
   businessName?: string;
   businessSector?: string;
@@ -45,4 +46,5 @@ export interface UpdateProfileData {
   specialization?: string;
   sessionRate?: string | number;
   bio?: string;
+  availability?: string;
 }

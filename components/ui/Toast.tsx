@@ -92,7 +92,7 @@ export function Toast({ type, title, message, duration = 4000, onDismiss }: Toas
         // Hint to the compositor: only transform and opacity will change
         willChange: 'transform, opacity',
       }}
-      className="relative w-[330px] rounded-2xl overflow-hidden text-white select-none"
+      className="relative w-[330px] h-[95px] rounded-2xl overflow-hidden text-white select-none"
       role="alert"
       aria-live="polite"
     >
@@ -115,7 +115,7 @@ export function Toast({ type, title, message, duration = 4000, onDismiss }: Toas
           <p className="text-[11px] font-black uppercase tracking-widest opacity-75 leading-none mb-1">
             {title}
           </p>
-          <p className="text-[13px] font-semibold leading-snug">{message}</p>
+          <p className="text-[13px] font-semibold leading-snug line-clamp-2 overflow-hidden text-ellipsis">{message}</p>
         </div>
 
         <button

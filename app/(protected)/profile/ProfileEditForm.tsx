@@ -211,27 +211,39 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
 
         {user.type === 'FOUNDER' && (
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Bio / Description</label>
+            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Startup Description</label>
             <textarea
-              name="bio"
+              name="description"
               rows={4}
               defaultValue={user.founder?.description ?? ''}
               className="w-full p-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-[24px] transition-all font-medium text-sm text-slate-900 dark:text-white outline-hidden resize-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500"
-              placeholder="Share a bit about your journey..."
+              placeholder="Describe your startup and its goals..."
             />
           </div>
         )}
-
+        
         {user.type === 'CONSULTANT' && (
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Professional Bio</label>
-            <textarea
-              name="bio"
-              rows={4}
-              defaultValue={user.consultant?.availability ?? ''} // Reusing bio field for general description/availability
-              className="w-full p-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-[24px] transition-all font-medium text-sm text-slate-900 dark:text-white outline-hidden resize-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500"
-              placeholder="Describe your expertise and consulting style..."
-            />
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Professional Bio</label>
+              <textarea
+                name="bio"
+                rows={4}
+                defaultValue={user.consultant?.bio ?? ''}
+                className="w-full p-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-[24px] transition-all font-medium text-sm text-slate-900 dark:text-white outline-hidden resize-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500"
+                placeholder="Describe your expertise and consulting style..."
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Availability Status</label>
+              <input
+                name="availability"
+                type="text"
+                defaultValue={user.consultant?.availability ?? ''}
+                placeholder="e.g. Mon-Fri, 9AM-5PM"
+                className="w-full h-14 px-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all font-semibold text-sm text-slate-900 dark:text-white outline-hidden focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500"
+              />
+            </div>
           </div>
         )}
 

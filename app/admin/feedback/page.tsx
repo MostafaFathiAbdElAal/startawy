@@ -81,8 +81,46 @@ export default function AdminFeedbackPage() {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-[500px]">
-        <Loader2 className="w-12 h-12 text-teal-500 animate-spin" />
+      <div className="p-8 animate-pulse">
+        {/* Skeleton Header */}
+        <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-3">
+            <div className="h-10 w-64 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+            <div className="h-4 w-80 bg-slate-100 dark:bg-slate-900 rounded-lg" />
+          </div>
+          <div className="h-20 w-64 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+        </div>
+
+        {/* Skeleton Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-slate-800 p-8 h-64 shadow-sm">
+              <div className="flex justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-slate-100 dark:bg-slate-800 rounded-2xl" />
+                  <div className="space-y-2">
+                    <div className="h-5 w-32 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+                    <div className="h-3 w-48 bg-slate-100 dark:bg-slate-900 rounded-md" />
+                  </div>
+                </div>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map(s => <div key={s} className="w-4 h-4 bg-slate-100 dark:bg-slate-800 rounded-full" />)}
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-lg" />
+                <div className="h-4 w-5/6 bg-slate-100 dark:bg-slate-800 rounded-lg" />
+              </div>
+              <div className="mt-8 pt-6 border-t border-slate-50 dark:border-slate-800 flex justify-between">
+                <div className="flex gap-2">
+                  <div className="h-8 w-24 bg-slate-100 dark:bg-slate-800 rounded-lg" />
+                  <div className="h-8 w-24 bg-slate-100 dark:bg-slate-800 rounded-lg" />
+                </div>
+                <div className="h-4 w-20 bg-slate-100 dark:bg-slate-800 rounded-lg mt-2" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -194,19 +232,6 @@ export default function AdminFeedbackPage() {
 
               <div className="mt-8 pt-6 border-t border-slate-50 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-4 w-full md:w-auto">
-                  <select
-                    value={f.category}
-                    onChange={(e) => handleUpdate(f.id, 'category', e.target.value)}
-                    className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg border outline-none cursor-pointer transition-colors ${
-                      f.category === 'POSITIVE' ? 'bg-green-50 text-green-700 border-green-200' :
-                      f.category === 'SUGGESTION' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                      'bg-red-50 text-red-700 border-red-200'
-                    }`}
-                  >
-                    <option value="POSITIVE">Positive</option>
-                    <option value="SUGGESTION">Suggestion</option>
-                    <option value="COMPLAINT">Complaint</option>
-                  </select>
 
                   <select
                     value={f.status}

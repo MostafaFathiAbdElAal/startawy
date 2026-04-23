@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { CreditCard, Calendar, Download, Filter, Package, Users, DollarSign, CheckCircle } from "lucide-react";
+import { CreditCard, Calendar, Filter, Package, Users, DollarSign, CheckCircle } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "My Payments",

@@ -55,7 +55,6 @@ export default async function ProtectedLayout({ children }: { children: React.Re
           userRole={user.type as "FOUNDER" | "CONSULTANT" | "ADMIN"} 
           isOwner={isOwner} 
           hasPaidPlan={hasPaidPlan}
-          hasPremiumPlan={hasPremiumPlan}
         />
         <div className="flex-1 flex flex-col overflow-hidden transition-all duration-200 ease-in-out">
           <TopBar 

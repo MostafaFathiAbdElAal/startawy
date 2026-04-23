@@ -40,7 +40,7 @@ export class AuthService {
             userId: user.id,
             businessName: businessName || '',
             businessSector: businessSector || '',
-            foundingDate: foundingDate ? new Date(foundingDate) : new Date(),
+            foundingDate: foundingDate ? new Date(foundingDate) : null,
           },
         });
       } else if (role === 'CONSULTANT') {
