@@ -1,7 +1,9 @@
 'use client';
 
+import { motion, AnimatePresence } from 'framer-motion';
+
 import { useState, useEffect } from 'react';
-import { ShieldCheck, UserPlus, Search, User, Mail, Shield, AlertCircle, X } from 'lucide-react';
+import { ShieldCheck, UserPlus, Search, User, Mail, Shield, AlertCircle, X, Trash2 } from 'lucide-react';
 import { useToast } from '@/components/providers/ToastProvider';
 
 interface Admin {
@@ -28,9 +30,25 @@ export default function ManageAdminsPage() {
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [formLoading, setFormLoading] = useState(false);
 
+  // Delete State
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     fetchAdmins();
   }, []);
+
+  // Lock body scroll when any modal is open
+  useEffect(() => {
+    if (isModalOpen || deleteConfirmId) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isModalOpen, deleteConfirmId]);
 
   const fetchAdmins = async () => {
     try {
@@ -85,6 +103,42 @@ export default function ManageAdminsPage() {
       });
     } finally {
       setFormLoading(false);
+    }
+  };
+
+  const handleDeleteAdmin = async () => {
+    if (!deleteConfirmId) return;
+    setIsDeleting(true);
+    
+    try {
+      const res = await fetch(`/api/admin/admins/${deleteConfirmId}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        showToast({
+          type: 'success',
+          title: 'Admin Removed',
+          message: 'The administrator has been successfully deleted.'
+        });
+        fetchAdmins();
+      } else {
+        showToast({
+          type: 'error',
+          title: 'Deletion Failed',
+          message: data.error || 'Failed to remove administrator'
+        });
+      }
+    } catch {
+      showToast({
+        type: 'error',
+        title: 'Network Error',
+        message: 'Could not connect to the server. Please try again.'
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmId(null);
     }
   };
 
@@ -208,9 +262,20 @@ export default function ManageAdminsPage() {
                       {new Intl.DateTimeFormat('en-GB').format(new Date(admin.createdAt))}
                     </td>
                     <td className="px-6 py-5 text-right">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 text-[10px] font-bold rounded-full border border-green-100 dark:border-green-900/50 uppercase tracking-wider">
-                        Active
-                      </span>
+                      <div className="flex items-center justify-end gap-3">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 text-[10px] font-bold rounded-full border border-green-100 dark:border-green-900/50 uppercase tracking-wider">
+                          Active
+                        </span>
+                        {!admin.admin?.isOwner && (
+                          <button
+                            onClick={() => setDeleteConfirmId(admin.id)}
+                            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                            title="Remove Administrator"
+                          >
+                            <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -305,6 +370,65 @@ export default function ManageAdminsPage() {
           </div>
         </div>
       )}
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmId && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 sm:p-0">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" 
+              onClick={() => !isDeleting && setDeleteConfirmId(null)} 
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden"
+            >
+              <div className="p-8 text-center space-y-6">
+                <div className="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <AlertCircle className="w-8 h-8" />
+                </div>
+                
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Remove Administrator?</h3>
+                  <p className="text-gray-500 dark:text-slate-400">
+                    Are you absolutely sure you want to remove this administrator? They will completely lose access to the system. This action cannot be undone.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 pt-4">
+                  <button
+                    onClick={() => setDeleteConfirmId(null)}
+                    disabled={isDeleting}
+                    className="flex-1 px-6 py-3.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 font-bold rounded-2xl transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteAdmin}
+                    disabled={isDeleting}
+                    className="flex-1 px-6 py-3.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-teal-600/20 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isDeleting ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Trash2 className="w-5 h-5" />
+                        Remove
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
