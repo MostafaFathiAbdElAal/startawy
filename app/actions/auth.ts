@@ -227,6 +227,12 @@ export async function logout() {
   redirect('/login?loggedOut=true');
 }
 
+export async function logoutToHome() {
+  const cookieStore = await cookies();
+  cookieStore.delete('auth-token');
+  redirect('/');
+}
+
 export async function sendVerificationOTP() {
   console.log('[OTP] sendVerificationOTP called');
   try {

@@ -85,31 +85,38 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL('/complete-profile', request.url));
   }
 
-  // 5. Role-Based Access Control (RBAC) - [NEW]
-  // Stops Founders from entering Consultant areas & prevents infinite Loops
-  if (!isOwner && user && user.role) {
-    const isConsultantPrivateZone = [
-      '/consultant/dashboard',
-      '/consultant/sessions',
-      '/consultant/earnings',
-      '/consultant/clients',
-      '/consultant/availability',
-      '/consultant/follow-up-plans',
-      '/consultant/recommendations'
-    ].some(path => pathname.startsWith(path));
-    
+  // 5. Role-Based Access Control (RBAC) - [STRICT ENFORCEMENT]
+  if (user && user.role) {
+    const isConsultantRoute = pathname.startsWith('/consultant');
     const isAdminRoute = pathname.startsWith('/admin');
     
-    // If a Founder tries to access Consultant Private areas or Admin routes -> Kick to dashboard
-    if (user.role === 'FOUNDER' && (isConsultantPrivateZone || isAdminRoute)) {
+    // Define explicitly founder-only routes
+    const isFounderRoute = [
+      '/budget-analysis',
+      '/ai-chatbot',
+      '/book-consultant',
+      '/my-sessions',
+      '/my-plan',
+      '/my-payments',
+      '/feedback'
+    ].some(path => pathname.startsWith(path));
+
+    // Founder Restrictions
+    if (user.role === 'FOUNDER' && (isConsultantRoute || isAdminRoute)) {
       console.log(`[PROXY] RBAC Violation: FOUNDER on ${pathname} -> Redirecting to /dashboard`);
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
-    // If a Consultant tries to access Admin routes -> Kick to dashboard
-    if (user.role === 'CONSULTANT' && isAdminRoute) {
-      console.log(`[PROXY] RBAC Violation: CONSULTANT on ${pathname} -> Redirecting to /dashboard`);
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+    // Consultant Restrictions
+    if (user.role === 'CONSULTANT' && (isAdminRoute || isFounderRoute)) {
+      console.log(`[PROXY] RBAC Violation: CONSULTANT on ${pathname} -> Redirecting to /consultant/dashboard`);
+      return NextResponse.redirect(new URL('/consultant/dashboard', request.url));
+    }
+
+    // Admin Restrictions
+    if (user.role === 'ADMIN' && (isConsultantRoute || isFounderRoute)) {
+      console.log(`[PROXY] RBAC Violation: ADMIN on ${pathname} -> Redirecting to /admin/dashboard`);
+      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
     }
 
     // 6. Plan-Based Access Control (PBAC) - [RELAXED FOR PREVIEWS]

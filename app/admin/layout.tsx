@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyAuth } from "@/lib/auth-utils";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { AccessDenied } from "@/components/ui/AccessDenied";
 
 export default async function AdminLayout({
   children,
@@ -23,13 +24,7 @@ export default async function AdminLayout({
   const isOwner = !!userPayload.isOwner;
 
   if (!user || (user.type !== 'ADMIN' && !isOwner)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 flex-col gap-4">
-        <h1 className="text-3xl font-bold text-red-600">Access Denied</h1>
-        <p className="text-gray-600">You must be an Administrator to view this page.</p>
-        <a href="/dashboard" className="text-teal-600 hover:underline">Return to Dashboard</a>
-      </div>
-    );
+    return <AccessDenied message="You must be an Administrator to view this page." />;
   }
 
   return (

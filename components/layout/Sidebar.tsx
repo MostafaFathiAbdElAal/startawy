@@ -97,11 +97,7 @@ export function Sidebar({ userRole: rawRole = "FOUNDER", isOwner: propIsOwner, h
   const menuItems = [
     ...(userRole?.toUpperCase() === "CONSULTANT" ? consultantMenuItems :
        userRole?.toUpperCase() === "ADMIN" ? adminMenuItems :
-       founderMenuItems),
-    // If owner, also show ONLY UNIQUE admin items (to avoid duplicates like Profile/Dashboard)
-    ...(isOwner && userRole?.toUpperCase() !== "ADMIN" 
-      ? adminMenuItems.filter(item => !["Dashboard", "Profile"].includes(item.label))
-      : [])
+       founderMenuItems)
   ];
 
   return (
