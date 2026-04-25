@@ -75,8 +75,8 @@ export default async function BookSessionPage({ params }: { params: Promise<{ id
               <p className="text-amber-800 dark:text-amber-200 text-sm mt-1">
                 You already have an upcoming session with {consultant.user.name} on{" "}
                 <span className="font-bold">
-                  {new Date(upcomingSession.date).toLocaleDateString('en-US', { 
-                    month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                  {new Date(upcomingSession.date).toLocaleDateString('en-GB', { 
+                    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' 
                   })}
                 </span>.
                 Do you still wish to schedule another session?

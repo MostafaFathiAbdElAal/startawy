@@ -190,11 +190,10 @@ export function BookingForm({ consultant }: { consultant: ConsultantProps }) {
               </p>
               <p>
                 <strong className="text-gray-900 dark:text-white">Date:</strong>{" "}
-                {new Date(selectedDate).toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
+                {new Date(selectedDate).toLocaleDateString('en-GB', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
                 })}
               </p>
               <p>

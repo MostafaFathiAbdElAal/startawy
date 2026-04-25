@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import  { useEffect, useState } from 'react';
 import { Users, Briefcase, BarChart3, Calendar, Mail, Search } from 'lucide-react';
+import UserAvatar from "@/components/ui/UserAvatar";
 import Link from 'next/link';
 import { useToast } from "@/components/providers/ToastProvider";
 
@@ -17,6 +18,7 @@ interface Client {
     fixedCost: number;
     variableCost: number;
   } | null;
+  image: string | null;
   joinedAt: string;
 }
 
@@ -125,16 +127,20 @@ export default function ConsultantClientsPage() {
           {filteredClients.map(client => (
             <div
               key={client.id}
-              className="group bg-white dark:bg-gray-800 border border-amber-100/50 dark:border-amber-900/20 rounded-3xl overflow-hidden hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-500 hover:-translate-y-2 ring-1 ring-amber-50/50 dark:ring-amber-900/10"
+              className="group bg-white dark:bg-gray-800 border border-amber-100/50 dark:border-amber-900/20 rounded-3xl overflow-hidden hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-500 hover:-translate-y-2 ring-1 ring-amber-50/50 dark:ring-amber-900/10 flex flex-col"
             >
-              <div className="p-6 border-b border-amber-50/50 dark:border-amber-900/10 bg-gradient-to-br from-teal-500/[0.03] to-amber-500/[0.03] group-hover:from-teal-500/[0.07] transition-colors relative">
+              <div className="flex-1">
+                <div className="p-6 border-b border-amber-50/50 dark:border-amber-900/10 bg-gradient-to-br from-teal-500/[0.03] to-amber-500/[0.03] group-hover:from-teal-500/[0.07] transition-colors relative">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-opacity">
                   <Users className="w-12 h-12 text-teal-600" />
                 </div>
                 <div className="flex items-center gap-4 relative z-10">
-                  <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-teal-500 to-teal-700 flex items-center justify-center text-white font-black text-xl shadow-lg ring-4 ring-white dark:ring-gray-700 shadow-teal-500/20">
-                    {client.name.charAt(0).toUpperCase()}
-                  </div>
+                  <UserAvatar 
+                    name={client.name} 
+                    image={client.image} 
+                    size="md" 
+                    isVerified={true} 
+                  />
                   <div>
                     <h3 className="font-bold text-lg text-gray-900 dark:text-white leading-tight">{client.name}</h3>
                     <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-1">{client.email}</p>
@@ -188,13 +194,14 @@ export default function ConsultantClientsPage() {
                   </div>
                 )}
               </div>
+            </div>
 
-              <div className="px-6 pb-6">
+            <div className="px-6 pb-6">
                 <a
                   href={`mailto:${client.email}`}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-teal-600 dark:bg-teal-500 text-white dark:text-gray-950 text-sm font-black hover:bg-teal-700 dark:hover:bg-teal-400 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-teal-500/20"
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-linear-to-r from-teal-500 to-teal-600 text-white text-sm font-bold hover:from-teal-600 hover:to-teal-700 transition-all active:scale-[0.98] shadow-sm"
                 >
-                  <Mail className="w-4 h-4" />
+                  <Mail className="w-5 h-5" />
                   Contact Founder
                 </a>
               </div>

@@ -90,19 +90,26 @@ export async function proxy(request: NextRequest) {
     const isConsultantRoute = pathname.startsWith('/consultant');
     const isAdminRoute = pathname.startsWith('/admin');
     
+    // Special routes that are public-ish (Consultant Profiles & Booking)
+    // Matches: /consultant/123, /consultant/123/, /consultant/123/book, /consultant/123/book/
+    const isPublicConsultantView = pathname.match(/^\/consultant\/\d+(\/book)?\/?$/);
+
     // Define explicitly founder-only routes
     const isFounderRoute = [
+      '/founder',
       '/budget-analysis',
       '/ai-chatbot',
       '/book-consultant',
       '/my-sessions',
       '/my-plan',
       '/my-payments',
-      '/feedback'
+      '/my-reports',
+      '/payment',
+      '/plans'
     ].some(path => pathname.startsWith(path));
 
     // Founder Restrictions
-    if (user.role === 'FOUNDER' && (isConsultantRoute || isAdminRoute)) {
+    if (user.role === 'FOUNDER' && ((isConsultantRoute && !isPublicConsultantView) || isAdminRoute)) {
       console.log(`[PROXY] RBAC Violation: FOUNDER on ${pathname} -> Redirecting to /dashboard`);
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
@@ -114,7 +121,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // Admin Restrictions
-    if (user.role === 'ADMIN' && (isConsultantRoute || isFounderRoute)) {
+    if (user.role === 'ADMIN' && ((isConsultantRoute && !isPublicConsultantView) || isFounderRoute)) {
       console.log(`[PROXY] RBAC Violation: ADMIN on ${pathname} -> Redirecting to /admin/dashboard`);
       return NextResponse.redirect(new URL('/admin/dashboard', request.url));
     }

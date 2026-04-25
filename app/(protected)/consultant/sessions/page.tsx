@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Calendar, Clock, DollarSign, FileText, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, DollarSign, FileText, Loader2, CheckCircle2, AlertCircle, Video } from 'lucide-react';
 import { useToast } from "@/components/providers/ToastProvider";
 
 interface Session {
@@ -90,7 +90,7 @@ const SessionCard = ({
       <div className="grid grid-cols-2 gap-4 mb-5 p-4 bg-linear-to-br from-teal-50/30 to-amber-50/30 dark:from-teal-900/5 dark:to-amber-900/5 rounded-xl border border-amber-100/20">
         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 font-medium">
           <Calendar className="w-4 h-4 text-teal-600" />
-          <span>{new Date(s.date).toLocaleDateString()}</span>
+          <span>{new Date(s.date).toLocaleDateString('en-GB')}</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 font-medium">
           <Clock className="w-4 h-4 text-teal-500" />
@@ -115,7 +115,7 @@ const SessionCard = ({
           rel="noopener noreferrer"
           className="w-full mb-4 flex items-center justify-center gap-2 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-xl transition-all duration-300 font-bold text-xs shadow-lg shadow-teal-500/25"
         >
-          <Loader2 className="w-4 h-4 animate-pulse" />
+          <Video className="w-4 h-4" />
           Join Meeting
         </a>
       )}

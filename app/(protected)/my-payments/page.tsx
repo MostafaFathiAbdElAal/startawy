@@ -59,7 +59,7 @@ export default async function MyPaymentsPage({
       consultant: !isPlan && p.session?.consultant?.user?.name ? p.session.consultant.user.name : "Consultant",
       sessionType: !isPlan ? `${p.session?.consultant?.specialization || "Consultation"} Session` : "Plan Subscription",
       amount: `$${p.amount.toFixed(2)}`,
-      date: new Date(p.transDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      date: new Date(p.transDate).toLocaleDateString("en-GB"),
       status: "Completed",
       paymentMethod: paymentMethodLabel,
       invoice: `INV-${new Date(p.transDate).getFullYear()}-${String(p.id).padStart(3, '0')}`,

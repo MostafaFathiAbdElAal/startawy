@@ -96,7 +96,7 @@ export default function AvailabilityForm({ current, onSuccess }: AvailabilityFor
                 key={tpl.label}
                 type="button"
                 onClick={() => applyTemplate(tpl.value)}
-                className="text-[10px] font-bold px-3 py-1.5 rounded-lg border border-teal-500/20 bg-teal-500/5 text-teal-600 dark:text-teal-400 hover:bg-teal-500 hover:text-white transition-all"
+                className="text-[10px] font-black px-4 py-2 rounded-full border border-teal-500/20 bg-white dark:bg-gray-800 text-teal-600 dark:text-teal-400 hover:bg-teal-500 hover:text-white hover:border-teal-500 transition-all shadow-xs uppercase tracking-wider"
               >
                 {tpl.label}
               </button>
@@ -129,9 +129,9 @@ export default function AvailabilityForm({ current, onSuccess }: AvailabilityFor
         <button
           type="submit"
           disabled={saving}
-          className="w-full sm:w-auto flex items-center justify-center gap-3 px-12 py-4 bg-linear-to-br from-gray-900 to-slate-800 dark:from-teal-600 dark:to-teal-700 text-white dark:text-gray-950 rounded-2xl font-black text-sm transition-all hover:scale-[1.03] active:scale-95 disabled:opacity-50 disabled:scale-100 shadow-xl shadow-teal-500/20 border border-amber-400/20"
+          className="w-full sm:w-auto flex items-center justify-center gap-3 px-12 py-4 bg-linear-to-br from-teal-500 to-teal-600 text-white rounded-2xl font-black text-sm transition-all hover:scale-[1.03] hover:from-teal-600 hover:to-teal-700 active:scale-95 disabled:opacity-50 disabled:scale-100 shadow-xl shadow-teal-500/10"
         >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin text-teal-400" /> : <Save className="w-4 h-4" />}
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {saving ? 'Syncing...' : 'Update Schedule'}
         </button>
       </div>

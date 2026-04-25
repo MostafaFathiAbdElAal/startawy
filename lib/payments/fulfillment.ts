@@ -97,14 +97,14 @@ export async function fulfillPayment(session: any) {
       logFulfillment(`Generated meeting link: ${meetingLink}`);
 
       // 1. Create Consultation Session (Step 1: Basic Data)
-      // We exclude meetingLink here to bypass the "Unknown argument" Prisma Client error
+      // We use the custom notes from metadata if provided, otherwise fallback to generic message.
       const consultation = await prisma.session.create({
         data: {
           founderId: founderId,
           consultantId: consultantId,
           date: sessionDate,
           duration: "1 Hour",
-          notes: `Booked via Stripe (Session: ${session.id})`,
+          notes: metadata.notes || `Booked via Stripe (Session: ${session.id})`,
           paymentStatus: "PAID",
         },
       });

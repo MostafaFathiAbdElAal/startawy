@@ -37,6 +37,7 @@ export async function GET() {
               select: {
                 name: true,
                 email: true,
+                image: true,
                 createdAt: true,
               },
             },
@@ -69,6 +70,7 @@ export async function GET() {
       businessSector: f.businessSector,
       totalSessions: f.sessions.length,
       lastBudgetAnalysis: f.budgetAnalyses[0] ?? null,
+      image: f.user.image,
       joinedAt: f.user.createdAt,
     }));
 

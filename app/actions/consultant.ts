@@ -179,6 +179,7 @@ export async function getConsultantClients() {
     businessSector: f.businessSector,
     totalSessions: f.sessions.length,
     lastBudgetAnalysis: f.budgetAnalyses[0] ?? null,
+    image: f.user.image,
     joinedAt: f.user.createdAt,
   }));
 }

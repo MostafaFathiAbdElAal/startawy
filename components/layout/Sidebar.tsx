@@ -50,7 +50,9 @@ export function Sidebar({ userRole: rawRole = "FOUNDER", isOwner: propIsOwner, h
   };
 
   const isActive = (path: string) => {
-    if (path === '/dashboard') return pathname === '/dashboard';
+    if (path === '/dashboard' || path === '/consultant/dashboard' || path === '/admin/dashboard') {
+      return pathname === path;
+    }
     return pathname.startsWith(path);
   };
 
@@ -70,7 +72,7 @@ export function Sidebar({ userRole: rawRole = "FOUNDER", isOwner: propIsOwner, h
   ];
 
   const consultantMenuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+    { icon: LayoutDashboard, label: "Dashboard", path: "/consultant/dashboard" },
     { icon: Calendar, label: "My Sessions", path: "/consultant/sessions" },
     { icon: Users, label: "My Clients", path: "/consultant/clients" },
     { icon: DollarSign, label: "My Earnings", path: "/consultant/earnings" },

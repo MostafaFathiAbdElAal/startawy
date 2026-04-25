@@ -65,7 +65,7 @@ export class UserService {
             description: data.description || data.bio // Handle both naming conventions
           }
         } : undefined,
-        consultant: (data.specialization || data.bio || data.availability) ? {
+        consultant: (data.specialization || data.bio || data.availability || data.sessionRate !== undefined || data.yearsOfExp !== undefined) ? {
           update: {
             specialization: data.specialization,
             yearsOfExp: data.yearsOfExp !== undefined ? Number(data.yearsOfExp) : undefined,

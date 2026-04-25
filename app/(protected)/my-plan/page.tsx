@@ -155,7 +155,7 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
             <div className="flex items-center gap-2">
               <CalendarIcon className="w-4 h-4" />
               <p className="font-semibold">
-                {subscription?.startDate ? new Date(subscription.startDate).toLocaleDateString() : 'N/A'}
+                {subscription?.startDate ? new Date(subscription.startDate).toLocaleDateString('en-GB') : 'N/A'}
               </p>
             </div>
           </div>
@@ -164,7 +164,7 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
             <div className="flex items-center gap-2">
               <CalendarIcon className="w-4 h-4" />
               <p className="font-semibold">
-                {subscription?.endDate ? new Date(subscription.endDate).toLocaleDateString() : 'N/A'}
+                {subscription?.endDate ? new Date(subscription.endDate).toLocaleDateString('en-GB') : 'N/A'}
               </p>
             </div>
           </div>

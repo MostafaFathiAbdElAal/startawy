@@ -165,7 +165,7 @@ export default function ConsultantRecommendationsPage() {
                         </div>
                         <div>
                           <p className="font-black text-gray-900 dark:text-white">{recItem.founder?.user?.name || 'Founder'}</p>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{new Date(recItem.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{new Date(recItem.createdAt).toLocaleDateString('en-GB')}</p>
                         </div>
                       </div>
                       <span className={`text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest ${
@@ -187,7 +187,7 @@ export default function ConsultantRecommendationsPage() {
                         {recItem.priority || 'MEDIUM'}
                       </span>
                       <span className="text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter bg-teal-100 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400">
-                        {recItem.category?.replace('_', ' ') || 'STRATEGY'}
+                        {recItem.category?.replace(/_/g, ' ') || 'STRATEGY'}
                       </span>
                     </div>
                     <div className="pl-0">

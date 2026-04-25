@@ -121,12 +121,13 @@ export default function ConsultantEarningsPage() {
 
       {/* Ledger Section - Cleaned up lines & Radius */}
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center gap-4 bg-gray-50/30 dark:bg-transparent">
-          <div className="p-2.5 bg-gray-900 dark:bg-teal-500 rounded-xl">
-            <Receipt className="w-5 h-5 text-white dark:text-gray-900" />
+        <div className="p-6 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-4 bg-gray-50/30 dark:bg-slate-800/50">
+          <div className="p-3 bg-teal-500 rounded-xl shadow-lg shadow-teal-500/20">
+            <Receipt className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Financial Records</h2>
+            <h2 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Financial Records</h2>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Transaction Ledger</p>
           </div>
         </div>
 
@@ -134,38 +135,40 @@ export default function ConsultantEarningsPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50/50 dark:bg-gray-700/20 text-left">
-                  <th className="px-6 py-4 font-bold text-gray-400 text-[10px] uppercase tracking-wider border-b border-gray-100 dark:border-gray-700">Founder & Business</th>
-                  <th className="px-6 py-4 font-bold text-gray-400 text-[10px] uppercase tracking-wider border-b border-gray-100 dark:border-gray-700">Date</th>
-                  <th className="px-6 py-4 font-bold text-gray-400 text-[10px] uppercase tracking-wider border-b border-gray-100 dark:border-gray-700 text-right">Fee</th>
+                <tr className="bg-gray-50/50 dark:bg-slate-900/50 text-left">
+                  <th className="px-8 py-5 font-black text-gray-400 text-[10px] uppercase tracking-widest border-b border-gray-100 dark:border-gray-700/50">Founder & Business</th>
+                  <th className="px-8 py-5 font-black text-gray-400 text-[10px] uppercase tracking-widest border-b border-gray-100 dark:border-gray-700/50">Date</th>
+                  <th className="px-8 py-5 font-black text-gray-400 text-[10px] uppercase tracking-widest border-b border-gray-100 dark:border-gray-700/50 text-right">Fee</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
                 {records.map(r => (
-                  <tr key={r.id} className="hover:bg-gray-50/30 dark:hover:bg-gray-700/10 transition-colors">
-                    <td className="px-6 py-5">
-                      <p className="font-bold text-gray-900 dark:text-white text-sm">{r.founderName}</p>
-                      <p className="text-[10px] text-gray-400 font-medium">{r.businessName}</p>
+                  <tr key={r.id} className="hover:bg-teal-500/[0.02] dark:hover:bg-teal-500/[0.02] transition-colors border-b border-gray-50 dark:border-gray-700/30 last:border-0">
+                    <td className="px-8 py-6">
+                      <p className="font-black text-gray-900 dark:text-white text-base tracking-tight">{r.founderName}</p>
+                      <p className="text-[11px] text-teal-600 dark:text-teal-400 font-black uppercase tracking-tighter mt-0.5">{r.businessName}</p>
                     </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-2 text-gray-500 font-semibold text-xs">
-                        <Calendar className="w-3.5 h-3.5 text-gray-300" />
-                        <span>{new Date(r.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-2.5 text-gray-600 dark:text-gray-300 font-bold text-xs">
+                        <Calendar className="w-4 h-4 text-teal-500/50" />
+                        <span>{new Date(r.date).toLocaleDateString('en-GB')}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-5 text-right">
-                      <span className="font-bold text-teal-600 dark:text-teal-400 bg-teal-50/50 dark:bg-teal-900/20 px-3 py-1.5 rounded-lg border border-teal-100/50 dark:border-teal-800/30 tabular-nums">
+                    <td className="px-8 py-6 text-right">
+                      <span className="font-black text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 px-4 py-2 rounded-xl border border-teal-100 dark:border-teal-800/50 tabular-nums shadow-xs">
                         ${r.amount.toFixed(2)}
                       </span>
                     </td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="bg-gray-50/50 dark:bg-gray-700/10 border-t border-gray-100 dark:border-gray-700">
+              <tfoot className="bg-gray-50/50 dark:bg-slate-900/50 border-t-2 border-gray-100 dark:border-gray-700">
                 <tr>
-                  <td className="px-6 py-6 font-bold text-gray-900 dark:text-white uppercase text-xs" colSpan={2}>Total</td>
-                  <td className="px-6 py-6 text-right font-black text-teal-600 dark:text-teal-400 tabular-nums text-xl">
-                    ${totalEarnings.toFixed(2)}
+                  <td className="px-8 py-8 font-black text-gray-900 dark:text-white uppercase text-xs tracking-[0.2em]" colSpan={2}>Grand Total</td>
+                  <td className="px-8 py-8 text-right">
+                    <span className="font-black text-teal-600 dark:text-teal-400 tabular-nums text-2xl tracking-tighter">
+                      ${totalEarnings.toFixed(2)}
+                    </span>
                   </td>
                 </tr>
               </tfoot>

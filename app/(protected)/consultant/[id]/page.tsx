@@ -49,8 +49,8 @@ export default async function ConsultantProfilePage({ params }: { params: Promis
             <div>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Upcoming Session Scheduled</h3>
               <p className="text-gray-600 dark:text-gray-400">
-                You have an appointment on {new Date(upcomingSession.date).toLocaleDateString('en-US', { 
-                  weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                You have an appointment on {new Date(upcomingSession.date).toLocaleDateString('en-GB', { 
+                  day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' 
                 })}
               </p>
             </div>

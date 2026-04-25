@@ -63,7 +63,7 @@ export function MySessionsClient({ sessions }: MySessionsClientProps) {
           <Calendar className="w-5 h-5 text-teal-500" />
           <div className="flex flex-col">
             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Date</span>
-            <span className="font-bold text-sm">{new Date(session.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            <span className="font-bold text-sm">{new Date(session.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
           </div>
         </div>
         <div className="flex items-center gap-4 text-slate-600 dark:text-slate-300">

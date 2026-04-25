@@ -65,7 +65,7 @@ export const ChatWindow = ({ isAuthenticated, isPhoneVerified, userName, userRol
           initial={{ opacity: 0, y: 50, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 50, scale: 0.95 }}
-          className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 h-[500px] flex flex-col bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/50 overflow-hidden"
+          className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-[9999] w-[calc(100vw-32px)] sm:w-96 h-[500px] max-h-[calc(100vh-100px)] flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-800 overflow-hidden"
         >
           {/* Header */}
           <div className="p-4 bg-teal-600 text-white flex items-center justify-between">
@@ -136,7 +136,7 @@ export const ChatWindow = ({ isAuthenticated, isPhoneVerified, userName, userRol
               
               <div 
                 ref={scrollRef}
-                className="flex-1 p-4 overflow-y-auto space-y-4 scroll-smooth"
+                className="flex-1 min-h-0 p-4 overflow-y-auto space-y-4 scroll-smooth"
               >
                 {messages.length === 0 && (
                   <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3 opacity-60">
@@ -241,7 +241,7 @@ export const ChatWindow = ({ isAuthenticated, isPhoneVerified, userName, userRol
               </div>
 
               {/* Input Area */}
-              <div className="p-4 bg-white/50 dark:bg-slate-900/50 border-t border-gray-100 dark:border-slate-800">
+              <div className="p-4 bg-white/50 dark:bg-slate-900/50 border-t border-gray-100 dark:border-slate-800 flex-shrink-0">
                 <div className="flex items-center gap-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
                   <input
                     type="text"
