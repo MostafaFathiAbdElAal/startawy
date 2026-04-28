@@ -10,7 +10,8 @@ import {
   ArrowDownRight,
   History,
   Clock,
-  Calendar
+  Calendar,
+  Hand
 } from "lucide-react";
 import Link from "next/link";
 import { DashboardCharts } from "./DashboardCharts";
@@ -48,16 +49,19 @@ export default async function DashboardPage() {
   return (
     <div className="p-4 sm:p-8">
       {/* Welcome Section */}
-      <div className="mb-8 p-6 bg-linear-to-r from-gray-900 to-slate-800 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:bg-teal-500/20 transition-all duration-700"></div>
-        <div className="relative z-10">
-          <h1 className="text-3xl font-bold text-white mb-2 font-display">
-            Welcome back, {user.name?.split(' ')[0] || 'User'}! 👋
+      <div className="mb-6 sm:mb-10 bg-slate-900 rounded-[24px] sm:rounded-[32px] p-6 sm:p-10 text-white relative overflow-hidden shadow-2xl group">
+        <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-teal-500/10 rounded-full blur-[80px] sm:blur-[100px] -mr-16 -mt-16 sm:-mr-20 sm:-mt-20 group-hover:bg-teal-500/20 transition-all duration-700"></div>
+        <div className="relative z-10 flex flex-col items-center md:items-start text-center md:text-left gap-4">
+          <h1 className="text-2xl sm:text-4xl font-black text-white flex items-center flex-wrap justify-center md:justify-start gap-3 sm:gap-4 font-display leading-tight">
+            Welcome back, {user.name?.split(' ')[0] || 'User'}! 
+            <span className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white/10 rounded-xl sm:rounded-2xl backdrop-blur-md border border-white/10 shadow-xl">
+              <Hand className="w-5 h-5 sm:w-6 sm:h-6 text-teal-400 animate-bounce" />
+            </span>
           </h1>
-          <p className="text-gray-300">
+          <p className="text-slate-400 font-medium text-sm sm:text-lg max-w-2xl">
             {user.type === 'CONSULTANT' 
-              ? "Here's an overview of your consultations and impact today." 
-              : "Here's what's happening with your startup today."}
+              ? "Your expertise is making an impact today. Here's an overview of your consultations." 
+              : "Here's what's happening with your startup today. Stay focused on your goals."}
           </p>
         </div>
       </div>

@@ -26,7 +26,7 @@ export function ConfirmModal({
   isProcessing = false,
   variant = 'danger'
 }: ConfirmModalProps) {
-  
+
   const variants = {
     danger: {
       icon: AlertTriangle,

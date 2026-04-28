@@ -62,10 +62,12 @@ export function AddConsultantModal() {
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all shadow-md font-semibold shrink-0"
+        className="w-full md:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-2xl hover:from-teal-600 hover:to-teal-700 transition-all shadow-xl shadow-teal-500/20 font-black text-sm uppercase tracking-widest active:scale-95 group"
       >
-        <Plus className="w-5 h-5" />
-        Add Consultant
+        <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center group-hover:rotate-90 transition-transform duration-300">
+          <Plus className="w-4 h-4" />
+        </div>
+        Add New Consultant
       </button>
 
       <AnimatePresence>

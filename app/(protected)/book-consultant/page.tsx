@@ -78,11 +78,11 @@ export default async function BookConsultantPage({
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Book a Consultant</h1>
-        <p className="text-gray-600 dark:text-gray-400">Connect with expert financial consultants for personalized guidance</p>
+      <div className="mb-8 text-center md:text-left">
+        <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">Book a Consultant</h1>
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 font-medium">Connect with expert financial consultants for personalized guidance</p>
       </div>
 
       {/* Filter Bar */}
@@ -160,17 +160,17 @@ export default async function BookConsultantPage({
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Link
                   href={`/consultant/${consultant.id}/book`}
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all font-medium text-sm text-center flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-3 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all font-bold text-sm text-center flex items-center justify-center gap-2 shadow-lg shadow-teal-500/20 active:scale-95"
                 >
                   <Calendar className="w-4 h-4" />
                   Book Session
                 </Link>
                 <Link
                   href={`/consultant/${consultant.id}`}
-                  className="px-4 py-2.5 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-300 rounded-lg hover:border-teal-500 hover:text-teal-600 dark:hover:border-teal-400 dark:hover:text-teal-400 transition-colors font-medium text-sm"
+                  className="px-4 py-3 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-all font-bold text-sm text-center active:scale-95"
                 >
                   View Profile
                 </Link>
@@ -181,14 +181,14 @@ export default async function BookConsultantPage({
       </div>
 
       {/* Help Section */}
-      <div className="mt-12 bg-gradient-to-r from-teal-50 to-blue-50 dark:from-teal-900/20 dark:to-blue-900/20 rounded-2xl p-8 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Not sure which consultant to choose?</h2>
-        <p className="text-gray-700 dark:text-gray-300 mb-6 max-w-2xl mx-auto">
+      <div className="mt-12 bg-linear-to-br from-teal-50 to-blue-50 dark:from-slate-900/50 dark:to-slate-900 rounded-[32px] p-8 sm:p-12 text-center border border-teal-100 dark:border-slate-800 shadow-xl shadow-teal-500/5">
+        <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mb-3 tracking-tight">Not sure which consultant to choose?</h2>
+        <p className="text-sm sm:text-base text-gray-700 dark:text-gray-400 mb-8 max-w-2xl mx-auto font-medium leading-relaxed">
           Our AI advisor can help match you with the perfect consultant based on your specific needs and goals.
         </p>
         <Link
           href="/ai-chatbot"
-          className="inline-block px-8 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg hover:shadow-xl font-semibold"
+          className="inline-block px-10 py-4 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-2xl hover:from-teal-600 hover:to-teal-700 transition-all shadow-xl shadow-teal-500/25 font-black active:scale-95"
         >
           Get AI Recommendation
         </Link>

@@ -25,9 +25,8 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     // Detect file type to set correct resource_type
-    // PDFs must be uploaded as 'raw', images as 'image'
-    const isPDF = file.type === 'application/pdf' || file.name.endsWith('.pdf');
-    const uploadResourceType = isPDF ? 'raw' : 'image';
+    // Use 'auto' to let Cloudinary handle detection and page counting
+    const uploadResourceType = 'auto';
 
     // Upload to Cloudinary using a Promise to handle the stream
     const result = await new Promise<{ secure_url: string; public_id: string; pages?: number }>((resolve, reject) => {
@@ -35,11 +34,14 @@ export async function POST(req: NextRequest) {
         {
           folder: "startawy_library",
           resource_type: uploadResourceType,
-          pages: true, // Request page count for PDFs
+          pages: true, // Request page count
         },
         (error, result) => {
           if (error) reject(error);
-          else resolve(result as { secure_url: string; public_id: string; pages?: number });
+          else {
+            console.log("Cloudinary Upload Success:", result);
+            resolve(result as { secure_url: string; public_id: string; pages?: number });
+          }
         }
       );
       uploadStream.end(buffer);

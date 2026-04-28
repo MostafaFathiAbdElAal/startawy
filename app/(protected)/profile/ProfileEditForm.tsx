@@ -247,18 +247,18 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
           </div>
         )}
 
-        <div className="flex justify-end gap-4 pt-4">
+        <div className="flex flex-col sm:flex-row justify-center md:justify-end gap-4 pt-6">
           <button
             type="button"
             onClick={() => router.push('/profile')}
-            className="px-8 py-3.5 text-slate-500 font-bold hover:text-slate-900 dark:hover:text-white transition-colors"
+            className="w-full sm:w-auto px-8 py-3.5 text-slate-500 font-bold hover:text-slate-900 dark:hover:text-white transition-colors order-2 sm:order-1"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="px-10 py-3.5 bg-linear-to-r from-teal-500 to-emerald-600 text-white rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-teal-500/20 font-bold flex items-center gap-2.5 disabled:opacity-50"
+            className="w-full sm:w-auto px-10 py-3.5 bg-linear-to-r from-teal-500 to-emerald-600 text-white rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-teal-500/20 font-bold flex items-center justify-center gap-2.5 disabled:opacity-50 order-1 sm:order-2"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-5 h-5" /> Save Changes</>}
           </button>

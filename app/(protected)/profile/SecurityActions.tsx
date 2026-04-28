@@ -348,7 +348,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
             {isInitialLoading ? (
               <motion.div key="skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4 animate-pulse">
                 <div className="h-7 w-40 bg-slate-100 dark:bg-slate-800 rounded-lg mb-6" />
-                {[1, 2, 3].map((i) => (
+                {[1, 2].map((i) => (
                   <div key={i} className="w-full flex items-center justify-between p-5 bg-slate-50/50 dark:bg-slate-800/20 rounded-2xl border border-slate-100 dark:border-slate-800/50">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-xl" />
@@ -457,61 +457,50 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                 </h3>
                 <div className="grid gap-4">
                   {!user.isPhoneVerified && (
-                    <button onClick={handleStartPhoneVerification} className="w-full flex items-center justify-between p-5 bg-linear-to-r from-teal-500/10 to-teal-500/5 dark:from-teal-900/20 dark:to-teal-900/10 rounded-2xl border border-teal-500/20 hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-500/10 transition-all group relative overflow-hidden">
+                    <button onClick={handleStartPhoneVerification} className="w-full flex flex-col sm:flex-row items-center sm:justify-between p-4 sm:p-5 bg-linear-to-r from-teal-500/10 to-teal-500/5 dark:from-teal-900/20 dark:to-teal-900/10 rounded-2xl border border-teal-500/20 hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-500/10 transition-all group relative overflow-hidden gap-4 sm:gap-5">
                       <div className="absolute inset-0 bg-linear-to-r from-teal-500/0 via-teal-500/5 to-teal-500/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                      <div className="flex items-center gap-5 relative z-10 w-full">
-                        <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center border border-teal-200 dark:border-teal-800 shadow-sm text-teal-600 transition-transform group-hover:scale-110">
-                          <Smartphone className="w-6 h-6 stroke-3 animate-pulse" />
+                      <div className="flex items-center gap-4 sm:gap-5 relative z-10 w-full">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center border border-teal-200 dark:border-teal-800 shadow-sm text-teal-600 transition-transform group-hover:scale-110 shrink-0">
+                          <Smartphone className="w-5 h-5 sm:w-6 sm:h-6 stroke-3 animate-pulse" />
                         </div>
                         <div className="text-left flex-1">
-                          <span className="block text-base font-bold text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">Verify Phone Number</span>
-                          <span className="text-xs font-medium text-teal-600/80 dark:text-teal-400/80">Secure your account via WhatsApp instantly</span>
+                          <span className="block text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">Verify Phone Number</span>
+                          <span className="text-[10px] sm:text-xs font-medium text-teal-600/80 dark:text-teal-400/80">Secure your account via WhatsApp</span>
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                          <ChevronRight className="w-5 h-5 text-teal-600" />
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 shrink-0">
+                          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600" />
                         </div>
                       </div>
                     </button>
                   )}
 
-                  <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between p-5 bg-white dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-teal-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all group hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none">
-                    <div className="flex items-center gap-5 w-full">
-                      <div className="w-14 h-14 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center border border-slate-100 dark:border-slate-800 shadow-xs text-slate-500 group-hover:text-teal-500 transition-all group-hover:rotate-12 group-hover:scale-110">
-                        <Lock className="w-6 h-6 stroke-3" />
+                  <button onClick={() => setShowPasswordModal(true)} className="w-full flex flex-col sm:flex-row items-center sm:justify-between p-4 sm:p-5 bg-white dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-teal-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all group hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none gap-4 sm:gap-5">
+                    <div className="flex items-center gap-4 sm:gap-5 w-full">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center border border-slate-100 dark:border-slate-800 shadow-xs text-slate-500 group-hover:text-teal-500 transition-all group-hover:rotate-12 group-hover:scale-110 shrink-0">
+                        <Lock className="w-5 h-5 sm:w-6 sm:h-6 stroke-3" />
                       </div>
                       <div className="text-left flex-1">
-                        <span className="block text-base font-bold text-slate-900 dark:text-white">Change Password</span>
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Regularly update your account credentials</span>
+                        <span className="block text-sm sm:text-base font-bold text-slate-900 dark:text-white">Change Password</span>
+                        <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Regularly update your credentials</span>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-teal-500 transition-all group-hover:translate-x-1" />
+                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300 group-hover:text-teal-500 transition-all group-hover:translate-x-1 shrink-0" />
                     </div>
                   </button>
 
-                  <button onClick={() => setShowDeleteModal(true)} className="w-full flex items-center justify-between p-5 bg-white dark:bg-red-900/5 rounded-2xl border border-red-50 dark:border-red-900/10 hover:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all group">
-                    <div className="flex items-center gap-5 w-full">
-                      <div className="w-14 h-14 bg-red-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center border border-red-100 dark:border-red-900/20 shadow-xs text-red-500 group-hover:text-red-600 group-hover:animate-shake">
-                        <AlertCircle className="w-6 h-6 stroke-3" />
+                  <button onClick={() => setShowDeleteModal(true)} className="w-full flex flex-col sm:flex-row items-center sm:justify-between p-4 sm:p-5 bg-white dark:bg-red-950/10 rounded-2xl border border-red-100 dark:border-red-900/30 hover:border-red-500/50 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group gap-4 sm:gap-5">
+                    <div className="flex items-center gap-4 sm:gap-5 w-full">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-100 dark:bg-red-900/40 rounded-2xl flex items-center justify-center border border-red-200 dark:border-red-800 shadow-xs text-red-600 dark:text-red-400 group-hover:text-red-500 group-hover:animate-shake shrink-0">
+                        <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 stroke-3" />
                       </div>
                       <div className="text-left flex-1">
-                        <span className="block text-base font-bold text-red-600 dark:text-red-400">Delete Account</span>
-                        <span className="text-xs font-medium text-red-400/70">Permanently and irreversibly remove all your data</span>
+                        <span className="block text-sm sm:text-base font-bold text-red-600 dark:text-red-400">Delete Account</span>
+                        <span className="text-[10px] sm:text-xs font-medium text-red-400/70">Permanently and irreversibly remove all your data</span>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-red-300 group-hover:text-red-500 transition-all group-hover:translate-x-1" />
+                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-red-300 group-hover:text-red-500 transition-all group-hover:translate-x-1 shrink-0" />
                     </div>
                   </button>
 
-                  <div className="w-full flex items-center justify-between p-5 bg-slate-50/40 dark:bg-slate-800/20 rounded-2xl border border-slate-100 dark:border-slate-800 opacity-60 cursor-not-allowed">
-                    <div className="flex items-center gap-5 w-full">
-                      <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center border border-slate-100 dark:border-slate-800 shadow-xs text-slate-400">
-                        <Smartphone className="w-6 h-6 stroke-3" />
-                      </div>
-                      <div className="text-left flex-1">
-                        <span className="block text-base font-bold text-slate-400 dark:text-slate-500">Two-Factor Auth</span>
-                        <span className="text-xs font-medium text-slate-400 dark:text-slate-500 italic">Highly requested feature • Coming Soon</span>
-                      </div>
-                      <Lock className="w-4 h-4 text-slate-300" />
-                    </div>
-                  </div>
+
                 </div>
               </motion.div>
             )}

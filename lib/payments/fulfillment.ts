@@ -30,8 +30,8 @@ export async function fulfillPayment(session: any) {
   try {
     const founderId = parseInt(founderIdStr);
     if (isNaN(founderId)) {
-        logFulfillment(`ERROR: Invalid founderId: ${founderIdStr}`);
-        throw new Error(`Invalid founderId: ${founderIdStr}`);
+      logFulfillment(`ERROR: Invalid founderId: ${founderIdStr}`);
+      throw new Error(`Invalid founderId: ${founderIdStr}`);
     }
 
     if (type === "consultation") {
@@ -42,31 +42,31 @@ export async function fulfillPayment(session: any) {
       logFulfillment(`Parsing consultation details: consultantId=${consultantIdStr}, date=${dateStr}, time=${timeStr}`);
 
       if (!consultantIdStr || !dateStr || !timeStr) {
-          logFulfillment("ERROR: Missing consultation metadata fields (consultantId, date, or time)");
-          throw new Error("Missing consultation metadata fields");
+        logFulfillment("ERROR: Missing consultation metadata fields (consultantId, date, or time)");
+        throw new Error("Missing consultation metadata fields");
       }
 
       const consultantId = parseInt(consultantIdStr);
       if (isNaN(consultantId)) {
-          logFulfillment(`ERROR: Invalid consultantId: ${consultantIdStr}`);
-          throw new Error(`Invalid consultantId: ${consultantIdStr}`);
+        logFulfillment(`ERROR: Invalid consultantId: ${consultantIdStr}`);
+        throw new Error(`Invalid consultantId: ${consultantIdStr}`);
       }
 
       // Merge date and time strings into a single Date object
       const timeParts = timeStr.split(' ');
       if (timeParts.length !== 2) {
-          logFulfillment(`ERROR: Invalid time format: ${timeStr}`);
-          throw new Error(`Invalid time format: ${timeStr}`);
+        logFulfillment(`ERROR: Invalid time format: ${timeStr}`);
+        throw new Error(`Invalid time format: ${timeStr}`);
       }
-      
+
       const [time, period] = timeParts;
       const [hStr, mStr] = time.split(':');
       const h = parseInt(hStr);
       const minutes = parseInt(mStr);
-      
+
       if (isNaN(h) || isNaN(minutes)) {
-          logFulfillment(`ERROR: Could not parse time components: h=${hStr}, m=${mStr}`);
-          throw new Error("Could not parse time components");
+        logFulfillment(`ERROR: Could not parse time components: h=${hStr}, m=${mStr}`);
+        throw new Error("Could not parse time components");
       }
 
       let hours = h;
@@ -75,8 +75,8 @@ export async function fulfillPayment(session: any) {
 
       const sessionDate = new Date(dateStr);
       if (isNaN(sessionDate.getTime())) {
-          logFulfillment(`ERROR: Invalid date format: ${dateStr}`);
-          throw new Error(`Invalid date format: ${dateStr}`);
+        logFulfillment(`ERROR: Invalid date format: ${dateStr}`);
+        throw new Error(`Invalid date format: ${dateStr}`);
       }
       sessionDate.setHours(hours, minutes, 0, 0);
 
@@ -134,7 +134,7 @@ export async function fulfillPayment(session: any) {
         },
       });
 
-      
+
       logFulfillment(`Database record created: Payment for Session ID ${consultation.id}`);
       logFulfillment(`[SUCCESS] Fulfillment complete for founder ${founderId}`);
 
@@ -185,14 +185,14 @@ export async function fulfillPayment(session: any) {
           endDate: endDate,
         },
       });
-      
+
       logFulfillment(`[SUCCESS] ${planName} subscription activated for founder ${founderId}`);
     }
     return true;
   } catch (dbError) {
     logFulfillment(`[CRASH] Database error during fulfillment: ${dbError}`);
     if (dbError instanceof Error) {
-        logFulfillment(`Stack Trace: ${dbError.stack}`);
+      logFulfillment(`Stack Trace: ${dbError.stack}`);
     }
     console.error("[FULFILLMENT] Database error during fulfillment:", dbError);
     throw dbError;

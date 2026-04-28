@@ -9,7 +9,7 @@ interface CounterProps {
 }
 
 export default function Counter({ end, duration = 2000, suffix = '' }: CounterProps) {
-  const [count, setCount] = useState(end); // Show final number initially
+  const [count, setCount] = useState(0); // Start from 0 for a smooth animation
   const [hasStarted, setHasStarted] = useState(false);
   const countRef = useRef<HTMLSpanElement>(null);
 
@@ -43,7 +43,9 @@ export default function Counter({ end, duration = 2000, suffix = '' }: CounterPr
       // Easing function: easeOutExpo
       const easedProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
       
-      setCount(Math.floor(easedProgress * end));
+      const isDecimal = !Number.isInteger(end);
+      const value = easedProgress * end;
+      setCount(isDecimal ? parseFloat(value.toFixed(1)) : Math.floor(value));
       
       if (progress < 1) {
         window.requestAnimationFrame(step);

@@ -10,6 +10,7 @@ interface Admin {
   id: string;
   name: string;
   email: string;
+  image?: string;
   createdAt: string;
   admin?: {
     adminLevel: string;
@@ -150,22 +151,22 @@ export default function ManageAdminsPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="p-4 bg-teal-50 dark:bg-teal-900/20 rounded-2xl">
-            <ShieldCheck className="w-8 h-8 text-teal-600 dark:text-teal-400" />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-slate-900 p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="p-3 md:p-4 bg-teal-50 dark:bg-teal-900/20 rounded-2xl flex-shrink-0">
+            <ShieldCheck className="w-6 h-6 md:w-8 md:h-8 text-teal-600 dark:text-teal-400" />
           </div>
           <div>
-            <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">Manage Administrators</h1>
-            <p className="text-gray-500 text-sm mt-1">Add and oversee global system admins</p>
+            <h1 className="text-xl md:text-3xl font-extrabold text-gray-900 dark:text-white leading-tight">Manage Admins</h1>
+            <p className="text-gray-500 text-xs md:text-sm mt-0.5 md:mt-1">Add and oversee system admins</p>
           </div>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 px-6 py-3.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-teal-600/20 active:scale-95"
+          className="flex items-center justify-center gap-2 px-6 py-3 md:py-3.5 bg-teal-600 hover:bg-teal-700 text-white text-sm md:text-base font-bold rounded-2xl transition-all shadow-lg shadow-teal-600/20 active:scale-95"
         >
-          <UserPlus className="w-5 h-5" />
-          Add Administrator
+          <UserPlus className="w-4 h-4 md:w-5 md:h-5" />
+          Add Admin
         </button>
       </div>
 
@@ -178,19 +179,19 @@ export default function ManageAdminsPage() {
             placeholder="Search by name or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-6 py-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl outline-none focus:border-teal-500 transition-all shadow-sm"
+            className="w-full pl-11 md:pl-12 pr-6 py-3.5 md:py-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl outline-none focus:border-teal-500 transition-all shadow-sm text-sm"
           />
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 px-6 border border-gray-200 dark:border-slate-800 rounded-2xl flex items-center justify-between shadow-sm">
-          <span className="text-gray-500 font-medium">Total Admins</span>
-          <span className="text-2xl font-bold text-teal-600">{admins.length}</span>
+        <div className="bg-white dark:bg-slate-900 p-3.5 md:p-4 px-5 md:px-6 border border-gray-200 dark:border-slate-800 rounded-2xl flex items-center justify-between shadow-sm">
+          <span className="text-gray-500 text-xs md:text-sm font-medium">Total Admins</span>
+          <span className="text-xl md:text-2xl font-bold text-teal-600">{admins.length}</span>
         </div>
       </div>
 
-      {/* Main Table */}
-      <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
+      {/* Main List */}
+      <div className="space-y-4">
         {loading ? (
-          <div className="divide-y divide-gray-50 dark:divide-slate-800/50">
+          <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-slate-800/50">
             {[1, 2, 3].map((i) => (
               <div key={i} className="px-6 py-5 flex items-center justify-between animate-pulse">
                 <div className="flex items-center gap-4 flex-1">
@@ -203,9 +204,6 @@ export default function ManageAdminsPage() {
                 <div className="flex-1 hidden md:block">
                   <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded" />
                 </div>
-                <div className="flex-1 hidden md:block text-center">
-                  <div className="h-4 w-20 bg-slate-100 dark:bg-slate-800/50 rounded mx-auto" />
-                </div>
                 <div className="w-20 text-right">
                   <div className="h-6 w-16 bg-slate-200 dark:bg-slate-800 rounded-full ml-auto" />
                 </div>
@@ -213,75 +211,138 @@ export default function ManageAdminsPage() {
             ))}
           </div>
         ) : error ? (
-          <div className="p-20 flex flex-col items-center justify-center gap-4 text-center">
+          <div className="p-20 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-sm flex flex-col items-center justify-center gap-4 text-center">
             <AlertCircle className="w-12 h-12 text-red-500" />
             <p className="text-red-500 font-bold">{error}</p>
             <button onClick={fetchAdmins} className="text-teal-600 hover:underline">Try Again</button>
           </div>
         ) : filteredAdmins.length === 0 ? (
-          <div className="p-20 flex flex-col items-center justify-center gap-4 text-center opacity-40">
+          <div className="p-20 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-sm flex flex-col items-center justify-center gap-4 text-center opacity-40">
             <User className="w-16 h-16" />
             <p className="text-lg font-bold">No administrators found</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
-                <tr>
-                  <th className="px-6 py-5 text-sm font-bold text-gray-700 dark:text-gray-300">ADMINISTRATOR</th>
-                  <th className="px-6 py-5 text-sm font-bold text-gray-700 dark:text-gray-300">SCOPE & LEVEL</th>
-                  <th className="px-6 py-5 text-sm font-bold text-gray-700 dark:text-gray-300">CREATED AT</th>
-                  <th className="px-6 py-5 text-sm font-bold text-gray-700 dark:text-gray-300 text-right">STATUS</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
-                {filteredAdmins.map((admin) => (
-                  <tr key={admin.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center text-teal-600 font-bold">
-                          {admin.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-bold text-gray-900 dark:text-white capitalize">{admin.name}</p>
-                          <p className="text-xs text-gray-500">{admin.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xs font-bold text-teal-600 flex items-center gap-1 uppercase tracking-tighter">
-                          <Shield size={12} /> {admin.admin?.isOwner ? 'Platform Owner' : 'System Administrator'}
-                        </span>
-                        <span className="text-[9px] text-gray-400 font-black uppercase tracking-[0.15em]">
-                          {admin.admin?.adminScope === 'ALL' ? 'Full System Access' : admin.admin?.adminScope}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-sm font-medium text-slate-500 dark:text-slate-400">
-                      {new Intl.DateTimeFormat('en-GB').format(new Date(admin.createdAt))}
-                    </td>
-                    <td className="px-6 py-5 text-right">
-                      <div className="flex items-center justify-end gap-3">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 text-[10px] font-bold rounded-full border border-green-100 dark:border-green-900/50 uppercase tracking-wider">
-                          Active
-                        </span>
-                        {!admin.admin?.isOwner && (
-                          <button
-                            onClick={() => setDeleteConfirmId(admin.id)}
-                            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
-                            title="Remove Administrator"
-                          >
-                            <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                          </button>
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+                    <tr>
+                      <th className="px-6 py-5 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">ADMINISTRATOR</th>
+                      <th className="px-6 py-5 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">SCOPE & LEVEL</th>
+                      <th className="px-6 py-5 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">CREATED AT</th>
+                      <th className="px-6 py-5 text-sm font-bold text-gray-700 dark:text-gray-300 text-right uppercase tracking-wider whitespace-nowrap">STATUS</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
+                    {filteredAdmins.map((admin) => (
+                      <tr key={admin.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-teal-50 dark:bg-teal-900/20 rounded-2xl flex-shrink-0 flex items-center justify-center text-teal-600 font-black text-base border border-teal-100 dark:border-teal-800/50 overflow-hidden shadow-sm">
+                              {admin.image ? (
+                                <img src={admin.image} alt={admin.name} className="w-full h-full object-cover" />
+                              ) : (
+                                admin.name.charAt(0).toUpperCase()
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-bold text-sm text-gray-900 dark:text-white uppercase tracking-tight truncate leading-none mb-1">{admin.name}</p>
+                              <p className="text-xs text-gray-400 truncate">{admin.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex flex-col gap-1 whitespace-nowrap">
+                            <span className="text-xs font-bold text-teal-600 flex items-center gap-1 uppercase tracking-tighter">
+                              <Shield size={12} /> {admin.admin?.isOwner ? 'Platform Owner' : 'Admin'}
+                            </span>
+                            <span className="text-[9px] text-gray-400 font-black uppercase tracking-wider">
+                              {admin.admin?.adminScope === 'ALL' ? 'Full Access' : admin.admin?.adminScope}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-sm font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                          {new Intl.DateTimeFormat('en-GB').format(new Date(admin.createdAt))}
+                        </td>
+                        <td className="px-6 py-5 text-right">
+                          <div className="flex items-center justify-end gap-3">
+                            <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 text-[10px] font-bold rounded-full border border-green-100 dark:border-green-900/50 uppercase tracking-wider whitespace-nowrap">
+                              Active
+                            </span>
+                            {!admin.admin?.isOwner && (
+                              <button
+                                onClick={() => setDeleteConfirmId(admin.id)}
+                                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                                title="Remove Administrator"
+                              >
+                                <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="grid grid-cols-1 gap-4 md:hidden">
+              {filteredAdmins.map((admin) => (
+                <div key={admin.id} className="bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-sm space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-teal-50 dark:bg-teal-900/20 rounded-2xl flex items-center justify-center text-teal-600 font-black text-lg border border-teal-100 dark:border-teal-800/50 overflow-hidden shadow-sm">
+                        {admin.image ? (
+                          <img src={admin.image} alt={admin.name} className="w-full h-full object-cover" />
+                        ) : (
+                          admin.name.charAt(0).toUpperCase()
                         )}
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-gray-900 dark:text-white uppercase tracking-tight truncate leading-tight">{admin.name}</h3>
+                        <p className="text-[10px] text-gray-400 truncate">{admin.email}</p>
+                      </div>
+                    </div>
+                    <span className="inline-flex items-center px-2.5 py-0.5 bg-green-50 dark:bg-green-900/20 text-green-600 text-[8px] font-bold rounded-full border border-green-100 dark:border-green-900/50 uppercase tracking-wider">
+                      Active
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gray-50 dark:bg-slate-800/50 p-3 rounded-2xl">
+                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Scope & Level</p>
+                      <p className="text-[10px] font-bold text-teal-600 flex items-center gap-1 uppercase tracking-tighter mb-0.5">
+                        <Shield size={10} /> {admin.admin?.isOwner ? 'Platform Owner' : 'Admin'}
+                      </p>
+                      <p className="text-[9px] text-gray-400 font-black uppercase tracking-wider">
+                        {admin.admin?.adminScope === 'ALL' ? 'Full Access' : admin.admin?.adminScope}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-slate-800/50 p-3 rounded-2xl">
+                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Created At</p>
+                      <p className="text-[10px] font-bold text-gray-700 dark:text-gray-300">
+                        {new Intl.DateTimeFormat('en-GB').format(new Date(admin.createdAt))}
+                      </p>
+                    </div>
+                  </div>
+
+                  {!admin.admin?.isOwner && (
+                    <button
+                      onClick={() => setDeleteConfirmId(admin.id)}
+                      className="w-full py-3 flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/10 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-100 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                      Remove Admin
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 

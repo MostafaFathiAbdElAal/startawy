@@ -124,30 +124,33 @@ export default async function AdminDashboardPage() {
   });
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto pb-12">
       {/* Welcome Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 uppercase tracking-tight">Platform Overview</h1>
-        <p className="text-gray-600 dark:text-gray-400 font-medium">Here&apos;s your system status and top metrics today.</p>
+      <div className="mb-10 md:mb-16">
+        <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter mb-4 uppercase">
+          Platform <span className="text-teal-600">Overview</span>
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400 font-medium max-w-2xl text-sm md:text-base leading-relaxed">
+          Monitor system health, analyze growth trends, and manage your community Consultants and Founders in real-time.
+        </p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
+          const color = stat.iconColor.includes('teal') ? 'teal' : stat.iconColor.includes('blue') ? 'blue' : stat.iconColor.includes('green') ? 'emerald' : 'purple';
           return (
-            <div
-              key={index}
-              className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-800 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                  <Icon className={`w-6 h-6 ${stat.iconColor}`} />
+            <div key={index} className="group relative bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-[32px] p-8 shadow-2xl shadow-slate-900/5 border border-slate-100 dark:border-slate-800 transition-all duration-500 hover:-translate-y-2 overflow-hidden">
+              <div className={`absolute top-0 right-0 w-32 h-32 bg-${color}-500/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-${color}-500/20 transition-colors z-0`} />
+              <div className="relative z-10">
+                <div className={`w-14 h-14 ${stat.bgColor} ${stat.iconColor} rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-slate-500/10 group-hover:scale-110 transition-transform duration-500`}>
+                  <Icon className="w-7 h-7" />
                 </div>
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">{stat.label}</p>
+                <h3 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">{stat.value}</h3>
+                <p className="text-[10px] text-teal-600 dark:text-teal-400 font-black mt-3 uppercase tracking-widest bg-teal-500/5 inline-block px-3 py-1 rounded-full">{stat.trend}</p>
               </div>
-              <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-1 tracking-tight">{stat.value}</h3>
-              <p className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">{stat.label}</p>
-              <p className="text-[11px] text-teal-600 dark:text-teal-400 font-bold mt-2 uppercase tracking-wider">{stat.trend}</p>
             </div>
           );
         })}
@@ -155,68 +158,67 @@ export default async function AdminDashboardPage() {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Revenue Area Chart Component - Left Column (Large) */}
-        <div className="xl:col-span-2">
+        <div className="xl:col-span-2 space-y-8">
           <AdminRevenueChart data={chartData} />
 
-          {/* Recent Users Table */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 overflow-hidden mt-8">
-            <div className="p-6 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/10">
-              <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">Recent Registrations</h2>
-              <div className="flex gap-2">
-                <Link href="/admin/founders" className="text-[10px] font-black text-teal-600 hover:text-teal-700 uppercase tracking-widest bg-teal-50 dark:bg-teal-900/20 px-3 py-1.5 rounded-lg transition-colors">
+          {/* Recent Registrations Card */}
+          <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-[40px] shadow-2xl shadow-slate-900/5 border border-slate-100 dark:border-slate-800 overflow-hidden">
+            <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6">
+              <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Recent Registrations</h2>
+              <div className="flex bg-slate-50 dark:bg-slate-800 p-1.5 rounded-2xl">
+                <Link href="/admin/founders" className="text-[10px] font-black text-slate-400 hover:text-teal-600 uppercase tracking-widest px-6 py-2.5 rounded-xl transition-all hover:bg-white dark:hover:bg-slate-900 shadow-sm hover:shadow-xl">
                   Founders
                 </Link>
-                <Link href="/admin/consultants" className="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-widest bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg transition-colors">
+                <Link href="/admin/consultants" className="text-[10px] font-black text-slate-400 hover:text-blue-600 uppercase tracking-widest px-6 py-2.5 rounded-xl transition-all hover:bg-white dark:hover:bg-slate-900 shadow-sm hover:shadow-xl">
                   Consultants
                 </Link>
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-slate-800/50 border-b border-gray-200 dark:border-slate-800">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400">User</th>
-                    <th className="px-6 py-4 text-center text-[10px] font-black uppercase tracking-widest text-gray-400">Role</th>
-                    <th className="px-6 py-4 text-center text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
-                    <th className="px-6 py-4 text-center text-[10px] font-black uppercase tracking-widest text-gray-400">Joined</th>
+
+            {/* Desktop Table */}
+            <div className="hidden lg:block">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-slate-50/50 dark:bg-slate-800/30">
+                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">User Details</th>
+                    <th className="px-8 py-5 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">Role</th>
+                    <th className="px-8 py-5 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
+                    <th className="px-8 py-5 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Joined</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                   {recentUsers.map((u) => (
-                    <tr key={u.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 ${!u.image ? 'bg-teal-100 dark:bg-teal-900/30' : 'bg-transparent'} text-teal-600 dark:text-teal-400 rounded-full flex flex-col items-center justify-center font-bold text-sm shrink-0 overflow-hidden`}>
+                    <tr key={u.id} className="group hover:bg-teal-50/30 dark:hover:bg-teal-500/5 transition-colors">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-2xl overflow-hidden shadow-sm border-2 border-white dark:border-slate-800 ${!u.image ? 'bg-slate-100 dark:bg-slate-800' : ''}`}>
                             {u.image ? (
                               <img src={u.image} alt={u.name} className="w-full h-full object-cover" />
                             ) : (
-                              u.name ? u.name.charAt(0).toUpperCase() : "U"
+                              <div className="w-full h-full flex items-center justify-center text-teal-600 dark:text-teal-400 font-black text-sm">
+                                {u.name ? u.name.charAt(0).toUpperCase() : "U"}
+                              </div>
                             )}
                           </div>
                           <div>
-                            <p className="font-bold text-gray-900 dark:text-white text-sm uppercase tracking-tight">{u.name}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
+                            <p className="font-bold text-slate-900 dark:text-white text-sm uppercase tracking-tight group-hover:text-teal-600 transition-colors leading-none mb-1">{u.name}</p>
+                            <p className="text-[10px] font-medium text-slate-400">{u.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="inline-flex px-2.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-md text-[10px] font-black uppercase tracking-wider">
+                      <td className="px-8 py-5 text-center">
+                        <span className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-[9px] font-black uppercase tracking-widest border border-blue-100 dark:border-blue-800/50">
                           {u.type}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
-                          u.isSuspended
-                            ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                            : u.isEmailVerified || u.type === 'ADMIN'
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" 
-                            : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                      <td className="px-8 py-5 text-center">
+                        <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest ${
+                          u.isSuspended ? "bg-rose-50 text-rose-600 border border-rose-100" : "bg-green-50 text-green-600 border border-green-100"
                         }`}>
-                          {u.isSuspended ? "SUSPENDED" : (u.isEmailVerified || u.type === 'ADMIN' ? "ACTIVE" : "PENDING")}
+                          {u.isSuspended ? "SUSPENDED" : "ACTIVE"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-xs font-bold text-gray-400 font-mono text-center">
+                      <td className="px-8 py-5 text-right text-xs font-bold text-slate-400">
                         {new Intl.DateTimeFormat('en-GB').format(new Date(u.createdAt))}
                       </td>
                     </tr>
@@ -224,41 +226,63 @@ export default async function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile List View */}
+            <div className="lg:hidden p-6 space-y-4">
+              {recentUsers.map((u) => (
+                <div key={u.id} className="bg-slate-50 dark:bg-slate-800/30 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-md">
+                      {u.image ? <img src={u.image} alt={u.name} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-black text-teal-600">{u.name.charAt(0)}</div>}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-slate-900 dark:text-white text-sm uppercase tracking-tight leading-none mb-1">{u.name}</p>
+                      <p className="text-[10px] text-slate-400 font-medium">{u.email}</p>
+                    </div>
+                    <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg text-[8px] font-black uppercase">{u.type}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Recent Feedbacks - Right Column (Narrow) */}
+        {/* Recent Feedbacks Card */}
         <div className="xl:col-span-1">
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 h-full">
-            <div className="p-6 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/10">
-              <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">Recent Feedback</h2>
-              <Link href="/admin/feedback" className="text-xs font-black text-teal-600 hover:text-teal-700 uppercase tracking-widest bg-teal-50 dark:bg-teal-900/20 px-3 py-1.5 rounded-lg transition-colors">
-                All
+          <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-[40px] shadow-2xl shadow-slate-900/5 border border-slate-100 dark:border-slate-800 h-full overflow-hidden">
+            <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
+              <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Feedbacks</h2>
+              <Link href="/admin/feedback" className="w-10 h-10 bg-teal-50 dark:bg-teal-900/20 text-teal-600 rounded-xl flex items-center justify-center hover:scale-110 transition-transform">
+                <Star className="w-5 h-5" />
               </Link>
             </div>
-            <div className="p-6 space-y-6">
+            <div className="p-8 space-y-8">
               {recentFeedbacks.length === 0 ? (
-                <p className="text-center text-gray-500 dark:text-gray-400 text-sm py-12">No feedback received yet.</p>
+                <p className="text-center text-slate-400 py-12">No feedback received yet.</p>
               ) : (
                 recentFeedbacks.map((f) => (
-                  <div key={f.id} className="space-y-3 pb-6 border-b border-gray-100 dark:border-slate-800 last:border-0 last:pb-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 rounded-lg flex items-center justify-center font-bold text-xs uppercase">
+                  <div key={f.id} className="group relative">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center font-black text-teal-600 text-xs uppercase shadow-sm">
                           {f.user.name.charAt(0)}
                         </div>
-                        <p className="font-bold text-gray-900 dark:text-white text-xs uppercase">{f.user.name}</p>
-                      </div>
-                      <div className="flex items-center gap-0.5">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className={`w-3 h-3 ${i < f.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200 dark:text-gray-800'}`} />
-                        ))}
+                        <div>
+                          <p className="font-black text-slate-900 dark:text-white text-xs uppercase tracking-tight">{f.user.name}</p>
+                          <div className="flex items-center gap-0.5 mt-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star key={i} className={`w-2.5 h-2.5 ${i < f.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200 dark:text-slate-800'}`} />
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed font-medium italic">
-                      &ldquo;{f.comment}&rdquo;
-                    </p>
-                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                    <div className="relative p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 group-hover:border-teal-500/20 transition-colors">
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium italic">
+                        &ldquo;{f.comment}&rdquo;
+                      </p>
+                    </div>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-3 ml-2">
                       {new Intl.DateTimeFormat('en-GB').format(new Date(f.createdAt))}
                     </p>
                   </div>

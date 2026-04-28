@@ -27,14 +27,14 @@ export default async function MyPlanPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }> 
 }) {
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       {/* Toast Notifier for Payment Success */}
       <PaymentSuccessToast />
 
       {/* Header - Renders immediately */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Startawy Plan</h1>
-        <p className="text-gray-600 dark:text-gray-400">Manage your subscription and explore upgrade options</p>
+      <div className="mb-8 text-center md:text-left">
+        <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mb-1 tracking-tight">My Startawy Plan</h1>
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 font-medium">Manage your subscription and explore upgrade options</p>
       </div>
 
       {/* Main Content with Suspense and Skeleton */}
@@ -131,69 +131,75 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
   return (
     <>
       {/* Current Plan Card */}
-      <div className="bg-linear-to-br from-teal-500 to-teal-600 rounded-2xl shadow-lg p-8 text-white mb-8">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Package className="w-6 h-6" />
-              <span className="text-teal-100 text-sm font-medium">Current Plan</span>
+      <div className="bg-linear-to-br from-teal-500 to-emerald-600 rounded-[24px] sm:rounded-[32px] shadow-2xl p-6 sm:p-10 text-white mb-10 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+          <Package className="w-48 h-48 sm:w-64 sm:h-64" />
+        </div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-6 mb-8 text-center md:text-left">
+          <div className="space-y-4">
+            <div className="flex flex-col items-center md:items-start gap-2">
+              <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full border border-white/5">
+                <Package className="w-4 h-4 text-teal-100" />
+                <span className="text-teal-50 text-xs font-black uppercase tracking-widest">Current Plan</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight">{currentPlanDetails.name} Plan</h2>
             </div>
-            <h2 className="text-3xl font-bold mb-2">{currentPlanDetails.name} Plan</h2>
-            <div className="flex items-baseline gap-1 mb-4">
-              <span className="text-4xl font-bold">{currentPlanDetails.price}</span>
-              <span className="text-xl">{currentPlanDetails.period}</span>
+            <div className="flex items-baseline justify-center md:justify-start gap-1">
+              <span className="text-5xl sm:text-6xl font-black tracking-tighter">{currentPlanDetails.price}</span>
+              <span className="text-xl sm:text-2xl font-medium opacity-80">{currentPlanDetails.period}</span>
             </div>
           </div>
-          <span className="px-4 py-2 bg-white/20 rounded-full text-sm font-semibold">
-            {isActive ? "Active" : "Inactive"}
-          </span>
+          <div className={`px-6 py-2 rounded-full text-xs font-black tracking-[0.2em] uppercase border shadow-lg ${isActive ? "bg-emerald-400/20 text-emerald-100 border-emerald-400/30" : "bg-red-400/20 text-red-100 border-red-400/30"}`}>
+            {isActive ? "Active Subscription" : "Inactive Subscription"}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 pb-6 border-b border-white/20">
-          <div>
-            <p className="text-teal-100 text-sm mb-1">Started</p>
+        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8 pb-8 border-b border-white/10">
+          <div className="flex flex-col items-center md:items-start">
+            <p className="text-teal-100/60 text-[10px] uppercase font-black tracking-widest mb-2">Started On</p>
             <div className="flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4" />
-              <p className="font-semibold">
+              <CalendarIcon className="w-4 h-4 text-teal-200" />
+              <p className="font-bold text-lg leading-none">
                 {subscription?.startDate ? new Date(subscription.startDate).toLocaleDateString('en-GB') : 'N/A'}
               </p>
             </div>
           </div>
-          <div>
-            <p className="text-teal-100 text-sm mb-1">Next Billing</p>
+          <div className="flex flex-col items-center md:items-start">
+            <p className="text-teal-100/60 text-[10px] uppercase font-black tracking-widest mb-2">Next Billing</p>
             <div className="flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4" />
-              <p className="font-semibold">
+              <CalendarIcon className="w-4 h-4 text-teal-200" />
+              <p className="font-bold text-lg leading-none">
                 {subscription?.endDate ? new Date(subscription.endDate).toLocaleDateString('en-GB') : 'N/A'}
               </p>
             </div>
           </div>
-          <div>
-            <p className="text-teal-100 text-sm mb-1">Sessions This Month</p>
+          <div className="flex flex-col items-center md:items-start">
+            <p className="text-teal-100/60 text-[10px] uppercase font-black tracking-widest mb-2">Usage Tracker</p>
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              <p className="font-semibold">1 / 5 Used</p>
+              <TrendingUp className="w-4 h-4 text-teal-200" />
+              <p className="font-bold text-lg leading-none">1 / 5 Used</p>
             </div>
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="relative z-10 flex flex-col sm:flex-row gap-4">
           <Link 
             href="/plans"
-            className="px-6 py-3 bg-white text-teal-600 rounded-lg hover:bg-gray-100 transition-colors font-semibold flex items-center gap-2"
+            className="flex-1 inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-teal-600 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all font-black shadow-xl shadow-teal-900/10"
           >
             Upgrade Plan
             <ArrowRight className="w-5 h-5" />
           </Link>
-          <button className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-lg transition-colors font-semibold">
+          <button className="flex-1 px-8 py-4 bg-white/10 hover:bg-white/20 rounded-2xl transition-all font-black border border-white/10 active:scale-[0.98]">
             Cancel Subscription
           </button>
         </div>
       </div>
 
       {/* Available Plans */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Available Plans</h2>
+      <div className="mb-12">
+        <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mb-6 text-center md:text-left tracking-tight">Available Premium Plans</h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {defaultPlans.map((plan) => {
             const colorMap: Record<string, string> = {

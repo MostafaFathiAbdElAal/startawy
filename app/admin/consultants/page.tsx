@@ -32,46 +32,39 @@ export default async function ManageConsultantsPage() {
   }));
 
   return (
-    <div className="p-6 lg:p-8">
-      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Manage Consultants</h1>
-          <p className="text-gray-600 dark:text-gray-400">Oversee consultant performance and availability</p>
-        </div>
-        <AddConsultantModal />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-800">
-          <div className="flex items-center gap-3 mb-2">
-            <Users className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">Total Consultants</p>
-          </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white">{formattedUsers.length}</p>
-        </div>
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-800">
-          <div className="flex items-center gap-3 mb-2">
-            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">Active</p>
-          </div>
-          <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-            {formattedUsers.filter((c) => c.status === "ACTIVE").length}
+    <div className="p-4 md:p-8 max-w-7xl mx-auto pb-12">
+      <div className="mb-10 md:mb-16 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+        <div className="space-y-2">
+          <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter">
+            Consultants <span className="text-teal-600">Hub</span>
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xl text-sm md:text-base leading-relaxed">
+            Monitor, manage, and scale your network of elite financial consultants with precision and real-time analytics.
           </p>
         </div>
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-800">
-          <div className="flex items-center gap-3 mb-2">
-            <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">Total Sessions</p>
-          </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white">0</p>
+        <div className="w-full lg:w-auto">
+          <AddConsultantModal />
         </div>
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-800">
-          <div className="flex items-center gap-3 mb-2">
-            <DollarSign className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">Total Earnings</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        {[
+          { label: "Total Consultants", value: formattedUsers.length, icon: Users, color: "teal" },
+          { label: "Active Experts", value: formattedUsers.filter((c) => c.status === "ACTIVE").length, icon: CheckCircle, color: "emerald" },
+          { label: "Total Sessions", value: "0", icon: Calendar, color: "blue" },
+          { label: "Total Earnings", value: "$0", icon: DollarSign, color: "indigo" },
+        ].map((stat, i) => (
+          <div key={i} className="group relative bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-[32px] p-8 shadow-2xl shadow-slate-900/5 border border-slate-100 dark:border-slate-800 transition-all duration-500 hover:-translate-y-2 overflow-hidden">
+            <div className={`absolute top-0 right-0 w-32 h-32 bg-${stat.color}-500/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-${stat.color}-500/20 transition-colors z-0`} />
+            <div className="relative z-10">
+              <div className={`w-14 h-14 bg-${stat.color}-50 dark:bg-${stat.color}-900/20 text-${stat.color}-600 dark:text-${stat.color}-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-${stat.color}-500/10 group-hover:scale-110 transition-transform duration-500`}>
+                <stat.icon className="w-7 h-7" />
+              </div>
+              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">{stat.label}</p>
+              <h3 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">{stat.value}</h3>
+            </div>
           </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white">$0</p>
-        </div>
+        ))}
       </div>
 
       <AdminUsersTable data={formattedUsers} roleType="Consultant" />

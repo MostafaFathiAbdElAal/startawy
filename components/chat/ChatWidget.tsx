@@ -4,16 +4,16 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { ChatButton } from './ChatButton';
 import { ChatWindow } from './ChatWindow';
+import { useAuthState } from '@/components/providers/AuthStateProvider';
 
 interface ChatWidgetProps {
   isAuthenticated: boolean;
   userRole?: string;
-  userName?: string;
-  isPhoneVerified: boolean;
   isOwner?: boolean;
 }
 
-export const ChatWidget = ({ isAuthenticated, userRole, userName, isPhoneVerified, isOwner: propIsOwner }: ChatWidgetProps) => {
+export const ChatWidget = ({ isAuthenticated, userRole, isOwner: propIsOwner }: ChatWidgetProps) => {
+  const { isPhoneVerified, userName } = useAuthState();
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 

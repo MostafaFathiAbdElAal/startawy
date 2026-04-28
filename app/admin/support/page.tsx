@@ -49,8 +49,10 @@ export default function AdminSupportPage() {
 
   useEffect(() => {
     const newSocket = io(SOCKET_URL, {
-      reconnectionAttempts: 5,
-      timeout: 10000,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 5000, // Wait 5s before retrying
+      timeout: 20000,
+      transports: ['websocket', 'polling'], // Prioritize WebSockets
     });
     socketRef.current = newSocket;
 
@@ -60,13 +62,13 @@ export default function AdminSupportPage() {
       newSocket.emit('admin_join', { adminName: 'Admin Support' });
     });
 
-    newSocket.on('disconnect', () => {
-      console.log('--- ADMIN DISCONNECTED ---');
+    newSocket.on('disconnect', (reason) => {
+      console.log('--- ADMIN DISCONNECTED ---', reason);
       setIsConnected(false);
     });
 
     newSocket.on('connect_error', (err) => {
-      console.error('--- SOCKET CONNECTION ERROR ---', err);
+      // 🛡️ Silent fail in console, update UI instead
       setIsConnected(false);
     });
 

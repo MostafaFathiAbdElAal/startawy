@@ -7,27 +7,27 @@ interface ProfileDetailsProps {
 
 export default function ProfileDetails({ user }: ProfileDetailsProps) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-[32px] p-8 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 rounded-[32px] p-6 sm:p-8 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 blur-3xl rounded-full" />
         
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-3">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-8 flex items-center justify-center md:justify-start gap-3">
             <User className="w-5 h-5 text-teal-500" />
             Account Details
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
             {/* Name */}
-            <div className="space-y-2">
+            <div className="space-y-2 flex flex-col items-center md:items-start text-center md:text-left">
                 <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
-                <div className="flex items-center gap-4 h-14 pl-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white">
-                    <User className="w-5 h-5 text-slate-400" />
-                    <span className="text-sm font-semibold">{user.name}</span>
+                <div className="flex items-center gap-4 h-14 w-full px-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white justify-center md:justify-start">
+                    <User className="w-5 h-5 text-slate-400 shrink-0" />
+                    <span className="text-sm font-semibold truncate">{user.name}</span>
                 </div>
             </div>
 
             {/* Email */}
-            <div className="space-y-2">
-                <div className="flex items-center justify-between px-1">
+            <div className="space-y-2 flex flex-col items-center md:items-start text-center md:text-left">
+                <div className="flex items-center justify-between w-full px-1">
                     <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Email Address</label>
                     {user.isEmailVerified ? (
                         <span className="text-[9px] font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-800 uppercase tracking-tighter">Verified</span>
@@ -35,15 +35,15 @@ export default function ProfileDetails({ user }: ProfileDetailsProps) {
                         <span className="text-[9px] font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded-md border border-red-100 dark:border-red-800 uppercase tracking-tighter">Not Verified</span>
                     )}
                 </div>
-                <div className="flex items-center gap-4 h-14 pl-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white">
-                    <Mail className="w-5 h-5 text-slate-400" />
-                    <span className="text-sm font-semibold">{user.email}</span>
+                <div className="flex items-center gap-4 h-14 w-full px-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white justify-center md:justify-start overflow-hidden">
+                    <Mail className="w-5 h-5 text-slate-400 shrink-0" />
+                    <span className="text-sm font-semibold truncate">{user.email}</span>
                 </div>
             </div>
 
             {/* Phone */}
-            <div className="space-y-2">
-                <div className="flex items-center justify-between px-1">
+            <div className="space-y-2 flex flex-col items-center md:items-start text-center md:text-left">
+                <div className="flex items-center justify-between w-full px-1">
                     <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Phone Number</label>
                     {user.isPhoneVerified ? (
                         <span className="text-[9px] font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-800 uppercase tracking-tighter">Verified</span>
@@ -51,9 +51,9 @@ export default function ProfileDetails({ user }: ProfileDetailsProps) {
                         <span className="text-[9px] font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded-md border border-red-100 dark:border-red-800 uppercase tracking-tighter">Not Verified</span>
                     )}
                 </div>
-                <div className="flex items-center gap-4 h-14 pl-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white">
-                    <Smartphone className="w-5 h-5 text-slate-400" />
-                    <span className="text-sm font-semibold">{user.phone || 'Not provided'}</span>
+                <div className="flex items-center gap-4 h-14 w-full px-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white justify-center md:justify-start overflow-hidden">
+                    <Smartphone className="w-5 h-5 text-slate-400 shrink-0" />
+                    <span className="text-sm font-semibold truncate">{user.phone || 'Not provided'}</span>
                 </div>
             </div>
 

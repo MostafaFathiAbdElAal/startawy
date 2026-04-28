@@ -28,10 +28,6 @@ export default function ConsultantFollowUpPlansPage() {
   const [editNotes, setEditNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchSessions();
-  }, []);
-
   const fetchSessions = async () => {
     try {
       setLoading(true);
@@ -54,6 +50,10 @@ export default function ConsultantFollowUpPlansPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchSessions();
+  }, []);
 
   const handleUpdateNotes = async (sessionId: number) => {
     try {
@@ -174,11 +174,27 @@ export default function ConsultantFollowUpPlansPage() {
                 </div>
 
                 <div className="bg-gray-50/50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50 rounded-2xl p-6 mb-8 relative group">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="p-2 bg-teal-500/10 rounded-lg">
-                      <FileText className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                  <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-teal-500/10 rounded-lg">
+                        <FileText className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                      </div>
+                      <h4 className="font-black text-gray-900 dark:text-white text-sm uppercase tracking-tight">Strategy Blueprint</h4>
                     </div>
-                    <h4 className="font-black text-gray-900 dark:text-white text-sm uppercase tracking-tight">Strategy Blueprint</h4>
+
+                    {editingId !== session.id && (
+                      <button 
+                        onClick={() => { 
+                          setEditingId(session.id); 
+                          const template = `[CORE OBJECTIVE]:\n- \n\n[ACTION ITEMS]:\n1. \n2. \n\n[TIMELINE]:\n- Week 1: \n- Month 1: `;
+                          setEditNotes(session.notes || template); 
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-sm text-teal-600 dark:text-teal-400 text-xs font-bold hover:scale-105 transition-transform"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        {session.notes ? 'Refine Strategy' : 'Draft Strategy Blueprint'}
+                      </button>
+                    )}
                   </div>
                   
                   {editingId === session.id ? (
@@ -221,17 +237,7 @@ export default function ConsultantFollowUpPlansPage() {
                         </div>
                       )}
                       
-                      <button 
-                        onClick={() => { 
-                          setEditingId(session.id); 
-                          const template = `[CORE OBJECTIVE]:\n- \n\n[ACTION ITEMS]:\n1. \n2. \n\n[TIMELINE]:\n- Week 1: \n- Month 1: `;
-                          setEditNotes(session.notes || template); 
-                        }}
-                        className="absolute -top-12 right-0 flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-lg text-teal-600 dark:text-teal-400 text-xs font-bold hover:scale-105 transition-transform"
-                      >
-                        <Pencil className="w-3 h-3" />
-                        {session.notes ? 'Refine Strategy' : 'Draft Strategy Blueprint'}
-                      </button>
+                      {/* Refine button moved to header for better responsiveness */}
                     </div>
                   )}
                 </div>

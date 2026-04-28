@@ -127,12 +127,12 @@ export function LibraryClient({ reports, featuredReport, categories, userPlan }:
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       {/* Header */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 text-center sm:text-left">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 font-display">Startawy Reports Library</h1>
-          <p className="text-gray-600 dark:text-gray-400">Access industry insights, trends, and research reports.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 font-display">Startawy Reports Library</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Access industry insights, trends, and research reports.</p>
         </div>
         <div className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 ${
             isPremium 
@@ -145,7 +145,7 @@ export function LibraryClient({ reports, featuredReport, categories, userPlan }:
       </div>
 
       {/* Featured Report */}
-      <div className="bg-linear-to-r from-teal-500 to-teal-600 rounded-2xl p-8 mb-8 text-white relative overflow-hidden group">
+      <div className="bg-linear-to-r from-teal-500 to-teal-600 rounded-2xl p-6 sm:p-8 mb-8 text-white relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-64 h-64 bg-teal-400 rounded-full opacity-20 -mr-32 -mt-32 transition-transform group-hover:scale-110 duration-700"></div>
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-teal-700 rounded-full opacity-20 -ml-24 -mb-24 transition-transform group-hover:scale-110 duration-700"></div>
         
@@ -153,11 +153,11 @@ export function LibraryClient({ reports, featuredReport, categories, userPlan }:
           <span className="inline-block px-4 py-1 bg-white/20 rounded-full text-sm font-medium mb-4">
             ★ Featured Report
           </span>
-          <h2 className="text-3xl font-bold mb-3">{currentFeatured.title}</h2>
-          <p className="text-teal-100 mb-6 max-w-2xl leading-relaxed">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3">{currentFeatured.title}</h2>
+          <p className="text-teal-100 mb-6 max-w-2xl leading-relaxed text-sm sm:text-base">
             {currentFeatured.description}
           </p>
-          <div className="flex items-center gap-6 mb-6 text-sm">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6 mb-6 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
               <span>{currentFeatured.date}</span>
@@ -174,7 +174,7 @@ export function LibraryClient({ reports, featuredReport, categories, userPlan }:
           <button 
             onClick={() => handleDownload(currentFeatured.id)}
             disabled={isDownloading === currentFeatured.id}
-            className={`px-8 py-3 bg-white text-teal-600 rounded-lg transition-all shadow-lg font-bold flex items-center gap-2 disabled:opacity-75 ${
+            className={`w-full sm:w-auto px-6 sm:px-8 py-3 bg-white text-teal-600 rounded-lg transition-all shadow-lg font-bold flex items-center justify-center gap-2 disabled:opacity-75 ${
               !isPremium ? "opacity-90" : "hover:bg-gray-50 active:scale-95"
             }`}
           >
@@ -299,7 +299,7 @@ export function LibraryClient({ reports, featuredReport, categories, userPlan }:
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", damping: 30, stiffness: 400 }}
-              className="relative w-full max-w-2xl bg-slate-900 rounded-[2rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] overflow-hidden border border-white/5 max-h-[90vh] flex flex-col"
+              className="relative w-full max-w-2xl bg-slate-900 rounded-2xl sm:rounded-[2rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] overflow-hidden border border-white/5 max-h-[90vh] flex flex-col"
             >
               {/* Header Image Section - Cinema Style (No Cropping) */}
               <div className="relative h-60 md:h-64 w-full shrink-0 bg-slate-950 overflow-hidden">

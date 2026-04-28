@@ -17,7 +17,7 @@ export default async function MySessionsPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 min-h-screen">
+    <div className="p-4 sm:p-8 space-y-8 min-h-screen">
       <SectionHeader 
         title="Consultation Sessions"
         description="Review your active bookings and access past strategy notes from your consultants."

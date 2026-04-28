@@ -21,7 +21,7 @@ export default function ProfileHeader({ user, isEditing }: ProfileHeaderProps) {
         </div>
 
         <div className="px-8 pb-10">
-          <div className="flex flex-col md:flex-row items-start md:items-end gap-8 -mt-12 relative z-10">
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 -mt-12 relative z-10 text-center md:text-left">
             {/* Reusable UserAvatar */}
             <div className="relative">
               <UserAvatar 
@@ -33,9 +33,9 @@ export default function ProfileHeader({ user, isEditing }: ProfileHeaderProps) {
             </div>
 
             {/* Profile Meta */}
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center flex-wrap gap-3">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">
+            <div className="flex-1 space-y-3 md:space-y-2">
+              <div className="flex flex-col md:flex-row items-center md:items-center flex-wrap gap-3">
+                <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
                   {user.name}
                 </h2>
                 {isFullyVerified && (
@@ -45,14 +45,14 @@ export default function ProfileHeader({ user, isEditing }: ProfileHeaderProps) {
                 )}
               </div>
               
-              <div className="flex flex-wrap gap-5 text-slate-500 dark:text-slate-400 font-medium">
+              <div className="flex flex-wrap justify-center md:justify-start gap-3 md:gap-5 text-slate-500 dark:text-slate-400 font-medium">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                   <Briefcase className="w-4 h-4 text-teal-500" />
-                  <span className="text-xs">{user.type?.toLowerCase() || 'Member'} Account</span>
+                  <span className="text-[10px] md:text-xs">{user.type?.toLowerCase() || 'Member'} Account</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                   <Calendar className="w-4 h-4 text-blue-500" />
-                  <span className="text-xs">Joined {new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+                  <span className="text-[10px] md:text-xs">Joined {new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
                 </div>
               </div>
             </div>
@@ -61,7 +61,7 @@ export default function ProfileHeader({ user, isEditing }: ProfileHeaderProps) {
             {!isEditing ? (
               <Link 
                 href="/profile?edit=true"
-                className="px-8 py-3.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all font-bold flex items-center gap-2.5 shadow-xl shadow-slate-900/10 dark:shadow-none"
+                className="w-full md:w-auto px-8 py-3.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all font-bold flex items-center justify-center gap-2.5 shadow-xl shadow-slate-900/10 dark:shadow-none"
               >
                 <Edit className="w-5 h-5" />
                 Edit Profile
@@ -69,7 +69,7 @@ export default function ProfileHeader({ user, isEditing }: ProfileHeaderProps) {
             ) : (
               <Link 
                 href="/profile"
-                className="px-8 py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all font-bold flex items-center gap-2.5 shadow-sm"
+                className="w-full md:w-auto px-8 py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all font-bold flex items-center justify-center gap-2.5 shadow-sm"
               >
                 View Profile
               </Link>

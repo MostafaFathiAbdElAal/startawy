@@ -126,15 +126,15 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
   };
 
   return (
-    <div className="p-6 lg:p-8">
-      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Service Packages</h1>
-          <p className="text-gray-600 dark:text-gray-400">Configure subscription plans and pricing for Founders</p>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <div className="mb-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">Service Packages</h1>
+          <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium">Configure subscription plans and pricing for Founders</p>
         </div>
         <button 
           onClick={openCreateModal}
-          className="inline-flex items-center gap-2 px-6 py-2.5 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all shadow-md font-semibold shrink-0"
+          className="w-full lg:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-2xl hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg shadow-teal-500/20 font-black tracking-tight shrink-0 active:scale-95"
         >
           <Plus className="w-5 h-5" />
           Create New Package
@@ -142,24 +142,33 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
       </div>
 
       {loading && packages.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-12 h-12 text-teal-500 animate-spin mb-4" />
-          <p className="text-gray-500">Loading packages...</p>
+        <div className="flex flex-col items-center justify-center py-24">
+          <div className="w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center mb-4">
+            <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+          </div>
+          <p className="text-slate-500 font-medium">Loading packages...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {packages.map((pkg) => (
             <div 
               key={pkg.id} 
-              className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 p-8 flex flex-col relative group transition-all hover:shadow-xl hover:-translate-y-1"
+              className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-[32px] border border-slate-100 dark:border-slate-800 p-6 md:p-8 flex flex-col relative group transition-all duration-300 hover:shadow-2xl hover:shadow-teal-500/5 hover:-translate-y-1 overflow-hidden"
             >
-              <div className="flex justify-between items-start mb-6">
-                <div className="p-3 bg-teal-50 dark:bg-teal-900/30 rounded-xl">
-                  <Package className="w-8 h-8 text-teal-600 dark:text-teal-400" />
+              {/* Animated background element */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+
+              <div className="flex justify-between items-start mb-8 relative z-10">
+                <div className="p-4 bg-teal-50 dark:bg-teal-900/20 rounded-2xl text-teal-600 dark:text-teal-400 group-hover:scale-110 transition-transform">
+                  <Package className="w-8 h-8" />
                 </div>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg" onClick={() => setPkgToDelete(pkg)}>
-                    <Trash2 className="w-4 h-4" />
+                <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300">
+                  <button 
+                    className="p-2.5 text-red-500/70 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all" 
+                    onClick={() => setPkgToDelete(pkg)}
+                    title="Delete Package"
+                  >
+                    <Trash2 className="w-5 h-5" />
                   </button>
                 </div>
               </div>

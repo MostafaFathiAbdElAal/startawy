@@ -8,7 +8,8 @@ export async function proxy(request: NextRequest) {
   
   const isHomePage = pathname === '/';
   
-  // Public assets, API, and Home Page should always bypass proxy logic immediately
+  // Public assets, API routes, and Home Page should always bypass proxy logic immediately
+  // This MUST happen before verifyAuth to avoid unnecessary auth checks and log noise
   if (
     pathname.includes('.') || 
     pathname.startsWith('/api') || 

@@ -1,3 +1,4 @@
+// Force reload Prisma client
 import 'server-only';
 import { PrismaClient } from '@prisma/client'
 import { PrismaMariaDb } from '@prisma/adapter-mariadb'

@@ -218,30 +218,30 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       {/* Header */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Budget Analysis</h1>
-          <p className="text-gray-600 dark:text-gray-400">Comprehensive financial insights and AI-powered recommendations</p>
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 text-center md:text-left">
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">Budget Analysis</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 font-medium">Comprehensive financial insights and AI-powered recommendations</p>
         </div>
       </div>
 
       {/* Upload Section */}
-      <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl p-8 mb-8 text-white relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-40 transition-opacity">
-          <Sparkles className="w-32 h-32" />
+      <div className="bg-linear-to-br from-teal-500 to-emerald-600 rounded-[24px] sm:rounded-[32px] p-6 sm:p-10 mb-8 text-white relative overflow-hidden shadow-2xl group">
+        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+          <Sparkles className="w-48 h-48 sm:w-64 sm:h-64" />
         </div>
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-2">Upload Financial Data</h2>
-            <p className="text-teal-100 mb-6 max-w-lg">
+        <div className="relative z-10 flex flex-col items-center md:items-start text-center md:text-left gap-6">
+          <div className="flex-1 space-y-4">
+            <h2 className="text-2xl sm:text-3xl font-black">Upload Financial Data</h2>
+            <p className="text-teal-50/80 font-medium text-sm sm:text-lg max-w-2xl leading-relaxed">
               Upload your financial statements or spreadsheets to get AI-powered insights, categorizations, and growth recommendations instantly.
             </p>
-            <div className="flex flex-wrap items-center gap-4">
-              <label className="inline-flex items-center gap-2 px-6 py-3 bg-white text-teal-600 rounded-xl hover:bg-teal-50 transition-all cursor-pointer font-bold shadow-lg hover:-translate-y-1">
+            <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4 pt-2">
+              <label className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-teal-600 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer font-black shadow-xl shadow-teal-900/10">
                 <Upload className={`w-5 h-5 ${isUploading ? 'animate-bounce' : ''}`} />
-                {isUploading ? "Analyzing..." : uploadedFile ? `Updated: ${uploadedFile}` : "Choose File (.csv, .xlsx)"}
+                <span className="text-sm">{isUploading ? "Analyzing..." : uploadedFile ? `Updated: ${uploadedFile}` : "Choose File (.csv, .xlsx)"}</span>
                 <input type="file" className="hidden" accept=".csv,.xlsx,.pdf" onChange={handleFileUpload} disabled={isUploading} />
               </label>
 
@@ -249,10 +249,10 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
                 <button 
                   onClick={generatePDF}
                   disabled={isGenerating || isUploading}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-linear-to-r from-slate-800 to-slate-900 text-white rounded-xl hover:from-slate-900 hover:to-black transition-all font-bold shadow-xl hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed group"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all font-black shadow-xl shadow-slate-900/20 disabled:opacity-50 disabled:cursor-not-allowed group border border-white/5"
                 >
-                  {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileDown className="w-5 h-5 group-hover:bounce" />}
-                  {isGenerating ? "Preparing Report..." : "Generate Detailed PDF"}
+                  {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileDown className="w-5 h-5 group-hover:animate-bounce" />}
+                  <span className="text-sm">{isGenerating ? "Preparing Report..." : "Generate Detailed PDF"}</span>
                 </button>
               )}
             </div>
@@ -261,41 +261,41 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
       </div>
 
       {/* Stats and Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 hover:shadow-md transition-shadow">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/50 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+            <div className="w-12 h-12 bg-teal-50 dark:bg-teal-900/20 rounded-xl flex items-center justify-center border border-teal-100 dark:border-teal-800/50">
+              <TrendingUp className="w-6 h-6 text-teal-600 dark:text-teal-400" />
             </div>
           </div>
-          <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-            ${metrics.income.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-1">
+            ${metrics.income.toLocaleString(undefined, { minimumFractionDigits: 0 })}
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Income (This Month)</p>
+          <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest">Total Income (This Month)</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/50 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center">
-              <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
+            <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 rounded-xl flex items-center justify-center border border-orange-100 dark:border-orange-800/50">
+              <TrendingDown className="w-6 h-6 text-orange-600 dark:text-orange-400" />
             </div>
           </div>
-          <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-            ${metrics.expenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-1">
+            ${metrics.expenses.toLocaleString(undefined, { minimumFractionDigits: 0 })}
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Expenses (This Month)</p>
+          <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest">Total Expenses (This Month)</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/50 hover:shadow-md transition-shadow sm:col-span-2 lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-xl flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+            <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center border border-blue-100 dark:border-blue-800/50">
+              <DollarSign className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
-          <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-            ${metrics.profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-1">
+            ${metrics.profit.toLocaleString(undefined, { minimumFractionDigits: 0 })}
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Net Profit (This Month)</p>
+          <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest">Net Profit (This Month)</p>
         </div>
       </div>
 
@@ -412,20 +412,20 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
       )}
 
       {/* Strategic Management Recommendations */}
-      <div className="mt-12 bg-white dark:bg-slate-900 rounded-[32px] shadow-xl border border-gray-100 dark:border-slate-800 overflow-hidden">
-        <div className="p-8 border-b border-gray-100 dark:border-slate-800 bg-linear-to-r from-slate-50 to-white dark:from-slate-900/50 dark:to-slate-900">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-teal-500 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/20">
+      <div className="mt-8 sm:mt-12 bg-white dark:bg-slate-900 rounded-[24px] sm:rounded-[32px] shadow-xl border border-gray-100 dark:border-slate-800 overflow-hidden">
+        <div className="p-6 sm:p-8 border-b border-gray-100 dark:border-slate-800 bg-linear-to-r from-slate-50 to-white dark:from-slate-900/50 dark:to-slate-900 text-center sm:text-left">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="w-12 h-12 bg-teal-500 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/20 shrink-0">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div>
               <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Strategic Recommendations</h2>
-              <p className="text-slate-500 dark:text-gray-400 text-sm font-medium">Data-driven actions optimized for your current fiscal month.</p>
+              <p className="text-slate-500 dark:text-gray-400 text-xs sm:text-sm font-medium">Data-driven actions optimized for your current fiscal month.</p>
             </div>
           </div>
         </div>
 
-        <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-4 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {(recommendations.length > 0 ? recommendations : []).map((rec, idx) => {
             const themes = {
               marketing: { color: "teal", icon: <TrendingUp className="w-5 h-5" />, bg: "bg-teal-50/30", darkBg: "dark:bg-teal-900/10", border: "border-teal-100", darkBorder: "dark:border-teal-900/30", text: "text-teal-600" },
@@ -438,15 +438,15 @@ export function BudgetDashboard({ expenseData, monthlyData, metrics, recommendat
             return (
               <div 
                 key={idx} 
-                className={`p-6 rounded-2xl border ${theme.border} ${theme.darkBorder} ${theme.bg} ${theme.darkBg} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group`}
+                className={`p-5 sm:p-6 rounded-2xl border ${theme.border} ${theme.darkBorder} ${theme.bg} ${theme.darkBg} transition-all duration-300 hover:shadow-lg group text-center sm:text-left flex flex-col items-center sm:items-start`}
               >
-                <div className="flex items-center gap-3 mb-3">
+                <div className="flex flex-col sm:flex-row items-center gap-3 mb-3">
                   <div className={`p-2 rounded-lg ${theme.bg} ${theme.text} border ${theme.border} ${theme.darkBorder}`}>
                     {theme.icon}
                   </div>
                   <h4 className="font-bold text-slate-900 dark:text-white">{rec.title}</h4>
                 </div>
-                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed font-medium">
+                <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm leading-relaxed font-medium">
                   {rec.description}
                 </p>
               </div>

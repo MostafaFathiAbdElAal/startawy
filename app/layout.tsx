@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/auth-utils";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { prisma } from "@/lib/prisma";
+import { AuthStateProvider } from "@/components/providers/AuthStateProvider";
 import "./globals.css";
 
 export const dynamic = 'force-dynamic';
@@ -62,12 +63,17 @@ export default async function RootLayout({
   let userName = userPayload?.name as string | undefined; // Moved and changed to let
   
   if (userPayload?.id) {
-    const freshUser = await prisma.user.findUnique({
-      where: { id: Number(userPayload.id) },
-      select: { isPhoneVerified: true, name: true } // Added name to select
-    });
-    isPhoneVerified = freshUser?.isPhoneVerified ?? false;
-    userName = freshUser?.name || userName; // Added line to override userName
+    try {
+      const freshUser = await prisma.user.findUnique({
+        where: { id: Number(userPayload.id) },
+        select: { isPhoneVerified: true, name: true }
+      });
+      isPhoneVerified = freshUser?.isPhoneVerified ?? false;
+      userName = freshUser?.name || userName;
+    } catch (error) {
+      console.error("Database Sync Error in Layout:", error);
+      // isPhoneVerified stays false as initialized on line 61
+    }
   }
 
   return (
@@ -81,15 +87,14 @@ export default async function RootLayout({
         <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
         <ThemeProvider>
           <ToastProvider>
-            {children}
-            <ChatWidget 
-              isAuthenticated={isAuthenticated} 
-              userRole={userRole} 
-              userName={userName}
-              isOwner={!!userPayload?.isOwner}
-              key={isPhoneVerified ? 'verified' : 'unverified'} 
-              isPhoneVerified={isPhoneVerified} 
-            />
+            <AuthStateProvider initialVerified={isPhoneVerified} initialName={userName}>
+              {children}
+              <ChatWidget 
+                isAuthenticated={isAuthenticated} 
+                userRole={userRole} 
+                isOwner={!!userPayload?.isOwner}
+              />
+            </AuthStateProvider>
           </ToastProvider>
         </ThemeProvider>
       </body>

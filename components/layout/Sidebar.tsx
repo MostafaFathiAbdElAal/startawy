@@ -145,7 +145,7 @@ export function Sidebar({ userRole: rawRole = "FOUNDER", isOwner: propIsOwner, h
         {/* Sidebar Interior */}
         <aside
           className={`
-            w-full h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col
+            w-full h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col
             overflow-hidden
           `}
         >

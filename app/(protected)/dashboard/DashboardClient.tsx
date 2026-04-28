@@ -6,7 +6,8 @@ import {
   Users, 
   Target, 
   ArrowUpRight, 
-  ArrowDownRight
+  ArrowDownRight,
+  Hand
 } from "lucide-react";
 import { 
   LineChart, 
@@ -59,11 +60,17 @@ export default function DashboardClient({ data }: DashboardClientProps) {
   return (
     <div className="p-8">
       {/* Welcome Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Welcome back, {user.name?.split(' ')[0] || 'User'}! 👋
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">Here&apos;s what&apos;s happening with your startup today.</p>
+      <div className="mb-6 sm:mb-10 bg-slate-900 rounded-[24px] sm:rounded-[32px] p-6 sm:p-10 text-white relative overflow-hidden shadow-2xl">
+        <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-teal-500/10 blur-[80px] sm:blur-[100px] rounded-full -mr-16 -mt-16 sm:-mr-20 sm:-mt-20" />
+        <div className="relative z-10 flex flex-col items-center md:items-start text-center md:text-left gap-4">
+          <h1 className="text-2xl sm:text-4xl font-black flex items-center flex-wrap justify-center md:justify-start gap-3 sm:gap-4 leading-tight">
+            Welcome back, {user.name?.split(' ')[0] || 'User'}! 
+            <span className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white/10 rounded-xl sm:rounded-2xl backdrop-blur-md border border-white/10">
+              <Hand className="w-5 h-5 sm:w-6 sm:h-6 text-teal-400 animate-bounce" />
+            </span>
+          </h1>
+          <p className="text-slate-400 font-medium text-sm sm:text-lg max-w-2xl">Here&apos;s what&apos;s happening with your startup today.</p>
+        </div>
       </div>
 
       {/* Stats Grid */}

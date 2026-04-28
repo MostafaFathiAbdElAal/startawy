@@ -42,10 +42,6 @@ export default function ConsultantEarningsPage() {
   const [data, setData] = useState<EarningData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchEarnings();
-  }, []);
-
   const fetchEarnings = async () => {
     try {
       setLoading(true);
@@ -70,6 +66,10 @@ export default function ConsultantEarningsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchEarnings();
+  }, []);
 
   if (loading) return <EarningsSkeleton />;
   if (!data) return null;
@@ -132,47 +132,44 @@ export default function ConsultantEarningsPage() {
         </div>
 
         {records.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50/50 dark:bg-slate-900/50 text-left">
-                  <th className="px-8 py-5 font-black text-gray-400 text-[10px] uppercase tracking-widest border-b border-gray-100 dark:border-gray-700/50">Founder & Business</th>
-                  <th className="px-8 py-5 font-black text-gray-400 text-[10px] uppercase tracking-widest border-b border-gray-100 dark:border-gray-700/50">Date</th>
-                  <th className="px-8 py-5 font-black text-gray-400 text-[10px] uppercase tracking-widest border-b border-gray-100 dark:border-gray-700/50 text-right">Fee</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
-                {records.map(r => (
-                  <tr key={r.id} className="hover:bg-teal-500/[0.02] dark:hover:bg-teal-500/[0.02] transition-colors border-b border-gray-50 dark:border-gray-700/30 last:border-0">
-                    <td className="px-8 py-6">
-                      <p className="font-black text-gray-900 dark:text-white text-base tracking-tight">{r.founderName}</p>
-                      <p className="text-[11px] text-teal-600 dark:text-teal-400 font-black uppercase tracking-tighter mt-0.5">{r.businessName}</p>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-2.5 text-gray-600 dark:text-gray-300 font-bold text-xs">
-                        <Calendar className="w-4 h-4 text-teal-500/50" />
-                        <span>{new Date(r.date).toLocaleDateString('en-GB')}</span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6 text-right">
-                      <span className="font-black text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 px-4 py-2 rounded-xl border border-teal-100 dark:border-teal-800/50 tabular-nums shadow-xs">
-                        ${r.amount.toFixed(2)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="bg-gray-50/50 dark:bg-slate-900/50 border-t-2 border-gray-100 dark:border-gray-700">
-                <tr>
-                  <td className="px-8 py-8 font-black text-gray-900 dark:text-white uppercase text-xs tracking-[0.2em]" colSpan={2}>Grand Total</td>
-                  <td className="px-8 py-8 text-right">
-                    <span className="font-black text-teal-600 dark:text-teal-400 tabular-nums text-2xl tracking-tighter">
-                      ${totalEarnings.toFixed(2)}
+          <div className="min-w-full">
+            {/* Header - Hidden on Mobile */}
+            <div className="hidden md:grid grid-cols-12 bg-gray-50/50 dark:bg-slate-900/50 border-b border-gray-100 dark:border-gray-700/50 px-8 py-5">
+              <div className="col-span-6 font-black text-gray-400 text-[10px] uppercase tracking-widest">Founder & Business</div>
+              <div className="col-span-3 font-black text-gray-400 text-[10px] uppercase tracking-widest">Date</div>
+              <div className="col-span-3 font-black text-gray-400 text-[10px] uppercase tracking-widest text-right">Fee</div>
+            </div>
+
+            {/* Records List */}
+            <div className="divide-y divide-gray-50 dark:divide-gray-700/50">
+              {records.map(r => (
+                <div key={r.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-0 px-8 py-6 hover:bg-teal-500/[0.02] transition-colors items-center">
+                  <div className="col-span-6">
+                    <p className="font-black text-gray-900 dark:text-white text-base tracking-tight break-words">{r.founderName}</p>
+                    <p className="text-[11px] text-teal-600 dark:text-teal-400 font-black uppercase tracking-tighter mt-0.5">{r.businessName}</p>
+                  </div>
+                  <div className="col-span-6 md:col-span-3 flex items-center gap-2.5 text-gray-600 dark:text-gray-300 font-bold text-xs">
+                    <Calendar className="w-4 h-4 text-teal-500/50" />
+                    <span>{new Date(r.date).toLocaleDateString('en-GB')}</span>
+                  </div>
+                  <div className="col-span-6 md:col-span-3 text-left md:text-right">
+                    <span className="inline-block font-black text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 px-4 py-2 rounded-xl border border-teal-100 dark:border-teal-800/50 tabular-nums shadow-xs">
+                      ${r.amount.toFixed(2)}
                     </span>
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Total Footer */}
+            <div className="bg-gray-50/50 dark:bg-slate-900/50 border-t-2 border-gray-100 dark:border-gray-700 px-8 py-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <span className="font-black text-gray-900 dark:text-white uppercase text-xs tracking-[0.2em]">Grand Total</span>
+                <span className="font-black text-teal-600 dark:text-teal-400 tabular-nums text-2xl md:text-3xl tracking-tighter">
+                  ${totalEarnings.toFixed(2)}
+                </span>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="p-20 text-center">
