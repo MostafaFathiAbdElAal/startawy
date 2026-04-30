@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     const token = cookieStore.get('auth-token')?.value;
     const userPayload = await verifyAuth(token);
 
-    if (!userPayload) {
+    if (!userPayload || (userPayload.role !== 'FOUNDER' && userPayload.role !== 'ADMIN')) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

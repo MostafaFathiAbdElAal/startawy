@@ -409,7 +409,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                 </div>
                 <div className="mb-8 p-5 bg-red-50 dark:bg-red-900/20 rounded-[24px] border border-red-100 dark:border-red-900/30 flex gap-4">
                   <div className="w-10 h-10 bg-red-500 text-white rounded-xl flex items-center justify-center shrink-0"><AlertCircle className="w-6 h-6" /></div>
-                  <div><h4 className="text-sm font-bold text-red-600 dark:text-red-400 mb-1">Fatal Action</h4><p className="text-[11px] font-medium text-red-500/80 leading-relaxed">This will permanently delete your profile, projects, and all data. Irreversible.</p></div>
+                  <div><h4 className="text-sm font-bold text-red-600 dark:text-red-400 mb-1">Fatal Action</h4><p className="text-[11px] font-medium text-red-500/80 leading-relaxed">This will permanently delete your profile, analyses, plans, and all data. Irreversible.</p></div>
                 </div>
                 {deleteError && <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-2xl text-xs font-bold border border-red-100">{deleteError}</div>}
                 <form onSubmit={handleDeleteAccount} className="space-y-6">

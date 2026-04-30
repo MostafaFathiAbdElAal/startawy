@@ -1,18 +1,40 @@
-import { Calendar, Award, Globe } from 'lucide-react';
+import { Calendar, Award, TrendingUp, Lightbulb, FileText } from 'lucide-react';
+import { UserType } from '@prisma/client';
 
 interface ProfileStatsProps {
   stats: {
     sessions: number;
     reports: number;
-    projects: number;
+    analyses: number;
   };
+  userType?: UserType | null;
 }
 
-export default function ProfileStats({ stats }: ProfileStatsProps) {
+export default function ProfileStats({ stats, userType }: ProfileStatsProps) {
+  const isFounder = userType === 'FOUNDER';
+
   const statItems = [
-    { label: 'Sessions', value: stats.sessions, icon: Calendar, color: 'text-teal-600 dark:text-teal-400', bgColor: 'bg-teal-50 dark:bg-teal-900/20' },
-    { label: 'Reports', value: stats.reports, icon: Award, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-900/20' },
-    { label: 'Projects', value: stats.projects, icon: Globe, color: 'text-indigo-600 dark:text-indigo-400', bgColor: 'bg-indigo-50 dark:bg-indigo-900/20' },
+    { 
+        label: 'Sessions', 
+        value: stats.sessions, 
+        icon: Calendar, 
+        color: 'text-teal-600 dark:text-teal-400', 
+        bgColor: 'bg-teal-50 dark:bg-teal-900/20' 
+    },
+    { 
+        label: isFounder ? 'Reports' : 'Recommendations', 
+        value: stats.reports, 
+        icon: isFounder ? Award : Lightbulb, 
+        color: 'text-blue-600 dark:text-blue-400', 
+        bgColor: 'bg-blue-50 dark:bg-blue-900/20' 
+    },
+    { 
+        label: isFounder ? 'Analyses' : 'Follow-up Plans', 
+        value: stats.analyses, 
+        icon: isFounder ? TrendingUp : FileText, 
+        color: 'text-indigo-600 dark:text-indigo-400', 
+        bgColor: 'bg-indigo-50 dark:bg-indigo-900/20' 
+    },
   ];
 
   return (

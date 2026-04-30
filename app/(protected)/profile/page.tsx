@@ -64,7 +64,7 @@ export default async function ProfilePage({ searchParams }: PageProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Stats Strip (Server) */}
-          <ProfileStats stats={stats} />
+          <ProfileStats stats={stats} userType={user.type} />
 
           {/* MAIN CONTENT AREA */}
           <div className="lg:col-span-8 space-y-10">

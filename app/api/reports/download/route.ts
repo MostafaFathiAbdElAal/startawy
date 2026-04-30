@@ -36,7 +36,6 @@ export async function GET(req: NextRequest) {
       });
 
       const isPremium =
-        dbUser?.type === 'CONSULTANT' ||
         dbUser?.type === 'ADMIN' ||
         (dbUser?.founder?.payments?.[0]?.amount ?? 0) >= 299;
 

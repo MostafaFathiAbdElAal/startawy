@@ -42,8 +42,8 @@ export async function getProfileData() {
     },
     stats: {
       sessions: profile.founder?.sessions?.length || profile.consultant?.sessions?.length || 0,
-      reports: profile.founder?.reports?.length || 0,
-      projects: profile.founder?.budgetAnalyses?.length || 0
+      reports: profile.type === 'FOUNDER' ? (profile.founder?.reports?.length || 0) : (profile.consultant?.recommendations?.length || 0),
+      analyses: profile.type === 'FOUNDER' ? (profile.founder?.budgetAnalyses?.length || 0) : (profile.consultant?.sessions?.filter(s => s.notes).length || 0)
     },
     subscription: profile.founder?.payments?.[0]?.subscription || null,
     activePlan: (() => {

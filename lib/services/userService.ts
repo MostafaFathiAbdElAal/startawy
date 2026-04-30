@@ -24,7 +24,8 @@ export class UserService {
         },
         consultant: {
           include: {
-            sessions: true
+            sessions: true,
+            recommendations: true
           }
         },
         admin: true

@@ -32,13 +32,13 @@ export default async function StartawyLibraryPage() {
     }
   });
 
-  if (!user || (user.type !== 'FOUNDER' && user.type !== 'CONSULTANT')) {
-    redirect('/login');
+  if (!user || user.type !== 'FOUNDER') {
+    redirect('/dashboard');
   }
 
   // Plan calculation for UI display
   const lastPayment = user.founder?.payments?.[0];
-  const userPlan = user.type === 'CONSULTANT' ? 'Premium' : ((lastPayment?.amount || 0) >= 299 ? 'Premium' : ((lastPayment?.amount || 0) === 99 ? 'Basic' : 'Free'));
+  const userPlan = (lastPayment?.amount || 0) >= 299 ? 'Premium' : ((lastPayment?.amount || 0) === 99 ? 'Basic' : 'Free');
 
   // Fetch real reports from DB
   const dbReports = await prisma.startawyReport.findMany({

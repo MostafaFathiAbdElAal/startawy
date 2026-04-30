@@ -20,7 +20,8 @@ export type UserWithRelations = Prisma.UserGetPayload<{
     },
     consultant: {
       include: {
-        sessions: true
+        sessions: true,
+        recommendations: true
       }
     },
     admin: {

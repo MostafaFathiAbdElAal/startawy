@@ -78,7 +78,6 @@ export function Sidebar({ userRole: rawRole = "FOUNDER", isOwner: propIsOwner, h
     { icon: DollarSign, label: "My Earnings", path: "/consultant/earnings" },
     { icon: Lightbulb, label: "Recommendations", path: "/consultant/recommendations" },
     { icon: FileText, label: "Follow-Up Plans", path: "/consultant/follow-up-plans" },
-    { icon: FileText, label: "Startawy Library", path: "/startawy-library" },
     { icon: Clock, label: "Availability Schedule", path: "/consultant/availability" },
     { icon: User, label: "Profile", path: "/profile" },
   ];
