@@ -11,10 +11,12 @@ const prismaClientSingleton = () => {
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'bis_db',
+    connectionLimit: 1, // Enforce single connection for Vercel stability
     ssl: {
       rejectUnauthorized: false, // Required for Aiven cloud SSL
     },
-  } as ConstructorParameters<typeof PrismaMariaDb>[0])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any)
   return new PrismaClient({
     adapter,
     log: ['query', 'error', 'warn'],
@@ -32,4 +34,3 @@ export default prisma
 export { prisma }
 
 if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma
-

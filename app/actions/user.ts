@@ -51,11 +51,11 @@ export async function getProfileData() {
       const latestPayment = profile.founder?.payments?.[0];
       const sub = latestPayment?.subscription;
       const isActive = sub?.status === 'ACTIVE' && new Date() < new Date(sub.endDate);
-      if (!isActive || (latestPayment?.amount || 0) === 0) return 'Free Plan';
-      if ((latestPayment?.amount || 0) >= 299) return 'Premium';
-      if ((latestPayment?.amount || 0) === 99) return 'Basic';
-      return 'Free Plan';
-
+      if (!isActive) return 'Free Trial';
+      const amount = latestPayment?.amount || 0;
+      if (amount >= 299) return 'Premium Blueprint';
+      if (amount >= 99) return 'Basic Blueprint';
+      return 'Free Trial';
     })(),
     hasPaidPlan: (() => {
       if (profile.type === 'ADMIN') return true;

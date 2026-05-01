@@ -117,18 +117,19 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
   });
 
   const defaultPlans = dbPackages.map(pkg => {
-    const isPremium = pkg.price >= 299;
-    const isBasic = pkg.price === 99;
+    const isPremium = pkg.type.toLowerCase() === 'premium';
+    const isBasic = pkg.type.toLowerCase() === 'basic';
+    const isActivePlanMatch = planName.toLowerCase() === pkg.type.toLowerCase();
 
     return {
       id: pkg.id,
       name: pkg.type,
       price: `$${pkg.price}`,
       period: `/${pkg.duration}`,
-      description: pkg.type === 'Premium' ? "Strategic Growth Blueprint" : (pkg.type === 'Basic' ? "Foundation Scaling Plan" : "Exploratory Trial Access"),
-      features: pkg.description.split(',').map(f => f.trim()),
+      description: isPremium ? "Strategic Growth Blueprint" : (isBasic ? "Foundation Scaling Plan" : "Exploratory Trial Access"),
+      features: (pkg.description || "").split(',').filter(f => f.trim()).map(f => f.trim()),
       color: isPremium ? "gold" : (isBasic ? "teal" : "gray"),
-      isCurrent: isActive ? (planName === pkg.type) : (pkg.price === 0),
+      isCurrent: isActive ? isActivePlanMatch : (pkg.price === 0),
       recommended: isPremium
     };
   });
