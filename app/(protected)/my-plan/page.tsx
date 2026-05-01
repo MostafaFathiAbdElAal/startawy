@@ -104,9 +104,10 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
 
   // Standardized plan name logic
   const planName = (() => {
-    if (!isActive || (latestPayment?.amount || 0) === 0) return 'Free Trial';
-    if ((latestPayment?.amount || 0) >= 299) return 'Premium';
-    if ((latestPayment?.amount || 0) === 99) return 'Basic';
+    if (!isActive) return 'Free Trial';
+    const amount = latestPayment?.amount || 0;
+    if (amount >= 299) return 'Premium';
+    if (amount >= 99) return 'Basic';
     return 'Free Trial';
   })();
 
@@ -124,7 +125,7 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
       name: pkg.type,
       price: `$${pkg.price}`,
       period: `/${pkg.duration}`,
-      description: pkg.type === 'Premium' ? "Best for scaling businesses" : (pkg.type === 'Basic' ? "Ideal for growing startups" : "Perfect for exploring our platform"),
+      description: pkg.type === 'Premium' ? "Strategic Growth Blueprint" : (pkg.type === 'Basic' ? "Foundation Scaling Plan" : "Exploratory Trial Access"),
       features: pkg.description.split(',').map(f => f.trim()),
       color: isPremium ? "gold" : (isBasic ? "teal" : "gray"),
       isCurrent: isActive ? (planName === pkg.type) : (pkg.price === 0),
@@ -132,7 +133,27 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
     };
   });
 
-  const currentPlanDetails = defaultPlans.find(p => p.isCurrent) || defaultPlans[0];
+  // Ensure we have a "Free Trial" fallback if database is empty or doesn't have $0 plan
+  let currentPlanDetails = defaultPlans.find(p => p.isCurrent);
+  
+  if (!currentPlanDetails) {
+    if (!isActive) {
+       // Mock Free Trial if not in DB
+       currentPlanDetails = {
+         id: 0,
+         name: "Free Trial",
+         price: "$0",
+         period: "/month",
+         description: "Exploratory Trial Access",
+         features: ["Basic Analytics", "Community Access"],
+         color: "gray",
+         isCurrent: true,
+         recommended: false
+       };
+    } else {
+       currentPlanDetails = defaultPlans[0];
+    }
+  }
 
   const colorGradients: Record<string, string> = {
     gray: "from-slate-500 to-slate-600",

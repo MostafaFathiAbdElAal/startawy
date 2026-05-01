@@ -22,6 +22,7 @@ export default function UserAvatar({ name = 'User', image, size = 'md', isVerifi
   const initials = getInitials(name);
 
   // Safety check: Don't render Google images (redundant filter)
+  // Safety check: Don't render Google images (as per user request, only show manually uploaded ones)
   const finalImage = image?.includes('googleusercontent') ? null : image;
 
   // Size mappings
