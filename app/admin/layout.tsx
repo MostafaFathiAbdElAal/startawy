@@ -35,6 +35,7 @@ export default async function AdminLayout({
           userRole="ADMIN" 
           userName={user?.name} 
           userEmail={user?.email} 
+          userImage={user?.image?.includes('googleusercontent') ? null : user?.image}
           isVerified={user?.isEmailVerified}
           isOwner={isOwner}
         />
