@@ -30,7 +30,7 @@ export default async function ConsultantProfilePage({ params }: { params: Promis
     : null;
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       {/* Back Button */}
       <Link
         href="/book-consultant"
@@ -55,8 +55,8 @@ export default async function ConsultantProfilePage({ params }: { params: Promis
               </p>
             </div>
           </div>
-          <Link href="/my-sessions">
-            <button className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-semibold flex items-center gap-2">
+          <Link href="/my-sessions" className="w-full md:w-auto">
+            <button className="w-full px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-semibold flex items-center justify-center gap-2">
               View My Sessions
             </button>
           </Link>
@@ -64,7 +64,7 @@ export default async function ConsultantProfilePage({ params }: { params: Promis
       )}
 
       {/* Profile Header */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 p-8 mb-8">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 p-5 sm:p-8 mb-8">
         <div className="flex flex-col md:flex-row gap-8">
           {/* Avatar & Quick Info */}
           <div className="shrink-0">
@@ -87,8 +87,8 @@ export default async function ConsultantProfilePage({ params }: { params: Promis
 
           {/* Profile Details */}
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{consultant.user.name}</h1>
-            <p className="text-xl text-teal-600 dark:text-teal-400 font-medium mb-4">{consultant.specialization}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 break-words">{consultant.user.name}</h1>
+            <p className="text-lg sm:text-xl text-teal-600 dark:text-teal-400 font-medium mb-4">{consultant.specialization}</p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
@@ -106,7 +106,7 @@ export default async function ConsultantProfilePage({ params }: { params: Promis
               </div>
             </div>
 
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6 whitespace-pre-wrap">{consultant.bio}</p>
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6 whitespace-pre-wrap break-words">{consultant.bio}</p>
 
             {/* Certifications */}
             {consultant.certifications.length > 0 && (

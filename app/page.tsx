@@ -13,7 +13,7 @@ export default async function HomePage() {
 
   return (
     <HomePageClient 
-      initialReviews={reviews as any} 
+      initialReviews={reviews} 
       initialStats={stats} 
       serverIsAuthenticated={isAuthenticated}
     />

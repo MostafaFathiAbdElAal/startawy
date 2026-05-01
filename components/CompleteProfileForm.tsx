@@ -9,6 +9,9 @@ import PhoneInput from './ui/PhoneInput';
 import DateInput from './ui/DateInput';
 
 const CompleteProfileSchema = Yup.object().shape({
+  name: Yup.string()
+    .required('Full Name is required')
+    .min(3, 'Name is too short'),
   phone: Yup.string()
     .required('Phone number is required')
     .min(8, 'Invalid phone number'),
@@ -65,6 +68,7 @@ export default function CompleteProfileForm() {
 
     const formik = useFormik({
         initialValues: {
+            name: '',
             phone: '',
             role: 'FOUNDER' as 'FOUNDER' | 'CONSULTANT',
             businessName: '',
@@ -119,6 +123,20 @@ export default function CompleteProfileForm() {
             )}
 
             <form onSubmit={formik.handleSubmit} className="space-y-6 relative">
+                {/* Full Name */}
+                <div className="space-y-2">
+                    <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+                    <input
+                        name="name"
+                        type="text"
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        value={formik.values.name}
+                        className={`auth-input px-5 py-4 ${formik.touched.name && formik.errors.name ? 'auth-input-error' : ''}`}
+                        placeholder="Your full name"
+                    />
+                    {formik.touched.name && formik.errors.name && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold uppercase tracking-tight">{formik.errors.name}</p>}
+                </div>
                 {/* Phone Number */}
                 <div className="space-y-2">
                     <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>

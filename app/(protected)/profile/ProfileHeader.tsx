@@ -61,7 +61,7 @@ export default function ProfileHeader({ user, isEditing }: ProfileHeaderProps) {
             {!isEditing ? (
               <Link 
                 href="/profile?edit=true"
-                className="w-full md:w-auto px-8 py-3.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all font-bold flex items-center justify-center gap-2.5 shadow-xl shadow-slate-900/10 dark:shadow-none"
+                className="w-full md:w-auto px-8 py-3.5 bg-linear-to-r from-teal-600 to-teal-700 text-white rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all font-bold flex items-center justify-center gap-2.5 shadow-lg shadow-teal-600/20"
               >
                 <Edit className="w-5 h-5" />
                 Edit Profile

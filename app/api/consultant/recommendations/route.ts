@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { verifyAuth } from '@/lib/auth-utils';
 import { cookies } from 'next/headers';
 import { RecommendationService } from '@/lib/services/recommendationService';
+import { revalidatePath } from 'next/cache';
 
 /**
  * GET /api/consultant/recommendations
@@ -74,6 +75,10 @@ export async function POST(req: Request) {
       priority: priority || 'MEDIUM',
       impact: impact || 'MEDIUM',
     });
+
+    // Invalidate caches so the founder sees it immediately
+    revalidatePath("/founder/recommendations");
+    revalidatePath("/consultant/recommendations");
 
     return NextResponse.json({ success: true, recommendation: newRecommendation });
   } catch (error) {

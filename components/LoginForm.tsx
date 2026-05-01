@@ -77,8 +77,8 @@ export default function LoginForm() {
                 } else {
                     showToast({ 
                         type: 'success', 
-                        title: 'Welcome Back', 
-                        message: `Welcome back, ${result.user?.name || 'User'}!` 
+                        title: 'Login Successful', 
+                        message: `Happy to see you, ${result.user?.name || 'User'}!` 
                     });
                     router.refresh();
                     router.push('/dashboard');

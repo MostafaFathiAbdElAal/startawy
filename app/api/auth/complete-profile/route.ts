@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { role, phone, ...roleData } = body;
+    const { role, phone, name, ...roleData } = body;
 
     if (!role || !phone) {
       return NextResponse.json({ error: 'Role and Phone are required' }, { status: 400 });
@@ -45,7 +45,8 @@ export async function POST(req: NextRequest) {
         where: { id: userId },
         data: { 
             type: role as UserType,
-            phone: phone
+            phone: phone,
+            name: name || undefined
         },
       });
 

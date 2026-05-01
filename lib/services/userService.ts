@@ -19,7 +19,14 @@ export class UserService {
             },
             sessions: true,
             reports: true,
-            budgetAnalyses: true
+            budgetAnalyses: true,
+            followUpConsultant: {
+              include: {
+                user: {
+                  select: { name: true, image: true }
+                }
+              }
+            }
           }
         },
         consultant: {

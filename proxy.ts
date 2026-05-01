@@ -107,7 +107,8 @@ export async function proxy(request: NextRequest) {
       '/my-reports',
       '/payment',
       '/plans',
-      '/startawy-library'
+      '/startawy-library',
+      '/select-consultant'
     ].some(path => pathname.startsWith(path));
 
     // Founder Restrictions

@@ -1,12 +1,16 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { FileText, Calendar, User, Search, Loader2, CheckCircle2, Pencil } from 'lucide-react';
+import { FileText, Calendar, Search, Loader2, CheckCircle2, Pencil } from 'lucide-react';
 import { useToast } from "@/components/providers/ToastProvider";
+import UserAvatar from "@/components/ui/UserAvatar";
 
 interface Session {
-  id: number;
+  id: string | number;
+  type?: string;
   founderName: string;
+  founderId: number;
+  founderImage?: string | null;
   businessName: string;
   date: string;
   duration: string;
@@ -16,7 +20,9 @@ interface Session {
 
 /**
  * ConsultantFollowUpPlansPage - Client Component
- * Specialized hub to review and refine strategic action plans for completed sessions.
+ * Manages structured long-term follow-up plans (milestones, goals, action steps) for premium founders.
+ * Chapter 3 spec: "Manage Follow-Up Plans (Premium Only): Create/update structured plans."
+ * For individual advice, use the separate Recommendations tab.
  * Communicates with /api/consultant/sessions (GET and PATCH)
  */
 export default function ConsultantFollowUpPlansPage() {
@@ -24,7 +30,7 @@ export default function ConsultantFollowUpPlansPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | number | null>(null);
   const [editNotes, setEditNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -55,7 +61,7 @@ export default function ConsultantFollowUpPlansPage() {
     fetchSessions();
   }, []);
 
-  const handleUpdateNotes = async (sessionId: number) => {
+  const handleUpdateNotes = async (sessionId: string | number) => {
     try {
       setSaving(true);
       const res = await fetch('/api/consultant/sessions', {
@@ -72,8 +78,9 @@ export default function ConsultantFollowUpPlansPage() {
         message: "Strategy plan updated successfully"
       });
       setEditingId(null);
-      fetchSessions(); // Refresh list to show new data
+      fetchSessions();
     } catch (error) {
+      console.error('Plan update error:', error);
       showToast({
         type: "error",
         title: "Sync Error",
@@ -128,7 +135,7 @@ export default function ConsultantFollowUpPlansPage() {
       <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-2 tracking-tighter">Follow-Up Plans</h1>
-          <p className="text-gray-500 dark:text-gray-400 font-medium max-w-md">Manage and refine strategic action plans for your completed sessions.</p>
+          <p className="text-gray-500 dark:text-gray-400 font-medium max-w-md">Create structured long-term plans with milestones, action steps, and financial goals for your premium founders.</p>
         </div>
 
         {/* Dynamic Search */}
@@ -151,73 +158,85 @@ export default function ConsultantFollowUpPlansPage() {
               key={session.id}
               className="bg-white dark:bg-gray-800 border border-amber-100/50 dark:border-amber-900/20 rounded-[2rem] overflow-hidden shadow-xl shadow-amber-900/5 dark:shadow-none hover:border-teal-500/30 transition-all duration-500 ring-1 ring-amber-50/50 dark:ring-amber-900/10"
             >
-              <div className="p-8">
+              <div className="p-6 sm:p-8">
+                {/* Card Header: Founder Info */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-6 border-b border-gray-50 dark:border-gray-700/50">
                   <div className="flex items-center gap-5">
-                    <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-blue-500/10 to-blue-600/10 flex items-center justify-center border border-blue-500/20">
-                      <User className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+                    <div className="relative shrink-0">
+                      <UserAvatar 
+                        name={session.founderName} 
+                        image={session.founderImage} 
+                        size="lg" 
+                        isVerified={true} 
+                      />
                     </div>
                     <div>
                       <h3 className="font-black text-xl text-gray-900 dark:text-white leading-tight">{session.founderName}</h3>
                       <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{session.businessName}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-xs font-bold text-gray-500 dark:text-gray-300">
-                      <Calendar className="w-4 h-4" />
-                      <span>{new Date(session.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-slate-50 dark:bg-slate-700/50 rounded-xl text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-300">
+                      <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span>{session.type === 'FOLLOW_UP' ? '1 Year Active' : new Date(session.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                     </div>
-                    <div className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-xl font-black text-[10px] uppercase tracking-widest">
-                      Completed
+                    <div className={`px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] uppercase tracking-widest rounded-xl font-black ${session.type === 'FOLLOW_UP' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'}`}>
+                      {session.type === 'FOLLOW_UP' ? 'Premium Plan' : 'Completed'}
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gray-50/50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50 rounded-2xl p-6 mb-8 relative group">
+                {/* Strategy Blueprint Box */}
+                <div className="bg-gray-50/50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50 rounded-2xl p-6 relative group">
                   <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
                     <div className="flex items-center gap-2">
                       <div className="p-2 bg-teal-500/10 rounded-lg">
                         <FileText className="w-5 h-5 text-teal-600 dark:text-teal-400" />
                       </div>
-                      <h4 className="font-black text-gray-900 dark:text-white text-sm uppercase tracking-tight">Strategy Blueprint</h4>
+                      <div>
+                        <h4 className="font-black text-slate-900 dark:text-white text-sm uppercase tracking-tight">Strategy Blueprint</h4>
+                        <p className="text-[10px] sm:text-xs text-slate-500 font-medium">Structured plan (milestones, goals, action steps). Use the <strong>Recommendations</strong> tab for individual advice.</p>
+                      </div>
                     </div>
 
                     {editingId !== session.id && (
                       <button 
                         onClick={() => { 
                           setEditingId(session.id); 
-                          const template = `[CORE OBJECTIVE]:\n- \n\n[ACTION ITEMS]:\n1. \n2. \n\n[TIMELINE]:\n- Week 1: \n- Month 1: `;
+                          const template = `[FINANCIAL GOALS]:\n- \n\n[ACTION STEPS]:\n1. \n2. \n\n[MILESTONES]:\n- Week 1: \n- Month 1: `;
                           setEditNotes(session.notes || template); 
                         }}
-                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-sm text-teal-600 dark:text-teal-400 text-xs font-bold hover:scale-105 transition-transform"
+                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl shadow-sm text-teal-600 dark:text-teal-400 text-xs font-bold hover:scale-105 transition-transform"
                       >
                         <Pencil className="w-3.5 h-3.5" />
-                        {session.notes ? 'Refine Strategy' : 'Draft Strategy Blueprint'}
+                        {session.notes ? 'Refine Strategy' : 'Draft Strategy'}
                       </button>
                     )}
                   </div>
                   
                   {editingId === session.id ? (
                     <div className="space-y-4">
-                      <textarea 
-                        className="w-full p-5 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-900 focus:ring-4 focus:ring-teal-500/10 outline-none min-h-[150px] font-medium leading-relaxed"
-                        placeholder="Detail your follow-up plans and strategic steps here..."
-                        value={editNotes}
-                        onChange={(e) => setEditNotes(e.target.value)}
-                      />
-                      <div className="flex gap-3">
+                      <div className="relative">
+                        <textarea 
+                          className="w-full p-5 sm:p-6 text-sm sm:text-base border border-slate-200 dark:border-slate-600 rounded-[20px] bg-white dark:bg-slate-900 focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none min-h-[200px] font-medium leading-relaxed resize-none shadow-inner"
+                          placeholder="Detail your follow-up plans and strategic steps here..."
+                          value={editNotes}
+                          onChange={(e) => setEditNotes(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-3">
                         <button 
                           onClick={() => handleUpdateNotes(session.id)}
                           disabled={saving}
-                          className="flex-1 bg-teal-500 text-white text-xs font-black py-3 rounded-xl hover:bg-teal-600 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-teal-500/20"
+                          className="w-full sm:flex-1 bg-linear-to-r from-teal-500 to-emerald-600 text-white text-xs sm:text-sm font-black py-4 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-teal-500/20 order-1 sm:order-2"
                         >
                           {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <CheckCircle2 className="w-4 h-4"/>}
-                          Update Strategic Plan
+                          Save Strategic Plan
                         </button>
                         <button 
                           onClick={() => setEditingId(null)}
                           disabled={saving}
-                          className="px-6 py-3 border border-gray-200 dark:border-gray-600 text-gray-500 text-xs font-bold rounded-xl hover:bg-gray-100"
+                          className="w-full sm:w-auto px-8 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs sm:text-sm font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors order-2 sm:order-1"
                         >
                           Cancel
                         </button>
@@ -236,8 +255,6 @@ export default function ConsultantFollowUpPlansPage() {
                           </p>
                         </div>
                       )}
-                      
-                      {/* Refine button moved to header for better responsiveness */}
                     </div>
                   )}
                 </div>
@@ -245,13 +262,13 @@ export default function ConsultantFollowUpPlansPage() {
             </div>
           ))
         ) : (
-          <div className="bg-white dark:bg-gray-800 border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-[3rem] p-24 text-center">
+          <div className="bg-white dark:bg-gray-800 border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-[3rem] p-16 sm:p-24 text-center">
             <div className="w-24 h-24 bg-teal-500/5 rounded-full flex items-center justify-center mx-auto mb-8">
               <Search className="w-12 h-12 text-teal-200 dark:text-teal-900" strokeWidth={1.5} />
             </div>
             <h3 className="text-3xl font-black text-gray-900 dark:text-white mb-3 tracking-tight">Strategy Forge Empty</h3>
             <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto font-medium leading-relaxed">
-              Strategic blueprints only appear for completed sessions. Finalize your active consultations to begin forging the future for your founders.
+              Strategic blueprints appear for completed sessions and premium follow-up clients. Finalize your active consultations to begin drafting plans.
             </p>
           </div>
         )}

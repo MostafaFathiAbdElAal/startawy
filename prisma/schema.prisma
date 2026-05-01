@@ -49,9 +49,14 @@ model StartupFounder {
   budgetAnalyses  BudgetAnalysis[]
   reports         FounderReport[]
   payments        Payment[]
-  recommendations Recommendation[]
-  sessions        Session[]
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recommendations      Recommendation[]
+  sessions             Session[]
+  followUpConsultantId Int?
+  followUpEndDate      DateTime?
+  followUpNotes        String?          @db.Text
+  followUpUpdatedAt    DateTime?
+  followUpConsultant   Consultant?      @relation("FollowUpRelation", fields: [followUpConsultantId], references: [id])
+  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Consultant {
@@ -69,8 +74,9 @@ model Consultant {
   reviewCount     Int              @default(0)
   certifications  String?          @db.Text
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  recommendations Recommendation[]
-  sessions        Session[]
+  recommendations    Recommendation[]
+  sessions           Session[]
+  followUpFounders   StartupFounder[] @relation("FollowUpRelation")
 }
 
 model Payment {

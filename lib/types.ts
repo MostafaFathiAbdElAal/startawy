@@ -15,7 +15,14 @@ export type UserWithRelations = Prisma.UserGetPayload<{
         },
         sessions: true,
         reports: true,
-        budgetAnalyses: true
+        budgetAnalyses: true,
+        followUpConsultant: {
+          include: {
+            user: {
+              select: { name: true, image: true }
+            }
+          }
+        }
       }
     },
     consultant: {
@@ -24,11 +31,7 @@ export type UserWithRelations = Prisma.UserGetPayload<{
         recommendations: true
       }
     },
-    admin: {
-      include: {
-        user: true
-      }
-    }
+    admin: true
   }
 }>;
 

@@ -321,7 +321,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
               <button
                 onClick={handleStartPhoneVerification}
                 disabled={otpLoading}
-                className="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold hover:scale-[1.02] active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-2 shadow-sm"
+                className="w-full py-3 bg-teal-600 dark:bg-teal-500 text-white dark:text-slate-900 rounded-xl font-bold hover:scale-[1.02] active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-2 shadow-sm shadow-teal-500/20"
               >
                 {otpLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Start Verification'}
               </button>
@@ -394,7 +394,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                     <input type={showConfirmPass ? "text" : "password"} required autoComplete="new-password" value={passForm.confirm} onChange={(e) => setPassForm({ ...passForm, confirm: e.target.value })} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-teal-500/50 transition-all text-sm font-medium dark:text-white" placeholder="Repeat your new password" />
                     <button type="button" onClick={() => setShowConfirmPass(!showConfirmPass)} className="absolute right-4 bottom-4 p-1 text-slate-400 hover:text-teal-500">{showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
                   </div>
-                  <button type="submit" disabled={passLoading || !isPassValid || passForm.next !== passForm.confirm} className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[20px] font-black hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-3">
+                  <button type="submit" disabled={passLoading || !isPassValid || passForm.next !== passForm.confirm} className="w-full py-4 bg-teal-600 dark:bg-teal-500 text-white dark:text-slate-900 rounded-[20px] font-black hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-3 shadow-lg shadow-teal-500/20">
                     {passLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Update Password"}
                   </button>
                 </form>

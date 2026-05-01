@@ -52,12 +52,40 @@ export async function GET() {
         },
       },
     });
-
     // Deduplicate founders using a Map to ensure unique records
     const foundersMap = new Map();
+
+    // Also fetch Premium Follow-Up founders assigned to this consultant
+    const followUpFounders = await prisma.startupFounder.findMany({
+      where: {
+        followUpConsultantId: consultant.id,
+        followUpEndDate: { gt: new Date() } // Active only
+      },
+      include: {
+        user: {
+          select: { name: true, email: true, image: true, createdAt: true }
+        },
+        budgetAnalyses: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+        sessions: {
+          where: { consultantId: consultant.id },
+        },
+      },
+    });
+
+    // Merge session-based founders into map
     for (const s of sessions) {
       if (!foundersMap.has(s.founderId)) {
         foundersMap.set(s.founderId, s.founder);
+      }
+    }
+
+    // Merge premium follow-up founders (avoid duplicates)
+    for (const f of followUpFounders) {
+      if (!foundersMap.has(f.id)) {
+        foundersMap.set(f.id, f);
       }
     }
 
@@ -68,8 +96,8 @@ export async function GET() {
       email: f.user.email,
       businessName: f.businessName,
       businessSector: f.businessSector,
-      totalSessions: f.sessions.length,
-      lastBudgetAnalysis: f.budgetAnalyses[0] ?? null,
+      totalSessions: f.sessions?.length ?? 0,
+      lastBudgetAnalysis: f.budgetAnalyses?.[0] ?? null,
       image: f.user.image,
       joinedAt: f.user.createdAt,
     }));

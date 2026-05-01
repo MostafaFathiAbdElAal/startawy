@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyAuth } from '@/lib/auth-utils';
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 
 /**
  * GET /api/consultant/sessions
@@ -26,7 +27,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Consultant profile not found' }, { status: 404 });
     }
 
-    // Fetch all sessions with explicit select for guaranteed field availability
+    // 1. Fetch all sessions
     const sessions = await prisma.session.findMany({
       where: { consultantId: consultant.id },
       select: {
@@ -42,6 +43,7 @@ export async function GET() {
             user: {
               select: {
                 name: true,
+                image: true,
               },
             },
           },
@@ -55,11 +57,29 @@ export async function GET() {
       orderBy: { date: "desc" },
     });
 
+    // 2. Fetch Founders assigned for 1-year follow-up (Premium)
+    const followUpFounders = await prisma.startupFounder.findMany({
+      where: {
+        followUpConsultantId: consultant.id,
+        followUpEndDate: { gt: new Date() } // Active only
+      },
+      select: {
+        id: true,
+        businessName: true,
+        followUpNotes: true,
+        user: {
+          select: { name: true, image: true }
+        }
+      }
+    });
+
     // Map data to a clean JSON structure
     const formattedSessions = sessions.map((s) => ({
-      id: s.id,
+      id: s.id.toString(),
+      type: 'SESSION',
       founderName: s.founder?.user?.name || "Unknown",
-      businessName: s.founder?.businessName || "N/A",
+      founderImage: s.founder?.user?.image || null,
+      businessName: s.founder?.businessName || "No Business Name",
       date: s.date,
       duration: s.duration,
       notes: s.notes,
@@ -68,7 +88,21 @@ export async function GET() {
       meetingLink: s.meetingLink,
     }));
 
-    return NextResponse.json(formattedSessions);
+    const formattedFollowUps = followUpFounders.map((f) => ({
+      id: `fu-${f.id}`,
+      type: 'FOLLOW_UP',
+      founderName: f.user.name,
+      founderImage: f.user.image || null,
+      businessName: f.businessName || "No Business Name",
+      date: new Date().toISOString(), // Use current date to ensure they show up in 'completed' lists if filtered by date
+      duration: "1 Year",
+      notes: f.followUpNotes,
+      paymentStatus: "PAID",
+      amount: 0,
+      meetingLink: null,
+    }));
+
+    return NextResponse.json([...formattedSessions, ...formattedFollowUps]);
   } catch (error) {
     console.error('API Error [Consultant Sessions]:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -103,10 +137,36 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: 'Consultant profile not found' }, { status: 404 });
     }
 
-    // Convert sessionId to number to ensure database match
-    const sId = Number(sessionId);
+    const sessionIdStr = String(sessionId);
 
-    // Verify ownership and update
+    // Handle Long-term Follow-up Notes (Strategy Blueprint)
+    if (sessionIdStr.startsWith('fu-')) {
+      const founderId = parseInt(sessionIdStr.replace('fu-', ''));
+
+      const founder = await prisma.startupFounder.findFirst({
+        where: { id: founderId, followUpConsultantId: consultant.id }
+      });
+
+      if (!founder) {
+        return NextResponse.json({ error: 'Founder not found or permission denied' }, { status: 404 });
+      }
+
+      await prisma.startupFounder.update({
+        where: { id: founderId },
+        data: {
+          followUpNotes: notes,
+          followUpUpdatedAt: new Date()
+        }
+      });
+
+      revalidatePath("/founder/recommendations");
+      revalidatePath("/founder/dashboard");
+
+      return NextResponse.json({ success: true, message: 'Premium follow-up plan updated successfully' });
+    }
+
+    // Handle Standard Session Notes
+    const sId = Number(sessionId);
     const session = await prisma.session.findFirst({
       where: { id: sId, consultantId: consultant.id },
     });
@@ -120,7 +180,11 @@ export async function PATCH(req: Request) {
       data: { notes },
     });
 
-    return NextResponse.json({ success: true, message: 'Follow-up plan updated successfully' });
+    revalidatePath("/founder/recommendations");
+    revalidatePath("/founder/dashboard");
+    revalidatePath("/founder/sessions");
+
+    return NextResponse.json({ success: true, message: 'Session follow-up plan updated successfully' });
   } catch (error) {
     console.error('API Error [Update Session Notes]:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

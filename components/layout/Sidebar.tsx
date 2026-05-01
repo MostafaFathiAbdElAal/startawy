@@ -28,15 +28,17 @@ import {
   X,
   ShieldCheck,
   Headset,
+  Award, // Import Award for premium feature
 } from "lucide-react";
 
 interface SidebarProps {
   userRole?: "FOUNDER" | "CONSULTANT" | "ADMIN";
   isOwner?: boolean;
   hasPaidPlan?: boolean;
+  hasPremiumPlan?: boolean;
 }
 
-export function Sidebar({ userRole: rawRole = "FOUNDER", isOwner: propIsOwner, hasPaidPlan = false }: SidebarProps) {
+export function Sidebar({ userRole: rawRole = "FOUNDER", isOwner: propIsOwner, hasPaidPlan = false, hasPremiumPlan = false }: SidebarProps) {
   const userRole = rawRole || "FOUNDER";
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -64,7 +66,9 @@ export function Sidebar({ userRole: rawRole = "FOUNDER", isOwner: propIsOwner, h
     { icon: MessageSquare, label: "StartBot", path: "/ai-chatbot" },
     ...(hasPaidPlan ? [{ icon: FileText, label: "Startawy Library", path: "/startawy-library" }] : []),
     { icon: Calendar, label: "Book Consultant", path: "/book-consultant" },
+    ...(hasPremiumPlan ? [{ icon: Award, label: "Select Advisor", path: "/select-consultant" }] : []),
     { icon: BarChart3, label: "My Sessions", path: "/my-sessions" },
+    { icon: Lightbulb, label: "Recommendations", path: "/founder/recommendations" },
     { icon: Package, label: "My Startawy Plan", path: "/my-plan" },
     { icon: Receipt, label: "My Payments", path: "/my-payments" },
     { icon: MessageCircle, label: "Feedback", path: "/feedback" },

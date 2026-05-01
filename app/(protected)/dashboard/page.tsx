@@ -49,16 +49,16 @@ export default async function DashboardPage() {
   return (
     <div className="p-4 sm:p-8">
       {/* Welcome Section */}
-      <div className="mb-6 sm:mb-10 bg-slate-900 rounded-[24px] sm:rounded-[32px] p-6 sm:p-10 text-white relative overflow-hidden shadow-2xl group">
-        <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-teal-500/10 rounded-full blur-[80px] sm:blur-[100px] -mr-16 -mt-16 sm:-mr-20 sm:-mt-20 group-hover:bg-teal-500/20 transition-all duration-700"></div>
+      <div className="mb-6 sm:mb-10 bg-linear-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 rounded-[24px] sm:rounded-[32px] p-6 sm:p-10 text-slate-900 dark:text-white relative overflow-hidden shadow-lg dark:shadow-2xl group border border-slate-200 dark:border-slate-800 transition-all duration-500 hover:border-teal-500/30">
+        <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-teal-500/5 dark:bg-teal-500/10 rounded-full blur-[80px] sm:blur-[100px] -mr-16 -mt-16 sm:-mr-20 sm:-mt-20 group-hover:bg-teal-500/10 dark:group-hover:bg-teal-500/20 transition-all duration-700"></div>
         <div className="relative z-10 flex flex-col items-center md:items-start text-center md:text-left gap-4">
-          <h1 className="text-2xl sm:text-4xl font-black text-white flex items-center flex-wrap justify-center md:justify-start gap-3 sm:gap-4 font-display leading-tight">
+          <h1 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white flex items-center flex-wrap justify-center md:justify-start gap-3 sm:gap-4 font-display leading-tight">
             Welcome back, {user.name?.split(' ')[0] || 'User'}! 
-            <span className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white/10 rounded-xl sm:rounded-2xl backdrop-blur-md border border-white/10 shadow-xl">
-              <Hand className="w-5 h-5 sm:w-6 sm:h-6 text-teal-400 animate-bounce" />
+            <span className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-teal-50 dark:bg-white/10 rounded-xl sm:rounded-2xl backdrop-blur-md border border-teal-100 dark:border-white/10 shadow-sm dark:shadow-xl">
+              <Hand className="w-5 h-5 sm:w-6 sm:h-6 text-teal-600 dark:text-teal-400 animate-bounce" />
             </span>
           </h1>
-          <p className="text-slate-400 font-medium text-sm sm:text-lg max-w-2xl">
+          <p className="text-slate-600 dark:text-slate-400 font-medium text-sm sm:text-lg max-w-2xl">
             {user.type === 'CONSULTANT' 
               ? "Your expertise is making an impact today. Here's an overview of your consultations." 
               : "Here's what's happening with your startup today. Stay focused on your goals."}
