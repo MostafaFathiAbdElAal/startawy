@@ -3,6 +3,7 @@ import { verifyAuth } from "@/lib/auth-utils";
 import { cookies } from "next/headers";
 import cloudinary from "@/lib/cloudinary";
 import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 
 export async function POST(req: NextRequest) {
   try {
@@ -67,6 +68,8 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    revalidatePath("/", "layout");
+    
     return NextResponse.json({ 
       success: true, 
       url: result.secure_url,

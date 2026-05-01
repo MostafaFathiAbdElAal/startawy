@@ -27,7 +27,7 @@ export async function getProfileData() {
       name: profile.name,
       type: profile.type,
       phone: profile.phone,
-      image: profile.image?.includes('googleusercontent') ? null : profile.image,
+      image: profile.image,
       googleId: profile.googleId,
       isEmailVerified: profile.isEmailVerified,
       isPhoneVerified: profile.isPhoneVerified,
@@ -85,7 +85,7 @@ export async function updateProfile(data: UpdateProfileData) {
 
   try {
     await UserService.updateUserProfile(Number(decoded.id), data);
-    revalidatePath("/profile");
+    revalidatePath("/", "layout");
     return { success: true, message: "Profile updated successfully!" };
   } catch (err) {
     console.error("[PROFILE_UPDATE_ERROR]", err);
