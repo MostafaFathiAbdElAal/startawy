@@ -33,7 +33,10 @@ export const useChatStore = create<ChatState>()(
       sessionId: typeof window !== 'undefined' 
         ? (localStorage.getItem('chat-session-id') || Math.random().toString(36).substring(2, 11))
         : '',
-      setSessionId: (id) => set({ sessionId: id }),
+      setSessionId: (id) => {
+        if (typeof window !== 'undefined') localStorage.setItem('chat-session-id', id);
+        set({ sessionId: id });
+      },
       queuePosition: null,
       adminStatus: 'offline',
       isAdminTyping: false,

@@ -36,12 +36,57 @@ export default function AdminSupportPage() {
 
   // 🏆 Persistence: Save selected session on change
   useEffect(() => {
+    const fetchHistory = async (sid: string) => {
+      try {
+        const SECRET_KEY = 'STARTAWY_SECRET_123456'; // Same as in API or env
+        const res = await fetch(`/api/support/messages?sessionId=${sid}`, {
+          headers: { 'x-secret-key': SECRET_KEY }
+        });
+        const data = await res.json();
+        if (data.messages && data.messages.length > 0) {
+          setActiveChats(prev => {
+            const next = new Map(prev);
+            const current = next.get(sid);
+            if (current) {
+              // Merge messages, avoiding duplicates
+              const existingIds = new Set(current.messages.map(m => `${m.timestamp}-${m.text}`));
+              const newMessages = data.messages
+                .map((m: { sender: 'user' | 'admin' | 'system'; text: string; createdAt: string }) => ({
+                  sender: m.sender,
+                  text: m.text,
+                  timestamp: m.createdAt
+                }))
+                .filter((m: { text: string; timestamp: string }) => !existingIds.has(`${m.timestamp}-${m.text}`));
+
+              if (newMessages.length > 0) {
+                next.set(sid, {
+                  ...current,
+                  messages: [...current.messages, ...newMessages].sort((a, b) => 
+                    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+                  )
+                });
+              }
+            }
+            return next;
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch history:', err);
+      }
+    };
+
     if (selectedSessionId) {
       localStorage.setItem('admin_selected_session', selectedSessionId);
+      
+      // 🔄 NEW: Fetch full history from DB when session is selected to ensure persistence
+      const session = activeChats.get(selectedSessionId);
+      if (session && session.messages.length === 0) {
+        fetchHistory(selectedSessionId);
+      }
     } else {
       localStorage.removeItem('admin_selected_session');
     }
-  }, [selectedSessionId]);
+  }, [selectedSessionId, activeChats]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -247,7 +292,7 @@ export default function AdminSupportPage() {
   const selectedChat = selectedSessionId ? activeChats.get(selectedSessionId) : null;
 
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-120px)] bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 overflow-hidden">
+    <div className="flex flex-col md:flex-row h-screen md:h-[calc(100vh-120px)] bg-white dark:bg-slate-900 md:rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 overflow-hidden fixed inset-0 md:relative z-50 md:z-auto">
       {/* Sidebar: Chat List */}
       <div className={clsx(
         "w-full md:w-80 border-r border-gray-100 dark:border-slate-800 flex flex-col",
@@ -443,8 +488,8 @@ export default function AdminSupportPage() {
               })}
             </div>
 
-            <div className="p-4 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800">
-              <div className="flex items-center gap-2">
+            <div className="p-4 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 pb-safe">
+              <div className="flex items-center gap-2 max-w-full">
                 <input
                   type="text"
                   value={replyText}
@@ -456,12 +501,12 @@ export default function AdminSupportPage() {
                     }
                   }}
                   placeholder="Type your reply..."
-                  className="flex-1 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl outline-none text-sm border border-transparent focus:border-teal-500/50 transition-all"
+                  className="flex-1 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl outline-none text-sm border border-transparent focus:border-teal-500/50 transition-all min-w-0"
                 />
                 <button
                   onClick={handleSendReply}
                   disabled={!replyText.trim()}
-                  className="p-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 disabled:opacity-50 transition-colors shadow-lg shadow-teal-600/20"
+                  className="p-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 disabled:opacity-50 transition-colors shadow-lg shadow-teal-600/20 flex-shrink-0"
                 >
                   <Send size={20} />
                 </button>
@@ -469,7 +514,7 @@ export default function AdminSupportPage() {
             </div>
           </>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center opacity-30">
+          <div className="h-full flex flex-col items-center justify-center opacity-30 p-10 text-center">
             <MessageCircle size={60} className="mb-4" />
             <p className="text-lg font-medium">Select a chat to start messaging</p>
           </div>

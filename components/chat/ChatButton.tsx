@@ -9,11 +9,7 @@ export const ChatButton = () => {
 
   const handleToggle = () => {
     if (!isOpen) {
-      // If the chat was ended and user is reopening it, start a clean slate
-      const hasEndedSession = messages.some(m => m.sender === 'system' && m.text === 'Conversation ended');
-      if (hasEndedSession && adminStatus === 'offline') {
-        startNewSession();
-      }
+      // Logic removed: We no longer clear history on reopen to ensure persistence.
     }
     setIsOpen(!isOpen);
   };

@@ -11,6 +11,37 @@ export const useChatSocket = (userName?: string, userRole?: string) => {
   useEffect(() => {
     if (!sessionId) return;
 
+    // 🔄 NEW: Fetch history from DB to ensure sync
+    const syncHistory = async () => {
+      try {
+        const SECRET_KEY = 'STARTAWY_SECRET_123456'; 
+        const res = await fetch(`/api/support/messages?sessionId=${sessionId}`, {
+          headers: { 'x-secret-key': SECRET_KEY }
+        });
+        const data = await res.json();
+        if (data.messages && data.messages.length > 0) {
+          // Only add messages that aren't already in the store
+          data.messages.forEach((m: { text: string; createdAt: string; sender: string; id: number | string }) => {
+            const exists = useChatStore.getState().messages.some(msg => 
+              msg.text === m.text && msg.timestamp === m.createdAt
+            );
+            if (!exists) {
+              addMessage({
+                id: m.id.toString(),
+                sender: m.sender as 'user' | 'admin' | 'system',
+                text: m.text,
+                timestamp: m.createdAt
+              });
+            }
+          });
+        }
+      } catch (err) {
+        console.error('History sync failed:', err);
+      }
+    };
+
+    syncHistory();
+
     // Initialize socket connection
     const socket = io(SOCKET_URL);
     socketRef.current = socket;
