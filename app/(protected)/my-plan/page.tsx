@@ -105,6 +105,7 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
   // Standardized plan name logic
   const planName = (() => {
     if (!isActive) return 'Free Trial';
+    if (latestPayment?.paymentType) return latestPayment.paymentType;
     const amount = latestPayment?.amount || 0;
     if (amount >= 299) return 'Premium';
     if (amount >= 99) return 'Basic';
@@ -117,9 +118,10 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
   });
 
   const defaultPlans = dbPackages.map(pkg => {
-    const isPremium = pkg.type.toLowerCase() === 'premium';
-    const isBasic = pkg.type.toLowerCase() === 'basic';
-    const isActivePlanMatch = planName.toLowerCase() === pkg.type.toLowerCase();
+    const typeLower = pkg.type.toLowerCase();
+    const isPremium = typeLower.includes('premium') || typeLower.includes('pro');
+    const isBasic = typeLower.includes('basic') || typeLower.includes('standard');
+    const isActivePlanMatch = planName.toLowerCase() === typeLower;
 
     return {
       id: pkg.id,
@@ -157,17 +159,23 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
   }
 
   const colorGradients: Record<string, string> = {
-    gray: "from-slate-500 to-slate-600",
+    gray: "from-[#D3D3D3] to-[#B0B0B0]",
     teal: "from-teal-500 to-emerald-600",
     gold: "from-amber-400 via-amber-500 to-orange-600",
   };
 
   const currentGradient = colorGradients[currentPlanDetails.color] || colorGradients.teal;
+  const isGray = currentPlanDetails.color === 'gray';
+  const currentTextColor = isGray ? "text-slate-900" : "text-white";
+  const badgeClass = isGray ? "bg-slate-900/10 text-slate-900/90 border-slate-900/20" : "bg-white/10 text-white/90 border-white/5";
+  const iconClass = isGray ? "text-slate-900/80" : "text-white/80";
+  const textMutedClass = isGray ? "text-slate-900/60" : "text-white/60";
+  const borderClass = isGray ? "border-slate-900/10" : "border-white/10";
 
   return (
     <>
       {/* Current Plan Card */}
-      <div className={`bg-linear-to-br ${currentGradient} rounded-[24px] sm:rounded-[32px] shadow-2xl p-6 sm:p-10 text-white mb-10 relative overflow-hidden group`}>
+      <div className={`bg-linear-to-br ${currentGradient} rounded-[24px] sm:rounded-[32px] shadow-2xl p-6 sm:p-10 ${currentTextColor} mb-10 relative overflow-hidden group`}>
         <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
           <Package className="w-48 h-48 sm:w-64 sm:h-64" />
         </div>
@@ -175,9 +183,9 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
         <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-6 mb-8 text-center md:text-left">
           <div className="space-y-4">
             <div className="flex flex-col items-center md:items-start gap-2">
-              <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full border border-white/5">
-                <Package className="w-4 h-4 text-white/80" />
-                <span className="text-white/90 text-[10px] font-black uppercase tracking-widest">Active Membership</span>
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${badgeClass}`}>
+                <Package className={`w-4 h-4 ${iconClass}`} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Active Membership</span>
               </div>
               <h2 className="text-3xl sm:text-5xl font-black tracking-tight">{currentPlanDetails.name} Blueprint</h2>
             </div>
@@ -186,34 +194,34 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
               <span className="text-xl sm:text-2xl font-medium opacity-80">{currentPlanDetails.period}</span>
             </div>
           </div>
-          <div className={`px-6 py-2 rounded-full text-[10px] font-black tracking-[0.2em] uppercase border shadow-lg ${isActive ? "bg-white/20 text-white border-white/30" : "bg-red-400/20 text-red-100 border-red-400/30"}`}>
+          <div className={`px-6 py-2 rounded-full text-[10px] font-black tracking-[0.2em] uppercase border shadow-lg ${isActive ? (isGray ? "bg-slate-900/10 text-slate-900 border-slate-900/20" : "bg-white/20 text-white border-white/30") : "bg-red-400/20 text-red-100 border-red-400/30"}`}>
             {isActive ? "Status: Active" : "Status: Inactive"}
           </div>
         </div>
 
-        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8 pb-8 border-b border-white/10">
+        <div className={`relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8 pb-8 border-b ${borderClass}`}>
           <div className="flex flex-col items-center md:items-start">
-            <p className="text-white/60 text-[10px] uppercase font-black tracking-widest mb-2">Activation Date</p>
+            <p className={`${textMutedClass} text-[10px] uppercase font-black tracking-widest mb-2`}>Activation Date</p>
             <div className="flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4 text-white/80" />
+              <CalendarIcon className={`w-4 h-4 ${iconClass}`} />
               <p className="font-bold text-lg leading-none">
                 {subscription?.startDate ? new Date(subscription.startDate).toLocaleDateString('en-GB') : 'N/A'}
               </p>
             </div>
           </div>
           <div className="flex flex-col items-center md:items-start">
-            <p className="text-white/60 text-[10px] uppercase font-black tracking-widest mb-2">Next Billing</p>
+            <p className={`${textMutedClass} text-[10px] uppercase font-black tracking-widest mb-2`}>Next Billing</p>
             <div className="flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4 text-white/80" />
+              <CalendarIcon className={`w-4 h-4 ${iconClass}`} />
               <p className="font-bold text-lg leading-none">
                 {subscription?.endDate ? new Date(subscription.endDate).toLocaleDateString('en-GB') : 'N/A'}
               </p>
             </div>
           </div>
           <div className="flex flex-col items-center md:items-start">
-            <p className="text-white/60 text-[10px] uppercase font-black tracking-widest mb-2">Resource Usage</p>
+            <p className={`${textMutedClass} text-[10px] uppercase font-black tracking-widest mb-2`}>Resource Usage</p>
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-white/80" />
+              <TrendingUp className={`w-4 h-4 ${iconClass}`} />
               <p className="font-bold text-lg leading-none">Unlimited Access</p>
             </div>
           </div>
@@ -222,12 +230,12 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
         <div className="relative z-10 flex flex-col sm:flex-row gap-4">
           <Link
             href="/plans"
-            className="flex-1 inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-slate-900 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all font-black shadow-xl"
+            className={`flex-1 inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all font-black shadow-xl ${isGray ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
           >
             Manage Subscription
             <ArrowRight className="w-5 h-5" />
           </Link>
-          <button className="flex-1 px-8 py-4 bg-black/10 hover:bg-black/20 rounded-2xl transition-all font-black border border-white/10 active:scale-[0.98]">
+          <button className={`flex-1 px-8 py-4 rounded-2xl transition-all font-black border active:scale-[0.98] ${isGray ? "bg-slate-950/10 hover:bg-slate-950/20 text-slate-900 border-slate-900/10" : "bg-black/10 hover:bg-black/20 text-white border-white/10"}`}>
             View Billing History
           </button>
         </div>

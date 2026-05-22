@@ -24,8 +24,8 @@ export default async function ManageFoundersPage() {
 
   const formattedUsers = dbUsers.map(u => {
     const payments = u.founder?.payments || [];
-    const latestSub = payments.find(p => p.paymentType === 'Subscription');
-    const planName = latestSub ? (latestSub.amount >= 299 ? 'Premium' : 'Basic') : 'Free Trial';
+    const latestSub = payments.find(p => p.paymentType !== 'Consultation');
+    const planName = latestSub ? latestSub.paymentType : 'Free Trial';
 
     return {
       id: u.id,

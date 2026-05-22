@@ -111,8 +111,21 @@ export default async function PlansPage() {
 
   // If DB has packages, map them. Otherwise use realistic defaults.
   const plans = (dbPackages.length > 0 ? dbPackages.map((pkg) => {
-    // Attempt to match with default visual styles based on package type
-    const basePlan = defaultPlans.find(p => p.name.toLowerCase() === pkg.type.toLowerCase()) || defaultPlans[1];
+    // Attempt to match with default visual styles based on package type robustly
+    const typeLower = pkg.type.toLowerCase();
+    const basePlan = defaultPlans.find(p => {
+      const pNameLower = p.name.toLowerCase();
+      if (typeLower.includes('premium') || typeLower.includes('pro')) {
+        return pNameLower.includes('premium');
+      }
+      if (typeLower.includes('basic') || typeLower.includes('standard')) {
+        return pNameLower.includes('basic');
+      }
+      if (typeLower.includes('free')) {
+        return pNameLower.includes('free');
+      }
+      return false;
+    }) || defaultPlans[1];
     
     return {
       ...basePlan,
@@ -120,11 +133,11 @@ export default async function PlansPage() {
       price: `$${pkg.price}`,
       period: `/${pkg.duration.toLowerCase()}`,
       description: pkg.description || basePlan.description,
-      isCurrent: isActive && pkg.type === currentPlanName
+      isCurrent: isActive && typeLower === currentPlanName.toLowerCase()
     };
   }) : defaultPlans.map(p => ({
     ...p,
-    isCurrent: (p.name === currentPlanName)
+    isCurrent: (p.name.toLowerCase() === currentPlanName.toLowerCase())
   })));
 
   return (

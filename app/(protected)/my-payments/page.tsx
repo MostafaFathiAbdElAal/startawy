@@ -48,8 +48,7 @@ export default async function MyPaymentsPage({
 
   const payments = dbPayments.map((p) => {
     const isPlan = p.subscription !== null || 
-                   ['Premium', 'Basic', 'Free Trial'].includes(p.paymentType || '') || 
-                   p.paymentType?.includes('Plan');
+                   (p.paymentType ? ['premium', 'basic', 'free', 'pro', 'plan'].some(keyword => p.paymentType.toLowerCase().includes(keyword)) : false);
     const paymentMethodLabel = p.paymentMethod === 'Stripe' ? 'Stripe / Card' : 
                                p.paymentMethod === 'card' ? 'Visa •••• 4242' : 
                                'Mobile Billing';
