@@ -1,0 +1,132 @@
+import { User, Mail, Smartphone, Briefcase, Award, Calendar } from 'lucide-react';
+import { UserWithRelations } from '@/lib/types/user';
+
+interface ProfileDetailsProps {
+  user: UserWithRelations;
+}
+
+export default function ProfileDetails({ user }: ProfileDetailsProps) {
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-[32px] p-6 sm:p-8 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 blur-3xl rounded-full" />
+        
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-8 flex items-center justify-start gap-3">
+            <User className="w-5 h-5 text-teal-500" />
+            Account Details
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+            {/* Name */}
+            <div className="space-y-2 flex flex-col items-start text-left">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
+                <div className="flex items-center gap-4 h-14 w-full px-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white justify-start">
+                    <User className="w-5 h-5 text-slate-400 shrink-0" />
+                    <span className="text-sm font-semibold truncate">{user.name}</span>
+                </div>
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2 flex flex-col items-start text-left">
+                <div className="flex items-center justify-between w-full px-1">
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Email Address</label>
+                    {user.isEmailVerified ? (
+                        <span className="text-[9px] font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-800 uppercase tracking-tighter">Verified</span>
+                    ) : (
+                        <span className="text-[9px] font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded-md border border-red-100 dark:border-red-800 uppercase tracking-tighter">Not Verified</span>
+                    )}
+                </div>
+                <div className="flex items-center gap-4 h-14 w-full px-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white justify-start overflow-hidden">
+                    <Mail className="w-5 h-5 text-slate-400 shrink-0" />
+                    <span className="text-sm font-semibold truncate">{user.email}</span>
+                </div>
+            </div>
+
+            {/* Phone */}
+            <div className="space-y-2 flex flex-col items-start text-left">
+                <div className="flex items-center justify-between w-full px-1">
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Phone Number</label>
+                    {user.isPhoneVerified ? (
+                        <span className="text-[9px] font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-800 uppercase tracking-tighter">Verified</span>
+                    ) : (
+                        <span className="text-[9px] font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded-md border border-red-100 dark:border-red-800 uppercase tracking-tighter">Not Verified</span>
+                    )}
+                </div>
+                <div className="flex items-center gap-4 h-14 w-full px-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white justify-start overflow-hidden">
+                    <Smartphone className="w-5 h-5 text-slate-400 shrink-0" />
+                    <span className="text-sm font-semibold truncate">{user.phone || 'Not provided'}</span>
+                </div>
+            </div>
+
+            {/* Dynamic Role Fields */}
+            {user.type === 'FOUNDER' && (
+                <>
+                    <div className="space-y-2 flex flex-col items-start text-left">
+                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Business Name</label>
+                        <div className="flex items-center gap-4 h-14 w-full px-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white justify-start">
+                            <Briefcase className="w-5 h-5 text-slate-400 shrink-0" />
+                            <span className="text-sm font-semibold truncate">{user.founder?.businessName || 'Not set'}</span>
+                        </div>
+                    </div>
+                    {user.founder?.foundingDate && (
+                        <div className="space-y-2 flex flex-col items-start text-left">
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Founding Date</label>
+                            <div className="flex items-center gap-4 h-14 w-full px-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white justify-start">
+                                <Calendar className="w-5 h-5 text-slate-400 shrink-0" />
+                                <span className="text-sm font-semibold">
+                                    {new Intl.DateTimeFormat('en-GB').format(new Date(user.founder.foundingDate))}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
+
+            {user.type === 'CONSULTANT' && (
+                <>
+                    <div className="space-y-2 flex flex-col items-start text-left">
+                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Specialization</label>
+                        <div className="flex items-center gap-4 h-14 w-full px-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white justify-start">
+                            <Award className="w-5 h-5 text-slate-400 shrink-0" />
+                            <span className="text-sm font-semibold truncate">{user.consultant?.specialization || 'Not set'}</span>
+                        </div>
+                    </div>
+                    <div className="space-y-2 flex flex-col items-start text-left">
+                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Years of Experience</label>
+                        <div className="flex items-center gap-4 h-14 w-full px-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white justify-start">
+                            <Briefcase className="w-5 h-5 text-slate-400 shrink-0" />
+                            <span className="text-sm font-semibold truncate">{user.consultant?.yearsOfExp ?? 'Not set'}</span>
+                        </div>
+                    </div>
+                    <div className="space-y-2 flex flex-col items-start text-left">
+                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Session Rate</label>
+                        <div className="flex items-center gap-4 h-14 w-full px-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white justify-start">
+                            <span className="text-xl font-bold text-teal-500 w-5 text-center shrink-0">$</span>
+                            <span className="text-sm font-semibold truncate">{user.consultant?.sessionRate ?? 150} / hour</span>
+                        </div>
+                    </div>
+                    <div className="space-y-2 flex flex-col items-start text-left">
+                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Availability</label>
+                        <div className="flex items-center gap-4 h-14 w-full px-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white justify-start">
+                            <Calendar className="w-5 h-5 text-slate-400 shrink-0" />
+                            <span className="text-sm font-semibold truncate">{user.consultant?.availability || 'Not specified'}</span>
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+
+        {/* Bio / Description */}
+        {((user.type === 'FOUNDER' && user.founder?.description) || 
+          (user.type === 'CONSULTANT' && user.consultant?.bio)) && (
+            <div className="mt-8 space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">
+                    {user.type === 'FOUNDER' ? 'Startup Description' : 'Professional Bio'}
+                </label>
+                <div className="p-6 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-[24px] font-medium text-sm text-slate-600 dark:text-slate-400 italic">
+                    {user.type === 'FOUNDER' ? user.founder?.description : user.consultant?.bio}
+                </div>
+            </div>
+        )}
+    </div>
+  );
+}

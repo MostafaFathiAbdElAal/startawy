@@ -1,0 +1,302 @@
+"use client";
+
+import { useState } from "react";
+import { Package, Plus, ShieldCheck, Trash2, Loader2 } from "lucide-react";
+import { useToast } from "@/components/providers/ToastProvider";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+
+interface ServicePackage {
+  id: number;
+  type: string;
+  price: number;
+  duration: string;
+  description: string;
+}
+
+export default function AdminPackagesClient({ initialData }: { initialData: ServicePackage[] }) {
+  const { showToast } = useToast();
+  const [packages, setPackages] = useState<ServicePackage[]>(initialData);
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [currentPkgId, setCurrentPkgId] = useState<number | null>(null);
+  const [pkgToDelete, setPkgToDelete] = useState<ServicePackage | null>(null);
+  const [newPkg, setNewPkg] = useState({ type: "", price: "", duration: "month", description: "" });
+
+  const fetchPackages = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/packages");
+      if (res.ok) {
+        const data = await res.json();
+        setPackages(data);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast({
+        type: "error",
+        title: "Load Error",
+        message: "Failed to reload packages list."
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openEditModal = (pkg: ServicePackage) => {
+    setNewPkg({
+      type: pkg.type,
+      price: pkg.price.toString(),
+      duration: pkg.duration,
+      description: pkg.description,
+    });
+    setCurrentPkgId(pkg.id);
+    setEditMode(true);
+    setIsModalOpen(true);
+  };
+
+  const openCreateModal = () => {
+    setNewPkg({ type: "", price: "", duration: "month", description: "" });
+    setEditMode(false);
+    setCurrentPkgId(null);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const method = editMode ? "PATCH" : "POST";
+      const body = editMode ? { ...newPkg, id: currentPkgId } : newPkg;
+
+      const res = await fetch("/api/admin/packages", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        setIsModalOpen(false);
+        setNewPkg({ type: "", price: "", duration: "month", description: "" });
+        fetchPackages();
+        showToast({
+          type: "success",
+          title: editMode ? "Package Updated" : "Package Created",
+          message: editMode ? "Package details have been updated." : "New subscription package has been added successfully."
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      showToast({
+        type: "error",
+        title: "Operation Failed",
+        message: "Could not save the package changes."
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!pkgToDelete) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/packages?id=${pkgToDelete.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setPackages(packages.filter(p => p.id !== pkgToDelete.id));
+        showToast({
+          type: "success",
+          title: "Package Deleted",
+          message: `${pkgToDelete.type} has been removed permanently.`
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      showToast({
+        type: "error",
+        title: "Delete Error",
+        message: "An error occurred while trying to delete the package."
+      });
+    } finally {
+      setLoading(false);
+      setPkgToDelete(null);
+    }
+  };
+
+  return (
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <div className="mb-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">Service Packages</h1>
+          <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium">Configure subscription plans and pricing for Founders</p>
+        </div>
+        <button 
+          onClick={openCreateModal}
+          className="w-full lg:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-2xl hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg shadow-teal-500/20 font-black tracking-tight shrink-0 active:scale-95"
+        >
+          <Plus className="w-5 h-5" />
+          Create New Package
+        </button>
+      </div>
+
+      {loading && packages.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24">
+          <div className="w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center mb-4">
+            <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+          </div>
+          <p className="text-slate-500 font-medium">Loading packages...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {packages.map((pkg) => (
+            <div 
+              key={pkg.id} 
+              className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-[32px] border border-slate-100 dark:border-slate-800 p-6 md:p-8 flex flex-col relative group transition-all duration-300 hover:shadow-2xl hover:shadow-teal-500/5 hover:-translate-y-1 overflow-hidden"
+            >
+              {/* Animated background element */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+
+              <div className="flex justify-between items-start mb-8 relative z-10">
+                <div className="p-4 bg-teal-50 dark:bg-teal-900/20 rounded-2xl text-teal-600 dark:text-teal-400 group-hover:scale-110 transition-transform">
+                  <Package className="w-8 h-8" />
+                </div>
+                <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300">
+                  <button 
+                    className="p-2.5 text-red-500/70 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all" 
+                    onClick={() => setPkgToDelete(pkg)}
+                    title="Delete Package"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{pkg.type}</h3>
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className="text-4xl font-extrabold text-gray-900 dark:text-white">${pkg.price}</span>
+                <span className="text-gray-500 dark:text-gray-400 font-medium lowercase">/ {pkg.duration}</span>
+              </div>
+
+              <div className="space-y-4 flex-1 mb-8">
+                {pkg.description.split(',').map((feature, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <ShieldCheck className="w-5 h-5 text-teal-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-600 dark:text-gray-300">{feature.trim()}</span>
+                  </div>
+                ))}
+              </div>
+
+              <button 
+                onClick={() => openEditModal(pkg)}
+                className="w-full py-3 px-4 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 font-semibold text-gray-700 dark:text-gray-300 transition-all"
+              >
+                Edit Details
+              </button>
+            </div>
+          ))}
+
+          {packages.length === 0 && !loading && (
+            <div className="col-span-full py-20 bg-gray-50 dark:bg-slate-800/20 rounded-3xl border-2 border-dashed border-gray-200 dark:border-slate-800 flex flex-col items-center justify-center text-center">
+              <Package className="w-16 h-16 text-gray-200 dark:text-gray-700 mb-4" />
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">No Packages Configured</h3>
+              <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+                Your platform currently has no active subscription packages. Click &quot;Create New Package&quot; to start.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Basic Create Modal */}
+      {isModalOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-8 shadow-2xl border border-gray-100 dark:border-slate-800 animate-in zoom-in duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-bold mb-6 dark:text-white text-left">{editMode ? "Edit Package" : "Create New Package"}</h2>
+            <form onSubmit={handleSubmit} className="space-y-4 text-left">
+              <div>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Package Title (e.g. Premium Plan)</label>
+                <input 
+                  required
+                  className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
+                  value={newPkg.type}
+                  onChange={e => setNewPkg({...newPkg, type: e.target.value})}
+                  placeholder="Basic, Pro, Enterprise..."
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 dark:text-gray-300">Price ($)</label>
+                  <input 
+                    required type="number"
+                    className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
+                    value={newPkg.price}
+                    onChange={e => setNewPkg({...newPkg, price: e.target.value})}
+                    placeholder="29.99"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 dark:text-gray-300">Duration</label>
+                  <select 
+                    className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
+                    value={newPkg.duration}
+                    onChange={e => setNewPkg({...newPkg, duration: e.target.value})}
+                  >
+                    <option value="month">Per Month</option>
+                    <option value="year">Per Year</option>
+                    <option value="once">One-time</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Features (Comma separated)</label>
+                <textarea 
+                  required
+                  className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none h-32"
+                  value={newPkg.description}
+                  onChange={e => setNewPkg({...newPkg, description: e.target.value})}
+                  placeholder="3 Consultants, 5 Market Reports, 24/7 Support..."
+                />
+              </div>
+              <div className="flex gap-4 mt-8">
+                <button 
+                  type="button" 
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-3 px-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="flex-1 py-3 px-4 bg-teal-500 text-white rounded-xl hover:bg-teal-600 font-semibold shadow-md disabled:opacity-50"
+                >
+                  {loading ? "Saving..." : (editMode ? "Update Package" : "Save Package")}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Deletion */}
+      <ConfirmModal 
+        isOpen={!!pkgToDelete}
+        onClose={() => setPkgToDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete Package?"
+        message={`Are you sure you want to delete the ${pkgToDelete?.type} package? This action will prevent new signups for this plan.`}
+        confirmLabel="Delete Permanently"
+        cancelLabel="Keep Package"
+        isProcessing={loading}
+      />
+    </div>
+  );
+}
