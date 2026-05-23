@@ -1,6 +1,6 @@
 {
   "name": "bis",
-  "version": "6.32",
+  "version": "6.35",
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0",

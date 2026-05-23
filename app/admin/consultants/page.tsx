@@ -21,7 +21,7 @@ export default async function ManageConsultantsPage() {
     name: u.name || "Unknown",
     email: u.email,
     specialty: u.consultant?.specialization || "Consulting",
-    status: u.isSuspended ? "SUSPENDED" : "ACTIVE",
+    status: u.isSuspended ? "SUSPENDED" : (u.isEmailVerified ? "ACTIVE" : "PENDING"),
     joinedDate: new Intl.DateTimeFormat('en-GB').format(new Date(u.createdAt)),
     sessions: 0,
     revenue: "$0",
@@ -35,8 +35,8 @@ export default async function ManageConsultantsPage() {
     <div className="p-4 md:p-8 max-w-7xl mx-auto pb-12">
       <div className="mb-10 md:mb-16 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
         <div className="space-y-2">
-          <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter">
-            Consultants <span className="text-teal-600">Hub</span>
+          <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tight">
+            Consultants{" "}<span className="text-teal-600">Hub</span>
           </h1>
           <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xl text-sm md:text-base leading-relaxed">
             Monitor, manage, and scale your network of elite financial consultants with precision and real-time analytics.

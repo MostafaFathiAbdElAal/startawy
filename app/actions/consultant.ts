@@ -190,7 +190,7 @@ export async function getConsultantEarnings() {
   const consultant = await getAuthConsultant();
   if (!consultant) return null;
 
-  const PLATFORM_FEE = 0.15;
+  const PLATFORM_FEE = 0.15; // 15% platform commission
 
   const paidSessions = await prisma.session.findMany({
     where: { consultantId: consultant.id, paymentStatus: 'PAID' },

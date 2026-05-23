@@ -1,21 +1,33 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-export function AdminRevenueChart({ data }: { data: { id: string, month: string, revenue: number }[] }) {
+export function AdminRevenueChart({ 
+  data, 
+  trend 
+}: { 
+  data: { id: string, month: string, revenue: number }[];
+  trend: string;
+}) {
   // If no data provided, display an empty chart rather than crashing
   const chartData = data && data.length > 0 ? data : [
     { id: '1', month: "Jan", revenue: 0 },
   ];
 
+  const isNegative = trend.startsWith('-');
+
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 p-6 mb-8">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">Revenue Overview</h2>
-        <div className="flex items-center gap-2 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">
-          <TrendingUp className="w-4 h-4" />
-          <span className="text-xs font-bold">+23.5% vs last period</span>
+        <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${
+          isNegative 
+            ? "text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-900/20" 
+            : "text-green-600 dark:text-green-400 border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20"
+        }`}>
+          {isNegative ? <TrendingDown className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
+          <span className="text-xs font-bold">{trend} vs last period</span>
         </div>
       </div>
       <ResponsiveContainer width="100%" height={300}>

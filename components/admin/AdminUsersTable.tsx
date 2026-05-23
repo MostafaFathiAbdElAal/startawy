@@ -377,7 +377,7 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                         )}
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 dark:text-white group-hover:text-teal-600 transition-colors uppercase tracking-tight leading-none mb-1">{user.name}</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-teal-600 transition-colors tracking-tight mb-1">{user.name}</p>
                         <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">{user.email}</p>
                       </div>
                     </div>
@@ -385,8 +385,8 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                   
                   {roleType === "Founder" && (
                     <td className="px-8 py-5 text-center">
-                      <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${
-                        user.plan === "Premium"
+                      <span className={`inline-block whitespace-nowrap px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${
+                        (user.plan === "Premium" || user.plan === "Pro" || (user.plan || "").toLowerCase().includes("premium") || (user.plan || "").toLowerCase().includes("pro"))
                           ? "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-800/50"
                           : "bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 border border-teal-100 dark:border-teal-800/50"
                       }`}>
@@ -397,7 +397,7 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
     
                   {roleType === "Consultant" && (
                     <td className="px-8 py-5 text-center">
-                      <span className="px-4 py-1.5 rounded-xl text-[10px] font-black bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase tracking-widest border border-slate-100 dark:border-slate-700/50">
+                      <span className="inline-block whitespace-nowrap px-4 py-1.5 rounded-xl text-[10px] font-black bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase tracking-widest border border-slate-100 dark:border-slate-700/50">
                         {user.specialty || "General"}
                       </span>
                     </td>
@@ -741,7 +741,7 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                       </div>
                       <div className="md:col-span-2 space-y-1 bg-teal-500/5 p-4 rounded-2xl border border-teal-500/10">
                         <p className="text-[10px] font-black text-teal-600 dark:text-teal-400 uppercase tracking-[0.15em]">Session Rate</p>
-                        <p className="text-lg font-black text-slate-900 dark:text-white">${previewingUser.sessionRate || "150"}<span className="text-xs font-medium text-slate-400 ml-1">/hour</span></p>
+                        <p className="text-lg font-black text-slate-900 dark:text-white">${previewingUser.sessionRate || "150"}<span className="text-xs font-medium text-slate-400 ml-1">/session</span></p>
                       </div>
                     </>
                   )}

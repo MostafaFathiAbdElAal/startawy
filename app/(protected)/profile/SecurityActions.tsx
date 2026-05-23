@@ -202,7 +202,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
       const res = await fetch('/api/user/delete-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: deletePass })
+        body: JSON.stringify({ confirmPhrase: deletePass })
       });
       const data = await res.json();
       if (data.success) {
@@ -343,7 +343,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
           )}
         </AnimatePresence>
 
-        <div className="min-h-[400px] relative overflow-hidden">
+        <div className="relative overflow-hidden">
           <AnimatePresence mode="wait">
             {isInitialLoading ? (
               <motion.div key="skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4 animate-pulse">
@@ -402,7 +402,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
             ) : showDeleteModal ? (
               <motion.div key="delete-form" initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 100 }} transition={{ duration: 0.4 }} className="max-w-md mx-auto">
                 <div className="flex items-center gap-4 mb-8">
-                  <button onClick={() => { setShowDeleteModal(false); setDeleteError(null); }} className="p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-red-500/50 group transition-all">
+                  <button onClick={() => { setShowDeleteModal(false); setDeleteError(null); setDeletePass(''); }} className="p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-red-500/50 group transition-all">
                     <ArrowLeft className="w-5 h-5 text-slate-500 group-hover:text-red-500" />
                   </button>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white">Delete Account</h3>
@@ -414,11 +414,10 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                 {deleteError && <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-2xl text-xs font-bold border border-red-100">{deleteError}</div>}
                 <form onSubmit={handleDeleteAccount} className="space-y-6">
                   <div className="relative">
-                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 ml-1">Confirm with Password</label>
-                    <input type={showDeletePass ? "text" : "password"} required autoComplete="new-password" value={deletePass} onChange={(e) => setDeletePass(e.target.value)} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-red-500/50 transition-all text-sm font-medium dark:text-white" placeholder="Enter password to confirm" />
-                    <button type="button" onClick={() => setShowDeletePass(!showDeletePass)} className="absolute right-4 bottom-4 p-1 text-slate-400 hover:text-red-500">{showDeletePass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 ml-1">To confirm, type <span className="text-red-500 font-extrabold">&quot;iam sure&quot;</span> below</label>
+                    <input type="text" required autoComplete="off" value={deletePass} onChange={(e) => setDeletePass(e.target.value)} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-red-500/50 transition-all text-sm font-semibold dark:text-white placeholder-slate-400" placeholder="Type iam sure exactly" />
                   </div>
-                  <button type="submit" disabled={deleteLoading || !deletePass} className={`w-full py-4 rounded-[20px] font-black hover:scale-[1.01] transition-all text-sm flex items-center justify-center gap-3 ${isConfirmingDelete ? "bg-red-700 text-white animate-pulse" : "bg-red-600 text-white"} disabled:opacity-50`}>
+                  <button type="submit" disabled={deleteLoading || deletePass !== 'iam sure'} className={`w-full py-4 rounded-[20px] font-black hover:scale-[1.01] transition-all text-sm flex items-center justify-center gap-3 ${isConfirmingDelete ? "bg-red-700 text-white animate-pulse" : "bg-red-600 text-white"} disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed`}>
                     {deleteLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : isConfirmingDelete ? "Destroy Account Now" : "Permanently Delete My Account"}
                   </button>
                 </form>
@@ -474,18 +473,20 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                     </button>
                   )}
 
-                  <button onClick={() => setShowPasswordModal(true)} className="w-full flex flex-col sm:flex-row items-center sm:justify-between p-4 sm:p-5 bg-white dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-teal-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all group hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none gap-4 sm:gap-5">
-                    <div className="flex items-center gap-4 sm:gap-5 w-full">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center border border-slate-100 dark:border-slate-800 shadow-xs text-slate-500 group-hover:text-teal-500 transition-all group-hover:rotate-12 group-hover:scale-110 shrink-0">
-                        <Lock className="w-5 h-5 sm:w-6 sm:h-6 stroke-3" />
+                  {!user.googleId && (
+                    <button onClick={() => setShowPasswordModal(true)} className="w-full flex flex-col sm:flex-row items-center sm:justify-between p-4 sm:p-5 bg-white dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-teal-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all group hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none gap-4 sm:gap-5">
+                      <div className="flex items-center gap-4 sm:gap-5 w-full">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center border border-slate-100 dark:border-slate-800 shadow-xs text-slate-500 group-hover:text-teal-500 transition-all group-hover:rotate-12 group-hover:scale-110 shrink-0">
+                          <Lock className="w-5 h-5 sm:w-6 sm:h-6 stroke-3" />
+                        </div>
+                        <div className="text-left flex-1">
+                          <span className="block text-sm sm:text-base font-bold text-slate-900 dark:text-white">Change Password</span>
+                          <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Regularly update your credentials</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300 group-hover:text-teal-500 transition-all group-hover:translate-x-1 shrink-0" />
                       </div>
-                      <div className="text-left flex-1">
-                        <span className="block text-sm sm:text-base font-bold text-slate-900 dark:text-white">Change Password</span>
-                        <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Regularly update your credentials</span>
-                      </div>
-                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300 group-hover:text-teal-500 transition-all group-hover:translate-x-1 shrink-0" />
-                    </div>
-                  </button>
+                    </button>
+                  )}
 
                   <button onClick={() => setShowDeleteModal(true)} className="w-full flex flex-col sm:flex-row items-center sm:justify-between p-4 sm:p-5 bg-white dark:bg-red-950/10 rounded-2xl border border-red-100 dark:border-red-900/30 hover:border-red-500/50 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group gap-4 sm:gap-5">
                     <div className="flex items-center gap-4 sm:gap-5 w-full">

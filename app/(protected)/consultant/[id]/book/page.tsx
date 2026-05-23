@@ -112,7 +112,7 @@ export default async function BookSessionPage({ params }: { params: Promise<{ id
                 <span>{consultant.sessionsCompleted} Sessions</span>
                 <span>•</span>
                 <span className="font-semibold text-teal-600 dark:text-teal-400">
-                  ${consultant.sessionRate}/hour
+                  ${consultant.sessionRate}/session
                 </span>
               </div>
             </div>

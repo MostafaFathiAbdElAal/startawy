@@ -119,6 +119,7 @@ export function AddConsultantModal() {
                     type="email"
                     required
                     placeholder="Email Address"
+                    autoComplete="off"
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-slate-900 dark:text-white"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}

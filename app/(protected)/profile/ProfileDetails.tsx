@@ -101,7 +101,7 @@ export default function ProfileDetails({ user }: ProfileDetailsProps) {
                         <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Session Rate</label>
                         <div className="flex items-center gap-4 h-14 w-full px-4 bg-slate-50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/50 rounded-2xl font-bold text-slate-900 dark:text-white justify-start">
                             <span className="text-xl font-bold text-teal-500 w-5 text-center shrink-0">$</span>
-                            <span className="text-sm font-semibold truncate">{user.consultant?.sessionRate ?? 150} / hour</span>
+                            <span className="text-sm font-semibold truncate">{user.consultant?.sessionRate ?? 150} / session</span>
                         </div>
                     </div>
                     <div className="space-y-2 flex flex-col items-start text-left">

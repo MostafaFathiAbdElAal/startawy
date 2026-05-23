@@ -121,7 +121,12 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
     const typeLower = pkg.type.toLowerCase();
     const isPremium = typeLower.includes('premium') || typeLower.includes('pro');
     const isBasic = typeLower.includes('basic') || typeLower.includes('standard');
-    const isActivePlanMatch = planName.toLowerCase() === typeLower;
+    
+    // Treat Premium, Pro and Subscription as equivalent
+    const isPremiumMatch = (planName.toLowerCase().includes('premium') || planName.toLowerCase() === 'pro' || planName.toLowerCase() === 'subscription') && isPremium;
+    const isBasicMatch = (planName.toLowerCase().includes('basic') || planName.toLowerCase() === 'standard') && isBasic;
+    const isFreeMatch = (planName.toLowerCase().includes('free') || planName.toLowerCase().includes('trial')) && (!isPremium && !isBasic);
+    const isActivePlanMatch = isPremiumMatch || isBasicMatch || isFreeMatch || (planName.toLowerCase() === typeLower);
 
     return {
       id: pkg.id,
@@ -230,12 +235,12 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
         <div className="relative z-10 flex flex-col sm:flex-row gap-4">
           <Link
             href="/plans"
-            className={`flex-1 inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all font-black shadow-xl ${isGray ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
+            className={`flex-1 inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl hover:scale-105 active:scale-[0.98] transition-[transform,shadow,background-color,border-color] duration-300 font-black shadow-xl ${isGray ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
           >
             Manage Subscription
             <ArrowRight className="w-5 h-5" />
           </Link>
-          <button className={`flex-1 px-8 py-4 rounded-2xl transition-all font-black border active:scale-[0.98] ${isGray ? "bg-slate-950/10 hover:bg-slate-950/20 text-slate-900 border-slate-900/10" : "bg-black/10 hover:bg-black/20 text-white border-white/10"}`}>
+          <button className={`flex-1 px-8 py-4 rounded-2xl transition-[transform,shadow,background-color,border-color] duration-300 font-black border active:scale-[0.98] ${isGray ? "bg-slate-950/10 hover:bg-slate-950/20 text-slate-900 border-slate-900/10" : "bg-black/10 hover:bg-black/20 text-white border-white/10"}`}>
             View Billing History
           </button>
         </div>
@@ -258,7 +263,7 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
               >
                 {plan.recommended && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                    <span className="flex items-center gap-1.5 px-6 py-2 bg-linear-to-r from-amber-400 to-orange-500 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl">
+                    <span className="flex items-center gap-1.5 px-6 py-2 bg-linear-to-r from-amber-400 to-orange-500 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl whitespace-nowrap">
                       <Star className="w-3.5 h-3.5 fill-white" />
                       Most Popular
                     </span>
@@ -300,9 +305,9 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
                     ) : (
                       <Link
                         href={`/payment?plan=${encodeURIComponent(plan.name)}`}
-                        className={`block w-full text-center px-6 py-5 rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl font-black text-sm uppercase tracking-widest ${plan.color === 'gold'
-                            ? "bg-linear-to-r from-amber-400 to-orange-500 text-white hover:scale-[1.02]"
-                            : "bg-linear-to-r from-teal-500 to-emerald-600 text-white hover:scale-[1.02]"
+                        className={`block w-full text-center px-6 py-5 rounded-2xl transition-[transform,shadow,background-color,border-color] duration-300 shadow-xl hover:shadow-2xl font-black text-sm uppercase tracking-widest transform-gpu will-change-transform ${plan.color === 'gold'
+                            ? "bg-linear-to-r from-amber-400 to-orange-500 text-white hover:scale-105"
+                            : "bg-linear-to-r from-teal-500 to-emerald-600 text-white hover:scale-105"
                           }`}
                       >
                         {plan.id > currentPlanDetails.id ? "Upgrade Blueprint" : "Switch Plan"}

@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
       where: { id: Number(session.id) }
     });
 
-    if (!user || !user.password) {
-      return NextResponse.json({ error: 'User not found or using social login' }, { status: 404 });
+    if (!user || !user.password || user.googleId) {
+      return NextResponse.json({ error: 'Accounts using Google login cannot change passwords.' }, { status: 400 });
     }
 
     // 4. Verify Current Password

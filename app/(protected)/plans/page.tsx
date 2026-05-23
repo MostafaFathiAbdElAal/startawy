@@ -127,13 +127,22 @@ export default async function PlansPage() {
       return false;
     }) || defaultPlans[1];
     
+    const isPremium = typeLower.includes('premium') || typeLower.includes('pro');
+    const isBasic = typeLower.includes('basic') || typeLower.includes('standard');
+    
+    // Treat Premium, Pro and Subscription as equivalent
+    const isPremiumMatch = (currentPlanName.toLowerCase().includes('premium') || currentPlanName.toLowerCase() === 'pro' || currentPlanName.toLowerCase() === 'subscription') && isPremium;
+    const isBasicMatch = (currentPlanName.toLowerCase().includes('basic') || currentPlanName.toLowerCase() === 'standard') && isBasic;
+    const isFreeMatch = (currentPlanName.toLowerCase().includes('free') || currentPlanName.toLowerCase().includes('trial')) && (!isPremium && !isBasic);
+    const isActivePlanMatch = isPremiumMatch || isBasicMatch || isFreeMatch || (currentPlanName.toLowerCase() === typeLower);
+    
     return {
       ...basePlan,
       name: pkg.type,
       price: `$${pkg.price}`,
       period: `/${pkg.duration.toLowerCase()}`,
       description: pkg.description || basePlan.description,
-      isCurrent: isActive && typeLower === currentPlanName.toLowerCase()
+      isCurrent: isActive && isActivePlanMatch
     };
   }) : defaultPlans.map(p => ({
     ...p,
@@ -185,7 +194,7 @@ export default async function PlansPage() {
               ) : (
                 <Link
                   href={`/payment?plan=${encodeURIComponent(plan.name)}`}
-                  className={`w-full py-4 px-6 rounded-2xl font-black transition-all mb-8 block text-center shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:scale-95 ${
+                  className={`w-full py-4 px-6 rounded-2xl font-black transition-all mb-8 block text-center shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:scale-95 transform-gpu will-change-transform ${
                     plan.popular
                       ? "bg-linear-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700"
                       : "bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-slate-700"

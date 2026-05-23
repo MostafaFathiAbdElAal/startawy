@@ -65,6 +65,13 @@ export default async function AdminDashboardPage() {
     revenue: rev
   }));
 
+  const revenueTrendOnly = (() => {
+    if (revenueLastMonth === 0) return revenueThisMonth > 0 ? "+100%" : "0%";
+    const diff = revenueThisMonth - revenueLastMonth;
+    const percentage = (diff / revenueLastMonth) * 100;
+    return `${percentage > 0 ? '+' : ''}${percentage.toFixed(1)}%`;
+  })();
+
   const stats = [
     {
       icon: Users,
@@ -127,8 +134,8 @@ export default async function AdminDashboardPage() {
     <div className="p-4 md:p-8 max-w-7xl mx-auto pb-12">
       {/* Welcome Section */}
       <div className="mb-10 md:mb-16">
-        <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter mb-4 uppercase">
-          Platform <span className="text-teal-600">Overview</span>
+        <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tight mb-4 uppercase">
+          Platform{" "}<span className="text-teal-600">Overview</span>
         </h1>
         <p className="text-slate-500 dark:text-slate-400 font-medium max-w-2xl text-sm md:text-base leading-relaxed">
           Monitor system health, analyze growth trends, and manage your community Consultants and Founders in real-time.
@@ -159,7 +166,7 @@ export default async function AdminDashboardPage() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         <div className="xl:col-span-2 space-y-8">
-          <AdminRevenueChart data={chartData} />
+          <AdminRevenueChart data={chartData} trend={revenueTrendOnly} />
 
           {/* Recent Registrations Card */}
           <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-[40px] shadow-2xl shadow-slate-900/5 border border-slate-100 dark:border-slate-800 overflow-hidden">
@@ -201,7 +208,7 @@ export default async function AdminDashboardPage() {
                             )}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900 dark:text-white text-sm uppercase tracking-tight group-hover:text-teal-600 transition-colors leading-none mb-1">{u.name}</p>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-teal-600 transition-colors tracking-tight mb-1">{u.name}</p>
                             <p className="text-[10px] font-medium text-slate-400">{u.email}</p>
                           </div>
                         </div>

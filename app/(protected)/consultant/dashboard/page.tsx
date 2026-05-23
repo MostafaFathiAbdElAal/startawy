@@ -16,6 +16,14 @@ export default async function ConsultantDashboardPage() {
 
   const { user, stats, upcomingSessions, recentCompletedSessions, earningsData } = data;
 
+  const formatDateDDMMYYYY = (date: Date | string) => {
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const renderIndicator = (growth: number) => {
     if (growth === 0) {
       return (
@@ -148,7 +156,7 @@ export default async function ConsultantDashboardPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-xs font-bold text-teal-600 dark:text-teal-400">
-                        {new Date(s.date).toLocaleDateString()} {new Date(s.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {formatDateDDMMYYYY(s.date)} {new Date(s.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase ${getStatusBadge(s.paymentStatus)}`}>
                         {s.paymentStatus}
@@ -182,20 +190,30 @@ export default async function ConsultantDashboardPage() {
           <div className="p-4 flex-1">
             {recentCompletedSessions.length > 0 ? (
               <div className="space-y-3">
-                {recentCompletedSessions.map(s => (
-                  <div key={s.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700/50">
-                    <div>
-                      <p className="font-semibold text-sm text-gray-900 dark:text-white">{s.founderName}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{s.businessName}</p>
+                {recentCompletedSessions.map(s => {
+                  const gross = s.amount;
+                  const fee = gross * 0.15;
+                  const net = gross * 0.85;
+                  return (
+                    <div key={s.id} className="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700/50 hover:bg-gray-100/50 dark:hover:bg-gray-800/70 transition-all duration-300">
+                      <div>
+                        <p className="font-semibold text-sm text-gray-900 dark:text-white">{s.founderName}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{s.businessName}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-teal-600 dark:text-teal-400 font-bold mb-0.5">
+                          {formatDateDDMMYYYY(s.date)}
+                        </p>
+                        <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                          +${net.toFixed(2)} <span className="text-[10px] text-gray-400 font-medium">(Net)</span>
+                        </p>
+                        <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium mt-0.5">
+                          Gross: ${gross.toFixed(2)} | Fee: -${fee.toFixed(2)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(s.date).toLocaleDateString()}</p>
-                      <p className="text-sm font-bold text-teal-600 dark:text-teal-400">
-                        +${(s.amount * 0.85).toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 opacity-60">

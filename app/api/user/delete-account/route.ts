@@ -14,10 +14,14 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Parse Body
-    const { password } = await req.json();
+    const { confirmPhrase } = await req.json();
 
-    if (!password) {
-      return NextResponse.json({ error: 'Password is required' }, { status: 400 });
+    if (!confirmPhrase) {
+      return NextResponse.json({ error: 'Confirmation phrase is required' }, { status: 400 });
+    }
+
+    if (confirmPhrase !== 'iam sure') {
+      return NextResponse.json({ error: 'Incorrect confirmation phrase. You must write "iam sure" exactly.' }, { status: 400 });
     }
 
     // 3. Find User with all relations
@@ -30,14 +34,8 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    if (!user || !user.password) {
-      return NextResponse.json({ error: 'User not found or using social login' }, { status: 404 });
-    }
-
-    // 4. Verify Password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return NextResponse.json({ error: 'Incorrect password' }, { status: 400 });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // 5. Delete everything in a transaction

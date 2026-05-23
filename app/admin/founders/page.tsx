@@ -51,15 +51,15 @@ export default async function ManageFoundersPage() {
   const stats = [
     { label: "Total Founders", value: formattedUsers.length, icon: Users, color: "teal" },
     { label: "Active Network", value: formattedUsers.filter((f) => f.status === "ACTIVE").length, icon: CheckCircle, color: "emerald" },
-    { label: "Premium Tier", value: formattedUsers.filter((f) => f.plan === "Premium").length, icon: Zap, color: "purple" },
+    { label: "Premium Tier", value: formattedUsers.filter((f) => f.plan === "Premium" || f.plan === "Pro" || (f.plan || "").toLowerCase().includes("premium") || (f.plan || "").toLowerCase().includes("pro")).length, icon: Zap, color: "purple" },
     { label: "Total Revenue", value: `$${totalRevenue.toFixed(0)}`, icon: DollarSign, color: "teal" },
   ];
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto pb-12">
       <div className="mb-10 md:mb-16">
-        <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter mb-4">
-          Founders <span className="text-teal-600">Hub</span>
+        <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tight mb-4">
+          Founders{" "}<span className="text-teal-600">Hub</span>
         </h1>
         <p className="text-slate-500 dark:text-slate-400 font-medium max-w-2xl text-sm md:text-base leading-relaxed">
           The central command for monitoring startup growth, subscription health, and ecosystem engagement.

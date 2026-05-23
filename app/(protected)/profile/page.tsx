@@ -67,7 +67,7 @@ export default async function ProfilePage({ searchParams }: PageProps) {
           <ProfileStats stats={stats} userType={user.type} />
 
           {/* MAIN CONTENT AREA */}
-          <div className="lg:col-span-8 space-y-10">
+          <div className={`${user.type === 'FOUNDER' ? 'lg:col-span-8' : 'lg:col-span-12'} space-y-10`}>
             {/* Toggle between Edit Form and Static Details */}
             {isEditing ? (
               <ProfileEditForm user={user} />
@@ -80,9 +80,9 @@ export default async function ProfilePage({ searchParams }: PageProps) {
           </div>
 
           {/* SIDEBAR WIDGETS (Server) */}
-          <div className="lg:col-span-4 space-y-10">
-            {/* PLAN CARD */}
-            {user.type === 'FOUNDER' && (
+          {user.type === 'FOUNDER' && (
+            <div className="lg:col-span-4 space-y-10">
+              {/* PLAN CARD */}
               <div className="bg-white dark:bg-slate-900 rounded-[32px] p-8 text-slate-900 dark:text-white relative overflow-hidden shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800">
                 {/* Dynamic background blur based on plan type */}
                 <div className={`absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl ${activePlan.includes('Premium') || activePlan === 'Subscription'
@@ -132,9 +132,8 @@ export default async function ProfilePage({ searchParams }: PageProps) {
                   </Link>
                 </div>
               </div>
-            )}
-
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
