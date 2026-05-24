@@ -136,10 +136,42 @@ export async function proxy(request: NextRequest) {
       console.log(`[PROXY] Allowing FOUNDER to view Library Previews: ${pathname}`);
     }
 
-    // 7. Budget Analysis Access Control - [RELAXED]
-    // All users (Free, Basic, Premium) get access to budget analysis (Free gets basic version).
+    // 7. Budget Analysis Access Control - [STRICT ENFORCEMENT]
+    // Accessible ONLY to those who have the PRO/Premium plan ($200+ or paymentType contains pro/premium).
     if (user.role === 'FOUNDER' && pathname.startsWith('/budget-analysis')) {
-        console.log(`[PROXY] Allowing FOUNDER to access Budget Analysis: ${pathname}`);
+      const dbUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        include: {
+          founder: {
+            include: {
+              payments: {
+                where: { subscription: { isNot: null } },
+                orderBy: { transDate: 'desc' },
+                take: 1,
+                include: { subscription: true }
+              }
+            }
+          }
+        }
+      });
+
+      const latestPayment = dbUser?.founder?.payments?.[0];
+      const subscription = latestPayment?.subscription;
+      const isActive = subscription?.status === 'ACTIVE' && new Date() < new Date(subscription.endDate);
+      
+      const isPremium = isActive && (
+        (latestPayment?.paymentType && (
+          latestPayment.paymentType.toLowerCase().includes('pro') || 
+          latestPayment.paymentType.toLowerCase().includes('premium')
+        )) || 
+        (latestPayment?.amount || 0) >= 200
+      );
+
+      if (!isPremium) {
+        console.log(`[PROXY] Access Denied: Budget Analysis requires an active Premium/PRO plan.`);
+        return NextResponse.redirect(new URL('/my-plan?locked=budget', request.url));
+      }
+      console.log(`[PROXY] Allowing PRO/Premium FOUNDER to access Budget Analysis: ${pathname}`);
     }
   }
 

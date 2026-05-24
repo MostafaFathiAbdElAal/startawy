@@ -62,7 +62,7 @@ export function Sidebar({ userRole: rawRole = "FOUNDER", isOwner: propIsOwner, h
 
   const founderMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-    { icon: TrendingUp, label: "Budget Analysis", path: "/budget-analysis" },
+    ...(hasPremiumPlan ? [{ icon: TrendingUp, label: "Budget Analysis", path: "/budget-analysis" }] : []),
     { icon: MessageSquare, label: "StartBot", path: "/ai-chatbot" },
     ...(hasPaidPlan ? [{ icon: FileText, label: "Startawy Library", path: "/startawy-library" }] : []),
     { icon: Calendar, label: "Book Consultant", path: "/book-consultant" },
