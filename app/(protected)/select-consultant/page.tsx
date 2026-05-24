@@ -85,7 +85,13 @@ export default async function SelectConsultantPage() {
 
   const subscription = latestPayment?.subscription;
   const isActive = subscription?.status === 'ACTIVE' && new Date() < new Date(subscription.endDate);
-  const isPremium = isActive && (latestPayment?.amount || 0) >= 299;
+  const isPremium = isActive && (
+    (latestPayment?.paymentType && (
+      latestPayment.paymentType.toLowerCase().includes('pro') || 
+      latestPayment.paymentType.toLowerCase().includes('premium')
+    )) || 
+    (latestPayment?.amount || 0) >= 200
+  );
 
   if (!isPremium) {
     return (

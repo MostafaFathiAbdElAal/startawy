@@ -67,8 +67,9 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
         await fulfillPayment(session);
         console.log(`[MY-PLAN] Payment verified and fulfilled for session ${sessionId}`);
 
-        // If it's a Premium plan, redirect to consultant selection
-        if (session.metadata?.planName === 'Premium') {
+        // If it's a Premium or PRO plan, redirect to consultant selection
+        const planNameLower = session.metadata?.planName?.toLowerCase() || '';
+        if (planNameLower.includes('premium') || planNameLower.includes('pro')) {
            redirect('/select-consultant');
         }
       }
@@ -107,7 +108,7 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
     if (!isActive) return 'Free Trial';
     if (latestPayment?.paymentType) return latestPayment.paymentType;
     const amount = latestPayment?.amount || 0;
-    if (amount >= 299) return 'Premium';
+    if (amount >= 200) return 'Premium';
     if (amount >= 99) return 'Basic';
     return 'Free Trial';
   })();

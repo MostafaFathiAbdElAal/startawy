@@ -35,9 +35,16 @@ export async function GET(req: NextRequest) {
         }
       });
 
+      const latestPayment = dbUser?.founder?.payments?.[0];
       const isPremium =
         dbUser?.type === 'ADMIN' ||
-        (dbUser?.founder?.payments?.[0]?.amount ?? 0) >= 299;
+        (latestPayment && (
+          (latestPayment.paymentType && (
+            latestPayment.paymentType.toLowerCase().includes('pro') || 
+            latestPayment.paymentType.toLowerCase().includes('premium')
+          )) || 
+          latestPayment.amount >= 200
+        ));
 
       if (!isPremium) {
         return NextResponse.json({ 

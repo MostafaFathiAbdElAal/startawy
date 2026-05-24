@@ -98,11 +98,15 @@ export default async function PlansPage() {
   const subscription = latestPayment?.subscription;
   const isActive = subscription?.status === 'ACTIVE' && new Date() < new Date(subscription.endDate);
   
-  // Strict plan name detection to avoid inconsistencies
   const currentPlanName = (() => {
-    if (!isActive || (latestPayment?.amount || 0) === 0) return 'Free Trial';
-    if ((latestPayment?.amount || 0) >= 299) return 'Premium';
-    if ((latestPayment?.amount || 0) === 99) return 'Basic';
+    if (!isActive) return 'Free Trial';
+    const typeLower = latestPayment?.paymentType?.toLowerCase() || '';
+    if (typeLower.includes('pro') || typeLower.includes('premium') || (latestPayment?.amount || 0) >= 200) {
+      return 'Premium';
+    }
+    if (typeLower.includes('basic') || typeLower.includes('standard') || (latestPayment?.amount || 0) === 99) {
+      return 'Basic';
+    }
     return 'Free Trial';
   })();
 

@@ -38,7 +38,17 @@ export default async function StartawyLibraryPage() {
 
   // Plan calculation for UI display
   const lastPayment = user.founder?.payments?.[0];
-  const userPlan = (lastPayment?.amount || 0) >= 299 ? 'Premium' : ((lastPayment?.amount || 0) === 99 ? 'Basic' : 'Free');
+  const userPlan = (() => {
+    if (!lastPayment) return 'Free';
+    const typeLower = lastPayment.paymentType?.toLowerCase() || '';
+    if (typeLower.includes('pro') || typeLower.includes('premium') || lastPayment.amount >= 200) {
+      return 'Premium';
+    }
+    if (typeLower.includes('basic') || typeLower.includes('standard') || lastPayment.amount === 99) {
+      return 'Basic';
+    }
+    return 'Free';
+  })();
 
   // Fetch real reports from DB
   const dbReports = await prisma.startawyReport.findMany({

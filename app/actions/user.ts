@@ -52,8 +52,17 @@ export async function getProfileData() {
       const sub = latestPayment?.subscription;
       const isActive = sub?.status === 'ACTIVE' && new Date() < new Date(sub.endDate);
       if (!isActive) return 'Free Trial';
+      
+      const typeLower = latestPayment?.paymentType?.toLowerCase() || '';
+      if (typeLower.includes('pro') || typeLower.includes('premium')) {
+        return 'Premium Blueprint';
+      }
+      if (typeLower.includes('basic') || typeLower.includes('standard')) {
+        return 'Basic Blueprint';
+      }
+      
       const amount = latestPayment?.amount || 0;
-      if (amount >= 299) return 'Premium Blueprint';
+      if (amount >= 200) return 'Premium Blueprint';
       if (amount >= 99) return 'Basic Blueprint';
       return 'Free Trial';
     })(),
@@ -62,7 +71,14 @@ export async function getProfileData() {
       if (profile.type !== 'FOUNDER') return false;
       const latestPayment = profile.founder?.payments?.[0];
       const sub = latestPayment?.subscription;
-      return sub?.status === 'ACTIVE' && new Date() < new Date(sub.endDate) && (latestPayment?.amount || 0) > 0;
+      const isActive = sub?.status === 'ACTIVE' && new Date() < new Date(sub.endDate);
+      if (!isActive) return false;
+      
+      const typeLower = latestPayment?.paymentType?.toLowerCase() || '';
+      if (typeLower.includes('pro') || typeLower.includes('premium') || typeLower.includes('basic') || typeLower.includes('standard')) {
+        return true;
+      }
+      return (latestPayment?.amount || 0) >= 99;
     })(),
     hasPremiumPlan: (() => {
       if (profile.type === 'ADMIN') return true;
@@ -71,7 +87,12 @@ export async function getProfileData() {
       const sub = latestPayment?.subscription;
       const isActive = sub?.status === 'ACTIVE' && new Date() < new Date(sub.endDate);
       if (!isActive) return false;
-      return (latestPayment?.amount || 0) >= 299; // Strict Premium check
+      
+      const typeLower = latestPayment?.paymentType?.toLowerCase() || '';
+      if (typeLower.includes('pro') || typeLower.includes('premium')) {
+        return true;
+      }
+      return (latestPayment?.amount || 0) >= 200; // Strict Premium check
     })()
   };
 }
