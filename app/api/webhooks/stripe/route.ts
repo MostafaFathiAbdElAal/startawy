@@ -6,9 +6,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-02-25.clover",
 });
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
 export async function POST(req: NextRequest) {
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   console.log("[WEBHOOK] Received a request");
   const body = await req.text();
   const signature = req.headers.get("stripe-signature") as string;
@@ -20,7 +19,7 @@ export async function POST(req: NextRequest) {
       console.warn("[WEBHOOK] No webhook secret found, parsing raw body");
       event = JSON.parse(body) as Stripe.Event;
     } else {
-      console.log("[WEBHOOK] Verifying signature...");
+      console.log(`[WEBHOOK] Verifying signature... (Using secret starting with: ${webhookSecret.substring(0, 10)}...)`);
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
       console.log(`[WEBHOOK] Signature verified, event type: ${event.type}`);
     }

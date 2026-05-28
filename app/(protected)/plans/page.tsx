@@ -46,11 +46,11 @@ const defaultPlans = [
       "One-year follow-up support",
     ],
     color: "teal",
-    popular: true,
+    popular: false,
   },
   {
     name: "Premium",
-    price: "$299",
+    price: "$200",
     period: "/month",
     description: "For serious entrepreneurs",
     features: [
@@ -64,7 +64,7 @@ const defaultPlans = [
     ],
     notIncluded: [],
     color: "purple",
-    popular: false,
+    popular: true,
   },
 ];
 

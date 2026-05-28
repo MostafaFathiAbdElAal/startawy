@@ -37,10 +37,10 @@ async function main() {
       description: "Full access to market reports, Budget analysis tools, AI advisory chatbot, Request marketing research template, Email support, Monthly financial reviews",
     },
     {
-      type: "Premium",
-      price: 299,
-      duration: "month",
-      description: "All Basic features, Private consultant sessions, Financial performance dashboard, One-year follow-up support, Dedicated account manager, 24/7 priority support, Quarterly strategy sessions",
+      type: 'Premium',
+      price: 200,
+      duration: 'month',
+      description: 'All Basic features, Private consultant sessions, Financial performance dashboard, One-year follow-up support, Dedicated account manager, 24/7 priority support, Custom financial modeling'
     },
   ];
 
