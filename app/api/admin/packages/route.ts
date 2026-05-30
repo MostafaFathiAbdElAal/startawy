@@ -14,38 +14,6 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
-  try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth-token')?.value;
-    const userPayload = await verifyAuth(token);
-
-    if (!userPayload) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const isOwner = !!userPayload.isOwner;
-
-    if (userPayload.role !== 'ADMIN' && !isOwner) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const body = await req.json();
-    const { type, price, duration, description } = body;
-
-    const newPackage = await prisma.package.create({
-      data: {
-        type,
-        price: parseFloat(price),
-        duration,
-        description
-      }
-    });
-
-    return NextResponse.json(newPackage);
-  } catch {
-    return NextResponse.json({ error: "Failed to create package" }, { status: 500 });
-  }
-}
-
 export async function PATCH(req: Request) {
   try {
     const cookieStore = await cookies();
@@ -57,17 +25,15 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
-    const { id, type, price, duration, description } = body;
+    const { id, price, duration } = body;
 
     if (!id) return NextResponse.json({ error: "Package ID required" }, { status: 400 });
 
     const updatedPackage = await prisma.package.update({
       where: { id: parseInt(id) },
       data: {
-        type,
         price: parseFloat(price.toString()),
-        duration,
-        description
+        duration
       }
     });
 
@@ -77,19 +43,3 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Failed to update package" }, { status: 500 });
   }
 }
-
-export async function DELETE(req: Request) {
-    try {
-      const { searchParams } = new URL(req.url);
-      const id = searchParams.get('id');
-      if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
-  
-      await prisma.package.delete({
-        where: { id: parseInt(id) }
-      });
-  
-      return NextResponse.json({ success: true });
-    } catch {
-      return NextResponse.json({ error: "Failed to delete package" }, { status: 500 });
-    }
-  }

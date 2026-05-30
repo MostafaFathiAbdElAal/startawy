@@ -15,15 +15,10 @@ interface SecurityActionsProps {
   user: UserWithRelations;
 }
 
-interface WhatsAppMessage {
-  from: string;
-  body: string;
-  timestamp: string;
-}
 
 export default function SecurityActions({ user: initialUser }: SecurityActionsProps) {
   const router = useRouter();
-  const { socket, botStatus, otpEvent } = useSocket(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001');
+  const { botStatus, otpEvent } = useSocket(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001');
   const { showToast } = useToast();
   const [user, setUser] = useState(initialUser);
   const [showOtpView, setShowOtpView] = useState(false);
@@ -31,12 +26,15 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
   const [passForm, setPassForm] = useState({ current: '', next: '', confirm: '' });
   const [passLoading, setPassLoading] = useState(false);
   const [passError, setPassError] = useState<string | null>(null);
+
+  // Stripe-like button success states
+  const [phoneVerifiedSuccess, setPhoneVerifiedSuccess] = useState(false);
+  const [passwordChangedSuccess, setPasswordChangedSuccess] = useState(false);
 
   // Loading State
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -89,16 +87,12 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
     setUser(initialUser);
   }, [initialUser]);
 
-  // Listen for incoming bot messages
-  useEffect(() => {
-    if (socket) {
-      socket.on('bot_message', (data: WhatsAppMessage) => {
-        setMessages(prev => [data, ...prev].slice(0, 10)); // Keep last 10
-      });
-    }
-  }, [socket]);
 
   const handleStartPhoneVerification = async () => {
+    // Close other forms to prevent overlapping
+    setShowPasswordModal(false);
+    setShowDeleteModal(false);
+
     setOtpLoading(true);
     setOtpError(null);
     try {
@@ -122,7 +116,10 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
     try {
       const res = await verifyPhone(otpValue);
       if (res.success) {
-        // Show Toast immediately — visible even after the OTP view closes
+        // Trigger Stripe-like emerald success state
+        setPhoneVerifiedSuccess(true);
+
+        // Show Toast immediately
         showToast({
           type: 'success',
           title: 'Phone Verified',
@@ -130,8 +127,13 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
         });
         setSuccess('Phone number verified successfully!');
         setUser({ ...user, isPhoneVerified: true });
-        setShowOtpView(false);
-        router.refresh();
+        
+        // Wait 1.5 seconds for user to enjoy the spring animation before closing
+        setTimeout(() => {
+          setShowOtpView(false);
+          setPhoneVerifiedSuccess(false);
+          router.refresh();
+        }, 1500);
       } else {
         const errMsg = res.error || 'Invalid verification code. Please try again.';
         setOtpError(errMsg);
@@ -172,10 +174,18 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
       });
       const data = await res.json();
       if (data.success) {
+        // Trigger Stripe-like emerald success state
+        setPasswordChangedSuccess(true);
+
         showToast({ type: 'success', title: 'Password Updated', message: 'Your password has been changed successfully.' });
         setSuccess('Password updated successfully!');
-        setShowPasswordModal(false);
-        setPassForm({ current: '', next: '', confirm: '' });
+        
+        // Wait 1.5 seconds for user to enjoy the spring animation before closing
+        setTimeout(() => {
+          setShowPasswordModal(false);
+          setPasswordChangedSuccess(false);
+          setPassForm({ current: '', next: '', confirm: '' });
+        }, 1500);
       } else {
         const errMsg = data.error || 'Failed to update password.';
         setPassError(errMsg);
@@ -371,15 +381,19 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                 </div>
                 {passError && <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-2xl text-xs font-bold border border-red-100 dark:border-red-900/30">{passError}</div>}
                 <form onSubmit={handleChangePassword} className="space-y-6">
-                  <div className="relative">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Current Password</label>
-                    <input type={showPass ? "text" : "password"} required autoComplete="new-password" value={passForm.current} onChange={(e) => setPassForm({ ...passForm, current: e.target.value })} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-teal-500/50 transition-all text-sm font-medium dark:text-white" placeholder="••••••••" />
-                    <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 bottom-4 p-1 text-slate-400 hover:text-teal-500">{showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Current Password</label>
+                    <div className="relative">
+                      <input type={showPass ? "text" : "password"} required autoComplete="new-password" value={passForm.current} onChange={(e) => setPassForm({ ...passForm, current: e.target.value })} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-teal-500/50 transition-all text-sm font-medium dark:text-white" placeholder="••••••••" />
+                      <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-teal-500">{showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+                    </div>
                   </div>
-                  <div className="relative">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">New Password</label>
-                    <input type={showPassNew ? "text" : "password"} required minLength={8} autoComplete="new-password" value={passForm.next} onChange={(e) => setPassForm({ ...passForm, next: e.target.value })} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-teal-500/50 transition-all text-sm font-medium dark:text-white" placeholder="Write your new password" />
-                    <button type="button" onClick={() => setShowPassNew(!showPassNew)} className="absolute right-4 bottom-4 p-1 text-slate-400 hover:text-teal-500">{showPassNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">New Password</label>
+                    <div className="relative">
+                      <input type={showPassNew ? "text" : "password"} required minLength={8} autoComplete="new-password" value={passForm.next} onChange={(e) => setPassForm({ ...passForm, next: e.target.value })} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-teal-500/50 transition-all text-sm font-medium dark:text-white" placeholder="Write your new password" />
+                      <button type="button" onClick={() => setShowPassNew(!showPassNew)} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-teal-500">{showPassNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+                    </div>
                     <div className="mt-4 grid grid-cols-2 gap-3 px-1">
                       {[{ key: 'length', label: '8+ Characters' }, { key: 'upper', label: 'Upper Case' }, { key: 'lower', label: 'Lower Case' }, { key: 'special', label: 'Number/Special' }].map((item) => (
                         <div key={item.key} className="flex items-center gap-2">
@@ -389,13 +403,37 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                       ))}
                     </div>
                   </div>
-                  <div className="relative">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Confirm New Password</label>
-                    <input type={showConfirmPass ? "text" : "password"} required autoComplete="new-password" value={passForm.confirm} onChange={(e) => setPassForm({ ...passForm, confirm: e.target.value })} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-teal-500/50 transition-all text-sm font-medium dark:text-white" placeholder="Repeat your new password" />
-                    <button type="button" onClick={() => setShowConfirmPass(!showConfirmPass)} className="absolute right-4 bottom-4 p-1 text-slate-400 hover:text-teal-500">{showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirm New Password</label>
+                    <div className="relative">
+                      <input type={showConfirmPass ? "text" : "password"} required autoComplete="new-password" value={passForm.confirm} onChange={(e) => setPassForm({ ...passForm, confirm: e.target.value })} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-teal-500/50 transition-all text-sm font-medium dark:text-white" placeholder="Repeat your new password" />
+                      <button type="button" onClick={() => setShowConfirmPass(!showConfirmPass)} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-teal-500">{showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+                    </div>
                   </div>
-                  <button type="submit" disabled={passLoading || !isPassValid || passForm.next !== passForm.confirm} className="w-full py-4 bg-teal-600 dark:bg-teal-500 text-white dark:text-slate-900 rounded-[20px] font-black hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-3 shadow-lg shadow-teal-500/20">
-                    {passLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Update Password"}
+                  <button 
+                    type="submit" 
+                    disabled={passLoading || !isPassValid || passForm.next !== passForm.confirm || passwordChangedSuccess} 
+                    className={`w-full py-4 rounded-[20px] font-black hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 text-sm flex items-center justify-center gap-3 shadow-lg relative overflow-hidden ${
+                      passwordChangedSuccess 
+                        ? "bg-emerald-500 text-white shadow-emerald-500/20" 
+                        : "bg-teal-600 dark:bg-teal-500 text-white dark:text-slate-900 shadow-teal-500/20"
+                    }`}
+                  >
+                    {passwordChangedSuccess ? (
+                      <div className="flex items-center gap-2 animate-bounce">
+                        <CheckCircle2 className="w-5 h-5 stroke-[3]" />
+                        <span>Success! Updated</span>
+                      </div>
+                    ) : passLoading ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Saving Changes...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span>Update Password</span>
+                      </div>
+                    )}
                   </button>
                 </form>
               </motion.div>
@@ -417,7 +455,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                     <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 ml-1">To confirm, type <span className="text-red-500 font-extrabold">&quot;iam sure&quot;</span> below</label>
                     <input type="text" required autoComplete="off" value={deletePass} onChange={(e) => setDeletePass(e.target.value)} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:border-red-500/50 transition-all text-sm font-semibold dark:text-white placeholder-slate-400" placeholder="Type iam sure exactly" />
                   </div>
-                  <button type="submit" disabled={deleteLoading || deletePass !== 'iam sure'} className={`w-full py-4 rounded-[20px] font-black hover:scale-[1.01] transition-all text-sm flex items-center justify-center gap-3 ${isConfirmingDelete ? "bg-red-700 text-white animate-pulse" : "bg-red-600 text-white"} disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed`}>
+                  <button type="submit" disabled={deleteLoading || deletePass.trim().toLowerCase() !== 'iam sure'} className={`w-full py-4 rounded-[20px] font-black hover:scale-[1.01] transition-all text-sm flex items-center justify-center gap-3 ${isConfirmingDelete ? "bg-red-700 text-white animate-pulse" : "bg-red-600 text-white"} disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed`}>
                     {deleteLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : isConfirmingDelete ? "Destroy Account Now" : "Permanently Delete My Account"}
                   </button>
                 </form>
@@ -430,7 +468,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                   </button>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white">Verify Phone</h3>
                 </div>
-                <div className="mb-0 p-6 bg-teal-50/50 dark:bg-teal-900/10 rounded-[28px] border border-teal-100 dark:border-teal-900/30 text-center relative overflow-hidden">
+                <div className="mb-8 p-6 bg-teal-50/50 dark:bg-teal-900/10 rounded-[28px] border border-teal-100 dark:border-teal-900/30 text-center relative overflow-hidden">
                   <div className="relative z-10 flex flex-col items-center">
                     <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-sm border border-teal-100 dark:border-teal-800 mb-4 text-teal-600"><Smartphone className="w-8 h-8" /></div>
                     <h4 className="text-sm font-black text-slate-900 dark:text-white mb-1">Check your WhatsApp</h4>
@@ -439,11 +477,34 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                 </div>
                 {!!otpEvent && <div className={`mb-6 p-4 rounded-xl border text-[10px] font-bold uppercase tracking-widest flex items-center justify-center transition-colors ${otpEvent.status === 'success' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : otpEvent.status === 'error' ? 'bg-red-500/10 text-red-600 border-red-500/20' : 'bg-teal-500/10 text-teal-600 border-teal-500/20 animate-pulse'}`}>{otpEvent.message}</div>}
                 {otpError && <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-2xl text-[10px] font-bold border border-red-100 flex items-center gap-2"><AlertCircle className="w-4 h-4" /> {otpError}</div>}
-                <div className="space-y-8 flex flex-col items-center">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Enter Verification Code</label>
+                <div className="mt-8 space-y-8 flex flex-col items-center">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Enter Verification Code</label>
                   <OTPInput value={otpValue} onChange={setOtpValue} length={6} error={!!otpError} />
-                  <button onClick={handleVerifyOtp} disabled={otpLoading || otpValue.length < 6} className="w-full py-4 bg-teal-600 text-white rounded-[20px] font-black hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-teal-500/20 disabled:opacity-50 flex items-center justify-center gap-3 text-sm">
-                    {otpLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><ShieldCheck className="w-5 h-5" /> Complete Verification</>}
+                  <button 
+                    onClick={handleVerifyOtp} 
+                    disabled={otpLoading || otpValue.length < 6 || phoneVerifiedSuccess} 
+                    className={`w-full py-4 rounded-[20px] font-black hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-xl disabled:opacity-50 flex items-center justify-center gap-3 text-sm relative overflow-hidden ${
+                      phoneVerifiedSuccess 
+                        ? "bg-emerald-500 text-white shadow-emerald-500/20" 
+                        : "bg-teal-600 text-white shadow-teal-500/20"
+                    }`}
+                  >
+                    {phoneVerifiedSuccess ? (
+                      <div className="flex items-center gap-2 animate-bounce">
+                        <CheckCircle2 className="w-5 h-5 stroke-[3]" />
+                        <span>Success! Verified</span>
+                      </div>
+                    ) : otpLoading ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Verifying Securely...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="w-5 h-5" />
+                        <span>Complete Verification</span>
+                      </div>
+                    )}
                   </button>
                   <button onClick={handleStartPhoneVerification} disabled={otpLoading} className="text-[10px] font-black text-slate-400 hover:text-teal-600 uppercase tracking-widest transition-colors mb-4">Didn&apos;t get the code? <span className="underline decoration-slate-300">Resend</span></button>
                 </div>
@@ -474,7 +535,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                   )}
 
                   {!user.googleId && (
-                    <button onClick={() => setShowPasswordModal(true)} className="w-full flex flex-col sm:flex-row items-center sm:justify-between p-4 sm:p-5 bg-white dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-teal-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all group hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none gap-4 sm:gap-5">
+                    <button onClick={() => { setShowPasswordModal(true); setShowOtpView(false); setShowDeleteModal(false); }} className="w-full flex flex-col sm:flex-row items-center sm:justify-between p-4 sm:p-5 bg-white dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-teal-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all group hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none gap-4 sm:gap-5">
                       <div className="flex items-center gap-4 sm:gap-5 w-full">
                         <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center border border-slate-100 dark:border-slate-800 shadow-xs text-slate-500 group-hover:text-teal-500 transition-all group-hover:rotate-12 group-hover:scale-110 shrink-0">
                           <Lock className="w-5 h-5 sm:w-6 sm:h-6 stroke-3" />
@@ -488,7 +549,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                     </button>
                   )}
 
-                  <button onClick={() => setShowDeleteModal(true)} className="w-full flex flex-col sm:flex-row items-center sm:justify-between p-4 sm:p-5 bg-white dark:bg-red-950/10 rounded-2xl border border-red-100 dark:border-red-900/30 hover:border-red-500/50 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group gap-4 sm:gap-5">
+                  <button onClick={() => { setShowDeleteModal(true); setShowOtpView(false); setShowPasswordModal(false); }} className="w-full flex flex-col sm:flex-row items-center sm:justify-between p-4 sm:p-5 bg-white dark:bg-red-950/10 rounded-2xl border border-red-100 dark:border-red-900/30 hover:border-red-500/50 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group gap-4 sm:gap-5">
                     <div className="flex items-center gap-4 sm:gap-5 w-full">
                       <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-100 dark:bg-red-900/40 rounded-2xl flex items-center justify-center border border-red-200 dark:border-red-800 shadow-xs text-red-600 dark:text-red-400 group-hover:text-red-500 group-hover:animate-shake shrink-0">
                         <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 stroke-3" />
@@ -509,19 +570,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
         </div>
       </div>
 
-      {messages.length > 0 && (
-        <div className="md:col-span-2 mt-4 p-4 bg-slate-950 rounded-[24px] border border-slate-800">
-          <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2"><Mail className="w-3 h-3" /> Incoming WhatsApp Responses</h5>
-          <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
-            {messages.map((m, i) => (
-              <div key={i} className="text-[11px] leading-relaxed">
-                <span className="text-teal-500 font-bold">{m.from.split('@')[0]}: </span>
-                <span className="text-slate-300 font-medium">{m.body}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }

@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X, Loader2, User, Mail, Lock, Briefcase, Calendar } from "lucide-react";
+import { Plus, X, Loader2, User, Mail, Lock, Briefcase, Calendar, Eye, EyeOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/providers/ToastProvider";
+import { useRouter } from "next/navigation";
 
 export function AddConsultantModal() {
+  const router = useRouter();
   const { showToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -17,8 +20,26 @@ export function AddConsultantModal() {
     yearsOfExp: "",
   });
 
+  // Password strength calculation
+  const getPasswordStrength = (pwd: string): { score: number; label: string; color: string } => {
+    if (!pwd) return { score: 0, label: "", color: "" };
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (pwd.length >= 12) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+    if (score <= 1) return { score: 1, label: "Weak", color: "bg-red-500" };
+    if (score <= 3) return { score: 2, label: "Fair", color: "bg-yellow-500" };
+    return { score: 3, label: "Strong", color: "bg-emerald-500" };
+  };
+
+  const passwordStrength = getPasswordStrength(formData.password);
+  const isPasswordTooShort = formData.password.length > 0 && formData.password.length < 8;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.password.length < 8) return;
     setIsSubmitting(true);
 
     try {
@@ -38,8 +59,7 @@ export function AddConsultantModal() {
         });
         setIsOpen(false);
         setFormData({ name: "", email: "", password: "", specialization: "", yearsOfExp: "" });
-        // Use router.refresh() if possible or just rely on state update if this was in a list
-        window.location.reload(); 
+        router.refresh(); 
       } else {
         showToast({
           type: "error",
@@ -126,16 +146,57 @@ export function AddConsultantModal() {
                   />
                 </div>
 
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
-                  <input
-                    type="password"
-                    required
-                    placeholder="Initial Password"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-slate-900 dark:text-white"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  />
+                <div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      placeholder="Initial Password"
+                      className={`w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800/50 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-slate-900 dark:text-white transition-colors ${
+                        isPasswordTooShort
+                          ? "border-red-400 dark:border-red-500"
+                          : "border-slate-200 dark:border-slate-700"
+                      }`}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+
+                  {/* Password strength indicator */}
+                  {formData.password.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      <div className="flex gap-1">
+                        {[1, 2, 3].map((i) => (
+                          <div
+                            key={i}
+                            className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                              i <= passwordStrength.score ? passwordStrength.color : "bg-slate-200 dark:bg-slate-700"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p className={`text-xs font-medium ${
+                          passwordStrength.score === 1 ? "text-red-500" :
+                          passwordStrength.score === 2 ? "text-yellow-500" : "text-emerald-500"
+                        }`}>
+                          {passwordStrength.label}
+                        </p>
+                        {isPasswordTooShort && (
+                          <p className="text-xs text-red-500">At least 8 characters required</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

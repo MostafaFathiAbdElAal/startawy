@@ -18,6 +18,12 @@ export const useChatSocket = (userName?: string, userRole?: string) => {
         const res = await fetch(`/api/support/messages?sessionId=${sessionId}`, {
           headers: { 'x-secret-key': SECRET_KEY }
         });
+        
+        if (!res.ok) {
+          console.error('History sync failed with status:', res.status);
+          return;
+        }
+        
         const data = await res.json();
         if (data.messages && data.messages.length > 0) {
           // Only add messages that aren't already in the store

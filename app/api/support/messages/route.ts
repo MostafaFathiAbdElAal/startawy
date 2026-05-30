@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 const SECRET_KEY = process.env.STARTAWY_SECRET_KEY || 'STARTAWY_SECRET_123456';
 
 export async function GET(req: NextRequest) {
+    console.log("[SUPPORT_MESSAGES] GET Request received");
     const { searchParams } = new URL(req.url);
     const sessionId = searchParams.get('sessionId');
     const secret = req.headers.get('x-secret-key');

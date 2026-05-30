@@ -55,3 +55,62 @@ export async function DELETE(
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export async function PATCH(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> | { id: string } }
+) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value;
+    const userPayload = await verifyAuth(token);
+
+    // Only current Owner/Super Admin can transfer ownership
+    if (!userPayload || !userPayload.isOwner) {
+      return NextResponse.json({ error: 'Unauthorized. Only the Platform Owner can transfer ownership.' }, { status: 403 });
+    }
+
+    const resolvedParams = await Promise.resolve(context.params);
+    const targetUserId = parseInt(resolvedParams.id, 10);
+
+    if (isNaN(targetUserId)) {
+      return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
+    }
+
+    const currentOwnerId = Number(userPayload.id);
+
+    if (targetUserId === currentOwnerId) {
+      return NextResponse.json({ error: 'You are already the Platform Owner.' }, { status: 400 });
+    }
+
+    // Verify target user is an admin
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      include: { admin: true }
+    });
+
+    if (!targetUser || targetUser.type !== 'ADMIN') {
+      return NextResponse.json({ error: 'Target user is not an administrator.' }, { status: 404 });
+    }
+
+    // Execute transfer in a database transaction
+    await prisma.$transaction(async (tx) => {
+      // 1. Demote current owner to a regular admin
+      await tx.admin.update({
+        where: { userId: currentOwnerId },
+        data: { isOwner: false }
+      });
+
+      // 2. Promote target admin to owner
+      await tx.admin.update({
+        where: { userId: targetUserId },
+        data: { isOwner: true }
+      });
+    });
+
+    return NextResponse.json({ success: true, message: 'Ownership transferred successfully.' });
+  } catch (error) {
+    console.error('Transfer Ownership API Error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}

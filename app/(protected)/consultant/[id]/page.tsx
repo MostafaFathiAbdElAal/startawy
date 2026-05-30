@@ -25,7 +25,7 @@ export default async function ConsultantProfilePage({ params }: { params: Promis
   }
 
   // Check for upcoming session using the Service (ABI)
-  const upcomingSession = auth.id 
+  const upcomingSession = auth.id
     ? await ConsultantService.getUserSessionWithConsultant(auth.id, consultantId)
     : null;
 
@@ -49,8 +49,8 @@ export default async function ConsultantProfilePage({ params }: { params: Promis
             <div>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Upcoming Session Scheduled</h3>
               <p className="text-gray-600 dark:text-gray-400">
-                You have an appointment on {new Date(upcomingSession.date).toLocaleDateString('en-GB', { 
-                  day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+                You have an appointment on {new Date(upcomingSession.date).toLocaleDateString('en-GB', {
+                  day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
                 })}
               </p>
             </div>
@@ -66,8 +66,8 @@ export default async function ConsultantProfilePage({ params }: { params: Promis
       {/* Profile Header */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 p-5 sm:p-8 mb-8">
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Avatar & Quick Info */}
-          <div className="shrink-0">
+          {/* Avatar only */}
+          <div className="shrink-0 flex flex-col items-center">
             <div className="relative">
               <UserAvatar
                 name={consultant.user.name}
@@ -76,20 +76,29 @@ export default async function ConsultantProfilePage({ params }: { params: Promis
                 isVerified={true}
               />
             </div>
-            <div className="mt-4 text-center">
-              <div className="flex items-center justify-center gap-1 mb-2">
-                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">{(consultant.rating || 5.0).toFixed(1)}</span>
-              </div>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">{consultant.reviewCount} reviews</p>
-            </div>
           </div>
 
           {/* Profile Details */}
           <div className="flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 break-words">{consultant.user.name}</h1>
+            {/* Name + Rating badge inline */}
+            <div className="flex flex-wrap items-center gap-3 mb-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white break-words">{consultant.user.name}</h1>
+              {consultant.reviewCount > 0 ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-50 dark:bg-yellow-400/10 border border-yellow-200 dark:border-yellow-400/20 rounded-full">
+                  <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                  <span className="text-sm font-bold text-yellow-700 dark:text-yellow-400">{consultant.rating.toFixed(1)}</span>
+                  <span className="text-xs text-yellow-600/70 dark:text-yellow-400/60">({consultant.reviewCount})</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full">
+                  <Star className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">No reviews yet</span>
+                </span>
+              )}
+            </div>
+
             <p className="text-lg sm:text-xl text-teal-600 dark:text-teal-400 font-medium mb-4">{consultant.specialization}</p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                 <Award className="w-5 h-5 text-teal-600 dark:text-teal-400" />
@@ -160,9 +169,9 @@ export default async function ConsultantProfilePage({ params }: { params: Promis
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Availability Summary</h2>
             <div className="p-4 bg-teal-50 dark:bg-teal-900/20 rounded-lg border border-teal-100 dark:border-teal-800/30">
-               <p className="text-gray-800 dark:text-gray-200">
+              <p className="text-gray-800 dark:text-gray-200">
                 {consultant.availability || "Availability details coming soon."}
-               </p>
+              </p>
             </div>
           </div>
         </div>
@@ -171,7 +180,7 @@ export default async function ConsultantProfilePage({ params }: { params: Promis
         <div className="lg:col-span-1">
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 p-6 sticky top-8">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Consultation Overview</h2>
-            
+
             {/* Session Price */}
             <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-4 mb-6">
               <div className="flex items-center justify-between">
@@ -182,20 +191,20 @@ export default async function ConsultantProfilePage({ params }: { params: Promis
             </div>
 
             <div className="space-y-4 mb-6">
-               <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Sessions Managed</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">{consultant.sessionsCompleted}</span>
-               </div>
-               <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Response Time</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">Under 24h</span>
-               </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600 dark:text-gray-400">Sessions Managed</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{consultant.sessionsCompleted}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600 dark:text-gray-400">Response Time</span>
+                <span className="font-semibold text-gray-900 dark:text-white">Under 24h</span>
+              </div>
             </div>
 
             <Link href={`/consultant/${consultant.id}/book`} className="block w-full">
-               <button className="w-full py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-bold">
-                  Book A Session
-               </button>
+              <button className="w-full py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-bold">
+                Book A Session
+              </button>
             </Link>
           </div>
         </div>

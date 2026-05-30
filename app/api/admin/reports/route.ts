@@ -48,3 +48,56 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }
 }
+
+export async function GET() {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value;
+    const userPayload = await verifyAuth(token);
+
+    if (!userPayload) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (userPayload.role !== 'ADMIN' && !userPayload.isOwner) {
+      return NextResponse.json({ error: "Access Denied. Admins Only." }, { status: 403 });
+    }
+
+    const reports = await prisma.startawyReport.findMany({
+      orderBy: { uploadDate: 'desc' },
+    });
+
+    const parsedReports = reports.map(r => {
+      let metadata = {
+        title: `Report - ${r.industry}`,
+        description: "Full research data for this sector.",
+        image: "https://images.unsplash.com/photo-1618044733300-9472054094ee",
+        pages: 20,
+        pdfUrl: ""
+      };
+
+      try {
+        const parsed = JSON.parse(r.link);
+        metadata = { ...metadata, ...parsed };
+      } catch {
+        if (r.link.startsWith('http')) metadata.image = r.link;
+      }
+
+      return {
+        id: r.id,
+        title: metadata.title,
+        description: metadata.description,
+        image: metadata.image,
+        pages: metadata.pages,
+        industry: r.industry,
+        uploadDate: r.uploadDate,
+        pdfUrl: metadata.pdfUrl
+      };
+    });
+
+    return NextResponse.json({ success: true, reports: parsedReports });
+  } catch (error) {
+    console.error("Admin Fetch Reports Error:", error);
+    return NextResponse.json({ error: "Server Error" }, { status: 500 });
+  }
+}

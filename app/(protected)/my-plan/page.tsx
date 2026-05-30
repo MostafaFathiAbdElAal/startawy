@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { Package, Check, ArrowRight, TrendingUp, Calendar as CalendarIcon, Star } from "lucide-react";
+import { Package, Check, ArrowRight, TrendingUp, Calendar as CalendarIcon, Star, X } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "My Startawy Plan",
@@ -45,6 +45,54 @@ export default async function MyPlanPage({
   );
 }
 
+const systemFeatures = [
+  {
+    key: "reports",
+    label: (color: string) => color === 'gray' ? "Limited Access to Reports" : "Full Access to Market Reports",
+    isIncluded: () => true,
+  },
+  {
+    key: "chatbot",
+    label: (color: string) => color === 'gray' ? "Basic AI Chatbot Access" : "Full AI Advisory Chatbot",
+    isIncluded: () => true,
+  },
+  {
+    key: "templates",
+    label: (color: string) => color === 'gray' ? "Marketing Research Templates" : "Request Marketing Templates",
+    isIncluded: (color: string) => color !== 'gray',
+  },
+  {
+    key: "consultations",
+    label: (color: string) => color === 'gray' ? "Limited Consultations" : "Private Consultant Sessions",
+    isIncluded: (color: string) => color === 'gold' || color === 'gray',
+  },
+  {
+    key: "budget",
+    label: () => "Budget Analysis Tools",
+    isIncluded: (color: string) => color === 'gold',
+  },
+  {
+    key: "dashboard",
+    label: () => "Financial Performance Dashboard",
+    isIncluded: (color: string) => color === 'gold',
+  },
+  {
+    key: "modeling",
+    label: () => "Custom Financial Modeling",
+    isIncluded: (color: string) => color === 'gold',
+  },
+  {
+    key: "manager",
+    label: () => "Dedicated Account Manager",
+    isIncluded: (color: string) => color === 'gold',
+  },
+  {
+    key: "support",
+    label: () => "24/7 Priority Support",
+    isIncluded: (color: string) => color === 'gold',
+  }
+];
+
 async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
@@ -72,13 +120,18 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
         if (planNameLower.includes('premium') || planNameLower.includes('pro')) {
            redirect('/select-consultant');
         }
+        
+        // Successfully verified and fulfilled
+        redirect('/my-plan?success=true');
+      } else {
+        console.warn(`[MY-PLAN] Session ${sessionId} is not paid (status: ${session.payment_status})`);
+        redirect('/my-plan?error=unpaid');
       }
     } catch (error) {
       if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) throw error;
       console.error("[MY-PLAN] Session verification failed:", error);
+      redirect('/my-plan?error=verification_failed');
     }
-    // Add success parameter for the toast, and the new param will bust the cache
-    redirect('/my-plan?success=true');
   }
 
   const user = await prisma.user.findUnique({
@@ -165,7 +218,7 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
   }
 
   const colorGradients: Record<string, string> = {
-    gray: "from-[#D3D3D3] to-[#B0B0B0]",
+    gray: "from-[#B8B8B8] to-[#989898]",
     teal: "from-teal-500 to-emerald-600",
     gold: "from-amber-400 via-amber-500 to-orange-600",
   };
@@ -193,7 +246,9 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
                 <Package className={`w-4 h-4 ${iconClass}`} />
                 <span className="text-[10px] font-black uppercase tracking-widest">Active Membership</span>
               </div>
-              <h2 className="text-3xl sm:text-5xl font-black tracking-tight">{currentPlanDetails.name} Blueprint</h2>
+              <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
+                {currentPlanDetails.name} {currentPlanDetails.color === 'gold' ? "Blueprint" : (currentPlanDetails.color === 'teal' ? "Plan" : "Trial")}
+              </h2>
             </div>
             <div className="flex items-baseline justify-center md:justify-start gap-1">
               <span className="text-5xl sm:text-6xl font-black tracking-tighter">{currentPlanDetails.price}</span>
@@ -241,9 +296,12 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
             Manage Subscription
             <ArrowRight className="w-5 h-5" />
           </Link>
-          <button className={`flex-1 px-8 py-4 rounded-2xl transition-[transform,shadow,background-color,border-color] duration-300 font-black border active:scale-[0.98] ${isGray ? "bg-slate-950/10 hover:bg-slate-950/20 text-slate-900 border-slate-900/10" : "bg-black/10 hover:bg-black/20 text-white border-white/10"}`}>
+          <Link
+            href="/my-payments"
+            className={`flex-1 inline-flex items-center justify-center px-8 py-4 rounded-2xl transition-[transform,shadow,background-color,border-color] duration-300 font-black border active:scale-[0.98] ${isGray ? "bg-slate-950/10 hover:bg-slate-950/20 text-slate-900 border-slate-900/10" : "bg-black/10 hover:bg-black/20 text-white border-white/10"}`}
+          >
             View Billing History
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -284,17 +342,43 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
                 <div className="p-8 sm:p-10 flex-1 flex flex-col">
                   <div className="mb-10">
                     <h4 className="font-black text-slate-400 mb-6 text-[10px] uppercase tracking-[0.2em]">
-                      Included Features
+                      Features & Capabilities
                     </h4>
-                    <ul className="space-y-5">
-                      {plan.features.map((feature, index) => (
-                        <li key={index} className="flex items-start gap-4 group/item">
-                          <div className={`mt-0.5 p-1 rounded-full ${plan.color === 'gold' ? 'bg-amber-100 text-amber-600' : 'bg-teal-50 text-teal-600'} dark:bg-slate-800 transition-all`}>
-                            <Check className="w-3.5 h-3.5" strokeWidth={3} />
-                          </div>
-                          <span className="text-sm text-slate-600 dark:text-slate-400 font-bold group-hover/item:text-slate-900 dark:group-hover/item:text-white transition-colors">{feature}</span>
-                        </li>
-                      ))}
+                    <ul className="space-y-4">
+                      {systemFeatures.map((feature, index) => {
+                        const included = feature.isIncluded(plan.color);
+                        const labelText = feature.label(plan.color);
+
+                        return (
+                          <li 
+                            key={index} 
+                            className={`flex items-start gap-4 transition-all ${
+                              included ? 'opacity-100 group/item' : 'opacity-40 group/item'
+                            }`}
+                          >
+                            {included ? (
+                              <div className={`mt-0.5 p-1 rounded-full ${
+                                plan.color === 'gold' 
+                                  ? 'bg-amber-100 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400' 
+                                  : 'bg-teal-50 text-teal-600 dark:bg-teal-950/30 dark:text-teal-400'
+                              } transition-all`}>
+                                <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                              </div>
+                            ) : (
+                              <div className="mt-0.5 p-1 rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800/50 dark:text-slate-600 transition-all">
+                                <X className="w-3.5 h-3.5" strokeWidth={3} />
+                              </div>
+                            )}
+                            <span className={`text-sm transition-colors ${
+                              included 
+                                ? 'text-slate-700 dark:text-slate-300 font-bold group-hover/item:text-slate-900 dark:group-hover/item:text-white' 
+                                : 'text-slate-400 dark:text-slate-500 font-medium line-through decoration-slate-300 dark:decoration-slate-800'
+                            }`}>
+                              {labelText}
+                            </span>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
 
@@ -311,7 +395,9 @@ async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: str
                             : "bg-linear-to-r from-teal-500 to-emerald-600 text-white hover:scale-105"
                           }`}
                       >
-                        {plan.id > currentPlanDetails.id ? "Upgrade Blueprint" : "Switch Plan"}
+                        {plan.id > currentPlanDetails.id 
+                          ? (plan.color === 'gold' ? "Upgrade Blueprint" : "Upgrade Plan") 
+                          : "Switch Plan"}
                       </Link>
                     )}
                   </div>

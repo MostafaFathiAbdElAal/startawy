@@ -121,7 +121,7 @@ export default function DateInput({ value, onChange, error, name, placeholder, d
   const firstDay = getFirstDayOfMonth(viewDate.getFullYear(), viewDate.getMonth());
 
   for (let i = 0; i < firstDay; i++) {
-    days.push(<div key={`pad-${i}`} className="h-10 w-10 sm:h-11 sm:w-11" />);
+    days.push(<div key={`pad-${i}`} className="w-full aspect-square" />);
   }
 
   for (let d = 1; d <= daysInMonth; d++) {
@@ -147,19 +147,19 @@ export default function DateInput({ value, onChange, error, name, placeholder, d
         type="button"
         disabled={isDisabled}
         onClick={() => handleDateSelect(d)}
-        className={`h-8 w-8 sm:h-9 sm:w-9 rounded-xl text-xs font-bold transition-all flex items-center justify-center relative group/day
+        className={`w-full aspect-square rounded-xl text-xs font-bold transition-all duration-200 flex items-center justify-center relative group/day
           ${isSelected 
-            ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20 active:scale-90 scale-110 z-10' 
+            ? 'bg-gradient-to-br from-teal-400 to-teal-600 text-white shadow-lg shadow-teal-500/20 active:scale-95 scale-105 z-10' 
             : isToday 
               ? 'text-teal-500 bg-teal-500/5 ring-1 ring-teal-500/20' 
               : isDisabled 
-                ? 'text-slate-100 dark:text-slate-800 cursor-not-allowed opacity-20'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-teal-500 active:scale-90'}
+                ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed opacity-20'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-teal-500/10 hover:text-teal-500 dark:hover:bg-teal-500/20 active:scale-95'}
         `}
       >
         {d}
         {isToday && !isSelected && (
-            <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-teal-500 rounded-full" />
+            <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-teal-500 rounded-full" />
         )}
       </button>
     );
@@ -170,7 +170,7 @@ export default function DateInput({ value, onChange, error, name, placeholder, d
     <div className="relative group" ref={containerRef}>
       <div className="relative group">
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-          <Calendar className={`h-4 w-4 transition-colors ${error ? 'text-red-400' : 'text-slate-400 group-focus-within:text-teal-500'}`} />
+          <Calendar className={`h-4 w-4 transition-colors duration-300 ${error ? 'text-red-400' : 'text-slate-400 group-focus-within:text-teal-500'}`} />
         </div>
         <input
           type="text"
@@ -178,7 +178,7 @@ export default function DateInput({ value, onChange, error, name, placeholder, d
           value={displayValue}
           onClick={toggleOpen}
           placeholder={placeholder || 'Select Date'}
-          className={`auth-input auth-input-icon pr-12 ${error ? 'auth-input-error' : ''} cursor-pointer caret-transparent text-sm h-12`}
+          className={`auth-input auth-input-icon pr-12 ${error ? 'auth-input-error' : ''} ${isOpen ? 'ring-2 ring-teal-500/20 border-teal-500' : ''} cursor-pointer caret-transparent text-sm h-12 transition-all duration-300`}
         />
         {value && (
           <button
@@ -204,7 +204,7 @@ export default function DateInput({ value, onChange, error, name, placeholder, d
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: popoverPlacement === 'bottom' ? 5 : -5, scale: 0.98 }}
             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-            className={`absolute left-0 z-100 w-[280px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-[24px] p-5 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.5)] border border-slate-200/50 dark:border-slate-800/50
+            className={`absolute left-0 z-[100] w-[280px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-[24px] p-5 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] border border-slate-200/50 dark:border-slate-800/50
               ${popoverPlacement === 'top' ? 'bottom-full mb-3' : 'top-full mt-3'}
             `}
           >
@@ -213,35 +213,23 @@ export default function DateInput({ value, onChange, error, name, placeholder, d
               <button 
                 type="button" 
                 onClick={() => changeMonth(-1)}
-                className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-500 transition-all active:scale-90"
+                className="w-8 h-8 flex items-center justify-center hover:bg-teal-500/10 hover:text-teal-500 dark:hover:bg-teal-500/20 rounded-xl text-slate-500 dark:text-slate-400 transition-all active:scale-90"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               
               <div className="flex flex-col items-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const now = new Date();
-                    const y = now.getFullYear();
-                    const m = String(now.getMonth() + 1).padStart(2, '0');
-                    const d = String(now.getDate()).padStart(2, '0');
-                    onChange(`${y}-${m}-${d}`);
-                    setViewDate(now);
-                    setIsOpen(false);
-                  }}
-                  className="text-[9px] font-black text-teal-500 uppercase tracking-[0.2em] mb-0.5 hover:text-teal-400 transition-colors"
-                >
+                <span className="text-[10px] font-black text-teal-500 uppercase tracking-[0.2em] mb-0.5">
                   {months[viewDate.getMonth()]}
-                </button>
+                </span>
                 <div className="flex items-center gap-1 group/yr cursor-pointer relative">
                   <select 
                     value={viewDate.getFullYear()} 
                     onChange={(e) => changeYear(parseInt(e.target.value))}
-                    className="bg-transparent border-none p-0 text-base font-black text-slate-900 dark:text-white focus:ring-0 cursor-pointer hover:text-teal-500 transition-colors text-center appearance-none"
+                    className="bg-transparent border-none p-0 text-base font-black text-slate-900 dark:text-white focus:ring-0 cursor-pointer hover:text-teal-500 transition-colors text-center appearance-none pr-1 focus:outline-none"
                     style={{ textAlignLast: 'center' }}
                   >
-                    {years.map(y => <option key={y} value={y} className="bg-white dark:bg-slate-900 font-bold">{y}</option>)}
+                    {years.map(y => <option key={y} value={y} className="bg-white dark:bg-slate-900 font-bold text-slate-900 dark:text-white">{y}</option>)}
                   </select>
                 </div>
               </div>
@@ -249,7 +237,7 @@ export default function DateInput({ value, onChange, error, name, placeholder, d
               <button 
                 type="button" 
                 onClick={() => changeMonth(1)}
-                className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-500 transition-all active:scale-90"
+                className="w-8 h-8 flex items-center justify-center hover:bg-teal-500/10 hover:text-teal-500 dark:hover:bg-teal-500/20 rounded-xl text-slate-500 dark:text-slate-400 transition-all active:scale-90"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -258,7 +246,7 @@ export default function DateInput({ value, onChange, error, name, placeholder, d
             {/* Weekdays */}
             <div className="grid grid-cols-7 mb-2">
               {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
-                <div key={`${day}-${idx}`} className="h-8 w-8 flex items-center justify-center text-[9px] font-black text-slate-400/40 uppercase">
+                <div key={`${day}-${idx}`} className="w-full aspect-square flex items-center justify-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase">
                   {day}
                 </div>
               ))}
@@ -267,6 +255,38 @@ export default function DateInput({ value, onChange, error, name, placeholder, d
             {/* Days Grid */}
             <div className="grid grid-cols-7 gap-1">
               {days}
+            </div>
+
+            {/* Today and Clear Buttons */}
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => {
+                  const now = new Date();
+                  const y = now.getFullYear();
+                  const m = String(now.getMonth() + 1).padStart(2, '0');
+                  const d = String(now.getDate()).padStart(2, '0');
+                  onChange(`${y}-${m}-${d}`);
+                  setViewDate(now);
+                  setIsOpen(false);
+                }}
+                className="text-[11px] font-bold text-teal-500 hover:text-teal-600 transition-colors flex items-center gap-1.5"
+              >
+                <div className="w-1.5 h-1.5 bg-teal-500 rounded-full animate-pulse" />
+                Go to Today
+              </button>
+              {value && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange('');
+                    setIsOpen(false);
+                  }}
+                  className="text-[11px] font-bold text-slate-400 hover:text-red-500 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
             </div>
           </motion.div>
         )}

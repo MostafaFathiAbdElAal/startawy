@@ -7,7 +7,18 @@ export const metadata: Metadata = {
   title: "Founders Hub | Startup Management",
 };
 
-export default async function ManageFoundersPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ManageFoundersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const resolvedParams = await searchParams;
+  const initialVerification = typeof resolvedParams.verification === 'string' ? resolvedParams.verification : 'All';
+  const initialPlan = typeof resolvedParams.plan === 'string' ? resolvedParams.plan : 'All';
+  const initialSearch = typeof resolvedParams.search === 'string' ? resolvedParams.search : '';
+
   const dbUsers = await prisma.user.findMany({
     where: { type: 'FOUNDER' },
     include: {
@@ -34,7 +45,8 @@ export default async function ManageFoundersPage() {
       company: u.founder?.businessName || "Unknown",
       businessSector: u.founder?.businessSector || "General",
       plan: planName,
-      status: u.isSuspended ? "SUSPENDED" : (u.isEmailVerified ? "ACTIVE" : "PENDING"),
+      status: (u.isEmailVerified && u.isPhoneVerified) ? "VERIFIED" : "UNVERIFIED",
+      isSuspended: u.isSuspended,
       joinedDate: new Intl.DateTimeFormat('en-GB').format(new Date(u.createdAt)),
       sessions: 0,
       revenue: `$${payments.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}`,
@@ -50,7 +62,7 @@ export default async function ManageFoundersPage() {
 
   const stats = [
     { label: "Total Founders", value: formattedUsers.length, icon: Users, color: "teal" },
-    { label: "Active Network", value: formattedUsers.filter((f) => f.status === "ACTIVE").length, icon: CheckCircle, color: "emerald" },
+    { label: "Verified Network", value: formattedUsers.filter((f) => f.status === "VERIFIED").length, icon: CheckCircle, color: "emerald" },
     { label: "Premium Tier", value: formattedUsers.filter((f) => f.plan === "Premium" || f.plan === "Pro" || (f.plan || "").toLowerCase().includes("premium") || (f.plan || "").toLowerCase().includes("pro")).length, icon: Zap, color: "purple" },
     { label: "Total Revenue", value: `$${totalRevenue.toFixed(0)}`, icon: DollarSign, color: "teal" },
   ];
@@ -81,7 +93,13 @@ export default async function ManageFoundersPage() {
         ))}
       </div>
 
-      <AdminUsersTable data={formattedUsers} roleType="Founder" />
+      <AdminUsersTable 
+        data={formattedUsers} 
+        roleType="Founder" 
+        initialVerification={initialVerification}
+        initialContext={initialPlan}
+        initialSearch={initialSearch}
+      />
     </div>
   );
 }

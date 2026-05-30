@@ -5,6 +5,7 @@ import { Search, Filter, Edit, Trash2, Eye, UserX, UserCheck, ChevronDown, Chevr
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/providers/ToastProvider";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { useRouter } from "next/navigation";
 
 type UserData = {
   id: number;
@@ -14,6 +15,7 @@ type UserData = {
   specialty?: string;
   plan?: string;
   status: string;
+  isSuspended: boolean;
   joinedDate: string;
   sessions?: number;
   revenue?: string;
@@ -25,17 +27,103 @@ type UserData = {
   phone?: string;
 };
 
+interface CustomDropdownProps {
+  label: string;
+  options: string[];
+  value: string;
+  onChange: (val: string) => void;
+}
+
+function CustomDropdown({ label, options, value, onChange }: CustomDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const displayValue = value === "VERIFIED" ? "Verified" : value === "UNVERIFIED" ? "Unverified" : value === "All" ? (label.toLowerCase().includes("status") ? "All Verification Statuses" : label.toLowerCase().includes("plan") ? "All Plans" : "All Specialties") : value;
+
+  return (
+    <div className="relative text-left w-full" ref={dropdownRef}>
+      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1 mb-2">
+        {label}
+      </label>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white text-xs font-bold focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500/50 outline-none transition-all shadow-xs"
+      >
+        <span className="truncate">{displayValue}</span>
+        <ChevronDown
+          className={`w-4 h-4 text-slate-400 transition-transform duration-300 shrink-0 ml-2 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 mt-2 z-[200] max-h-56 overflow-y-auto bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-xl transition-all duration-200">
+          <ul className="py-1">
+            {options.map((opt) => {
+              const displayOpt = opt === "VERIFIED" ? "Verified" : opt === "UNVERIFIED" ? "Unverified" : opt === "All" ? (label.toLowerCase().includes("status") ? "All Verification Statuses" : label.toLowerCase().includes("plan") ? "All Plans" : "All Specialties") : opt;
+              return (
+                <li key={opt}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange(opt);
+                      setIsOpen(false);
+                    }}
+                    className={`w-full px-4 py-2.5 text-left text-xs font-bold transition-colors ${
+                      value === opt
+                        ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 font-bold"
+                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                    }`}
+                  >
+                    {displayOpt}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type AdminUsersTableProps = {
   data: UserData[];
   roleType: "Founder" | "Consultant";
+  initialVerification?: string;
+  initialContext?: string;
+  initialSearch?: string;
 };
 
-export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
+export function AdminUsersTable({ 
+  data, 
+  roleType,
+  initialVerification = "All",
+  initialContext = "All",
+  initialSearch = ""
+}: AdminUsersTableProps) {
+  const router = useRouter();
   const { showToast } = useToast();
   const [users, setUsers] = useState<UserData[]>(data);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [contextFilter, setContextFilter] = useState("All");
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [statusFilter, setStatusFilter] = useState(initialVerification);
+  const [contextFilter, setContextFilter] = useState(initialContext);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
@@ -57,6 +145,33 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
     setUsers(data);
   }, [data]);
 
+  const handleFilterChange = (key: string, value: string, setter: (val: string) => void) => {
+    setter(value);
+    
+    // Update URL search parameters natively without page reloads or triggering RSC re-fetch
+    const params = new URLSearchParams(window.location.search);
+    if (value && value !== "All") {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
+    window.history.replaceState(null, '', newUrl);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    
+    const params = new URLSearchParams(window.location.search);
+    if (value.trim()) {
+      params.set("search", value.trim());
+    } else {
+      params.delete("search");
+    }
+    const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
+    window.history.replaceState(null, '', newUrl);
+  };
+
   const handleDelete = async () => {
     if (!userToDelete) return;
     
@@ -74,6 +189,7 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
           message: `${userToDelete.name} has been permanently removed.`
         });
         setUserToDelete(null);
+        router.refresh();
       } else {
         showToast({
           type: "error",
@@ -92,8 +208,8 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
     }
   };
 
-  const handleToggleStatus = async (id: number, currentStatus: string) => {
-    const nextSuspended = currentStatus === "ACTIVE"; // If active, we suspend
+  const handleToggleStatus = async (id: number, isSuspended: boolean) => {
+    const nextSuspended = !isSuspended; // If suspended, we activate; if active, we suspend
     
     setProcessingId(id);
     try {
@@ -107,13 +223,14 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
       if (result.success) {
         setUsers(users.map(u => u.id === id ? { 
           ...u, 
-          status: nextSuspended ? "SUSPENDED" : "ACTIVE" 
+          isSuspended: nextSuspended 
         } : u));
         showToast({
           type: "success",
           title: "Status Updated",
           message: `User account is now ${nextSuspended ? 'Suspended' : 'Active'}.`
         });
+        router.refresh();
       } else {
         showToast({
           type: "error",
@@ -198,6 +315,7 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
           message: "User details have been successfully changed."
         });
         setEditingUser(null);
+        router.refresh();
       } else {
         showToast({
           type: "error",
@@ -262,7 +380,7 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
               type="text"
               placeholder={`Search ${roleType.toLowerCase()}s by name or email...`}
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500/50 text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400 font-medium"
             />
           </div>
@@ -293,41 +411,25 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                   className="absolute right-0 top-full mt-3 w-[calc(100vw-4rem)] md:w-72 bg-white dark:bg-slate-900 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-100 dark:border-slate-800 z-[100] p-5 origin-top-right backdrop-blur-2xl"
                 >
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Account Status</label>
-                      <select 
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="w-full px-4 py-2.5 border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-xl focus:ring-2 focus:ring-teal-500 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer appearance-none"
-                      >
-                        <option value="All">All Statuses</option>
-                        <option value="ACTIVE">Active</option>
-                        <option value="PENDING">Pending</option>
-                        <option value="SUSPENDED">Suspended</option>
-                      </select>
-                    </div>
+                    <CustomDropdown
+                      label="Verification Status"
+                      options={["All", "VERIFIED", "UNVERIFIED"]}
+                      value={statusFilter}
+                      onChange={(val) => handleFilterChange("verification", val, setStatusFilter)}
+                    />
 
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">
-                        {roleType === "Founder" ? "Subscription Plan" : "Consultant Specialty"}
-                      </label>
-                      <select 
-                        value={contextFilter}
-                        onChange={(e) => setContextFilter(e.target.value)}
-                        className="w-full px-4 py-2.5 border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-xl focus:ring-2 focus:ring-teal-500 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer appearance-none"
-                      >
-                        <option value="All">All {roleType === "Founder" ? "Plans" : "Specialties"}</option>
-                        {uniqueContextValues.map(val => (
-                          <option key={val} value={val}>{val}</option>
-                        ))}
-                      </select>
-                    </div>
+                    <CustomDropdown
+                      label={roleType === "Founder" ? "Subscription Plan" : "Consultant Specialty"}
+                      options={["All", ...uniqueContextValues]}
+                      value={contextFilter}
+                      onChange={(val) => handleFilterChange(roleType === "Founder" ? "plan" : "specialty", val, setContextFilter)}
+                    />
 
                     <div className="pt-3 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
                       <button 
                         onClick={() => {
-                          setStatusFilter("All");
-                          setContextFilter("All");
+                          handleFilterChange("verification", "All", setStatusFilter);
+                          handleFilterChange(roleType === "Founder" ? "plan" : "specialty", "All", setContextFilter);
                         }}
                         className="text-[10px] font-black text-slate-400 hover:text-rose-500 uppercase tracking-widest transition-colors"
                       >
@@ -357,7 +459,7 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">User Details</th>
                 {roleType === "Founder" && <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center border-b border-slate-100 dark:border-slate-800">Subscription</th>}
                 {roleType === "Consultant" && <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center border-b border-slate-100 dark:border-slate-800">Specialization</th>}
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center border-b border-slate-100 dark:border-slate-800">Status</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center border-b border-slate-100 dark:border-slate-800">Verification</th>
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center border-b border-slate-100 dark:border-slate-800">Member Since</th>
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-right border-b border-slate-100 dark:border-slate-800">Actions</th>
               </tr>
@@ -377,7 +479,12 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                         )}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-teal-600 transition-colors tracking-tight mb-1">{user.name}</p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-teal-600 transition-colors tracking-tight leading-none">{user.name}</p>
+                          {user.isSuspended && (
+                            <span className="px-1.5 py-0.5 rounded-md text-[8px] font-black bg-rose-100 dark:bg-rose-900/30 text-rose-600 uppercase tracking-widest">Suspended</span>
+                          )}
+                        </div>
                         <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">{user.email}</p>
                       </div>
                     </div>
@@ -405,20 +512,17 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
     
                   <td className="px-8 py-5 text-center">
                     <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${
-                      user.status === "ACTIVE"
+                      user.status === "VERIFIED"
                         ? "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-100 dark:border-green-800/50"
                         : "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-800/50"
                     }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${user.status === "ACTIVE" ? 'bg-green-500' : 'bg-rose-500'}`} />
+                      <span className={`w-1.5 h-1.5 rounded-full ${user.status === "VERIFIED" ? 'bg-green-500' : 'bg-rose-500'}`} />
                       {user.status}
                     </span>
                   </td>
     
                   <td className="px-8 py-5 text-center">
-                    <div className="flex flex-col items-center">
-                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{user.joinedDate}</span>
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Verified</span>
-                    </div>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{user.joinedDate}</span>
                   </td>
   
                   <td className="px-8 py-5 text-right">
@@ -450,18 +554,18 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                       </button>
                       
                       <button 
-                        onClick={() => handleToggleStatus(user.id, user.status)}
+                        onClick={() => handleToggleStatus(user.id, user.isSuspended)}
                         disabled={processingId === user.id}
                         className={`p-2.5 rounded-xl transition-all ${
-                          user.status === "ACTIVE" 
+                          !user.isSuspended 
                             ? "text-slate-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20" 
                             : "text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
                         }`}
-                        title={user.status === "ACTIVE" ? "Suspend Account" : "Activate Account"}
+                        title={!user.isSuspended ? "Suspend Account" : "Activate Account"}
                       >
                         {processingId === user.id ? (
                           <div className="w-4 h-4 border-2 border-current border-t-transparent animate-spin rounded-full" />
-                        ) : user.status === "ACTIVE" ? (
+                        ) : !user.isSuspended ? (
                           <UserX className="w-4 h-4" />
                         ) : (
                           <UserCheck className="w-4 h-4" />
@@ -500,11 +604,16 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                 )}
               </div>
               <div className="flex-1">
-                <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-tight leading-tight mb-0.5">{user.name}</h4>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-tight leading-tight">{user.name}</h4>
+                  {user.isSuspended && (
+                    <span className="px-1.5 py-0.5 rounded-md text-[8px] font-black bg-rose-100 dark:bg-rose-900/30 text-rose-600 uppercase tracking-widest">Suspended</span>
+                  )}
+                </div>
                 <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500">{user.email}</p>
                 <div className="flex items-center gap-2 mt-2">
                    <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${
-                     user.status === "ACTIVE" ? "bg-green-50 dark:bg-green-900/20 text-green-600" : "bg-rose-50 dark:bg-rose-900/20 text-rose-600"
+                     user.status === "VERIFIED" ? "bg-green-50 dark:bg-green-900/20 text-green-600" : "bg-rose-50 dark:bg-rose-900/20 text-rose-600"
                    }`}>
                      {user.status}
                    </span>
@@ -525,8 +634,8 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                    businessSector: user.businessSector || "", phone: user.phone || "" 
                  });
               }} className="flex-1 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-xl flex items-center justify-center hover:text-teal-600 transition-all"><Edit className="w-4 h-4" /></button>
-              <button onClick={() => handleToggleStatus(user.id, user.status)} className="flex-1 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-xl flex items-center justify-center hover:text-orange-600 transition-all">
-                {user.status === "ACTIVE" ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+              <button onClick={() => handleToggleStatus(user.id, user.isSuspended)} className="flex-1 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-xl flex items-center justify-center hover:text-orange-600 transition-all">
+                {!user.isSuspended ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
               </button>
               <button onClick={() => setUserToDelete(user)} className="flex-1 py-2.5 bg-rose-50 dark:bg-rose-900/20 text-rose-400 rounded-xl flex items-center justify-center hover:text-rose-600 transition-all"><Trash2 className="w-4 h-4" /></button>
             </div>
@@ -688,12 +797,17 @@ export function AdminUsersTable({ data, roleType }: AdminUsersTableProps) {
                     <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-4">{previewingUser.email}</p>
                     <div className="flex flex-wrap justify-center gap-2">
                       <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                        previewingUser.status === "ACTIVE"
+                        previewingUser.status === "VERIFIED"
                           ? "bg-green-50 dark:bg-green-900/20 text-green-600 border border-green-100 dark:border-green-800/50"
                           : "bg-rose-50 dark:bg-rose-900/20 text-rose-600 border border-rose-100 dark:border-rose-800/50"
                       }`}>
                         {previewingUser.status}
                       </span>
+                      {previewingUser.isSuspended && (
+                        <span className="px-4 py-1 rounded-full text-[10px] font-black bg-rose-50 dark:bg-rose-900/20 text-rose-600 border border-rose-100 dark:border-rose-800/50 uppercase tracking-widest">
+                          SUSPENDED
+                        </span>
+                      )}
                       {previewingUser.phone && (
                         <span className="inline-flex items-center gap-2 px-4 py-1 rounded-full text-[10px] font-black bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase tracking-widest border border-slate-200 dark:border-slate-700">
                           <Phone className="w-3 h-3" />

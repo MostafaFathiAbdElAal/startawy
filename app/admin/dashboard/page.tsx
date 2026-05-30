@@ -5,6 +5,8 @@ export const metadata: Metadata = {
   title: "Admin Dashboard",
 };
 
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { AdminRevenueChart } from "@/components/admin/AdminRevenueChart"; // We will create this client component next

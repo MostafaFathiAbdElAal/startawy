@@ -58,6 +58,14 @@ export class UserService {
   }
 
   static async updateUserProfile(userId: number, data: UpdateProfileData) {
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, phone: true }
+    });
+
+    const isEmailChanged = currentUser && data.email && currentUser.email !== data.email;
+    const isPhoneChanged = currentUser && data.phone !== undefined && currentUser.phone !== data.phone;
+
     return await prisma.user.update({
       where: { id: userId },
       data: {
@@ -65,6 +73,8 @@ export class UserService {
         email: data.email,
         phone: data.phone,
         isSuspended: data.isSuspended !== undefined ? data.isSuspended : undefined,
+        isEmailVerified: isEmailChanged ? false : undefined,
+        isPhoneVerified: isPhoneChanged ? false : undefined,
         founder: (data.businessName || data.businessSector || data.foundingDate || data.description || data.bio) ? {
           update: {
             businessName: data.businessName,

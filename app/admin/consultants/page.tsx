@@ -5,11 +5,22 @@ export const metadata: Metadata = {
   title: "Manage Consultants",
 };
 
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import { AdminUsersTable } from "@/components/admin/AdminUsersTable";
 import { AddConsultantModal } from "@/components/admin/modals/AddConsultantModal";
 
-export default async function ManageConsultantsPage() {
+export default async function ManageConsultantsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const resolvedParams = await searchParams;
+  const initialVerification = typeof resolvedParams.verification === 'string' ? resolvedParams.verification : 'All';
+  const initialSpecialty = typeof resolvedParams.specialty === 'string' ? resolvedParams.specialty : 'All';
+  const initialSearch = typeof resolvedParams.search === 'string' ? resolvedParams.search : '';
+
   const dbUsers = await prisma.user.findMany({
     where: { type: 'CONSULTANT' },
     include: { consultant: true },
@@ -21,14 +32,16 @@ export default async function ManageConsultantsPage() {
     name: u.name || "Unknown",
     email: u.email,
     specialty: u.consultant?.specialization || "Consulting",
-    status: u.isSuspended ? "SUSPENDED" : (u.isEmailVerified ? "ACTIVE" : "PENDING"),
+    status: (u.isEmailVerified && u.isPhoneVerified) ? "VERIFIED" : "UNVERIFIED",
+    isSuspended: u.isSuspended,
     joinedDate: new Intl.DateTimeFormat('en-GB').format(new Date(u.createdAt)),
     sessions: 0,
     revenue: "$0",
     rating: 0,
     yearsOfExp: u.consultant?.yearsOfExp || 0,
     sessionRate: u.consultant?.sessionRate || 150,
-    image: u.image || undefined
+    image: u.image || undefined,
+    phone: u.phone || ""
   }));
 
   return (
@@ -50,7 +63,7 @@ export default async function ManageConsultantsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {[
           { label: "Total Consultants", value: formattedUsers.length, icon: Users, color: "teal" },
-          { label: "Active Experts", value: formattedUsers.filter((c) => c.status === "ACTIVE").length, icon: CheckCircle, color: "emerald" },
+          { label: "Verified Experts", value: formattedUsers.filter((c) => c.status === "VERIFIED").length, icon: CheckCircle, color: "emerald" },
           { label: "Total Sessions", value: "0", icon: Calendar, color: "blue" },
           { label: "Total Earnings", value: "$0", icon: DollarSign, color: "indigo" },
         ].map((stat, i) => (
@@ -67,7 +80,13 @@ export default async function ManageConsultantsPage() {
         ))}
       </div>
 
-      <AdminUsersTable data={formattedUsers} roleType="Consultant" />
+      <AdminUsersTable 
+        data={formattedUsers} 
+        roleType="Consultant" 
+        initialVerification={initialVerification}
+        initialContext={initialSpecialty}
+        initialSearch={initialSearch}
+      />
     </div>
   );
 }

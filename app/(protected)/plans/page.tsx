@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Service Plans",
@@ -35,12 +35,11 @@ const defaultPlans = [
     description: "Great for growing startups",
     features: [
       "Full access to market reports",
-      "Budget analysis tools",
       "AI advisory chatbot",
       "Request marketing research template",
-      "Email support",
     ],
     notIncluded: [
+      "Budget analysis tools",
       "Private consultant sessions",
       "Financial performance dashboard",
       "One-year follow-up support",
@@ -71,6 +70,54 @@ const defaultPlans = [
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
+
+const systemFeatures = [
+  {
+    key: "reports",
+    label: (color: string) => color === 'gray' ? "Limited Access to Reports" : "Full Access to Market Reports",
+    isIncluded: () => true,
+  },
+  {
+    key: "chatbot",
+    label: (color: string) => color === 'gray' ? "Basic AI Chatbot Access" : "Full AI Advisory Chatbot",
+    isIncluded: () => true,
+  },
+  {
+    key: "templates",
+    label: (color: string) => color === 'gray' ? "Marketing Research Templates" : "Request Marketing Templates",
+    isIncluded: (color: string) => color !== 'gray',
+  },
+  {
+    key: "consultations",
+    label: (color: string) => color === 'gray' ? "Limited Consultations" : "Private Consultant Sessions",
+    isIncluded: (color: string) => color === 'purple' || color === 'gold' || color === 'gray',
+  },
+  {
+    key: "budget",
+    label: () => "Budget Analysis Tools",
+    isIncluded: (color: string) => color === 'purple' || color === 'gold',
+  },
+  {
+    key: "dashboard",
+    label: () => "Financial Performance Dashboard",
+    isIncluded: (color: string) => color === 'purple' || color === 'gold',
+  },
+  {
+    key: "modeling",
+    label: () => "Custom Financial Modeling",
+    isIncluded: (color: string) => color === 'purple' || color === 'gold',
+  },
+  {
+    key: "manager",
+    label: () => "Dedicated Account Manager",
+    isIncluded: (color: string) => color === 'purple' || color === 'gold',
+  },
+  {
+    key: "support",
+    label: () => "24/7 Priority Support",
+    isIncluded: (color: string) => color === 'purple' || color === 'gold',
+  }
+];
 
 export default async function PlansPage() {
   const cookieStore = await cookies();
@@ -211,25 +258,39 @@ export default async function PlansPage() {
               {/* Features */}
               <div className="space-y-4">
                 <h4 className="font-semibold text-gray-900 dark:text-white text-sm uppercase tracking-wide">
-                  What&apos;s Included:
+                  Features & Capabilities:
                 </h4>
                 <ul className="space-y-3">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <div className="w-5 h-5 bg-teal-100 dark:bg-teal-900/40 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                        <Check className="w-3 h-3 text-teal-600 dark:text-teal-400" />
-                      </div>
-                      <span className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">{feature}</span>
-                    </li>
-                  ))}
-                  {plan.notIncluded.map((feature, i) => (
-                    <li key={`not-${i}`} className="flex items-start gap-3 opacity-40">
-                      <div className="w-5 h-5 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                        <span className="text-gray-400 dark:text-gray-500 text-xs">✕</span>
-                      </div>
-                      <span className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed line-through">{feature}</span>
-                    </li>
-                  ))}
+                  {systemFeatures.map((feature, i) => {
+                    const included = feature.isIncluded(plan.color);
+                    const labelText = feature.label(plan.color);
+
+                    return (
+                      <li 
+                        key={i} 
+                        className={`flex items-start gap-3 transition-all ${
+                          included ? 'opacity-100' : 'opacity-40'
+                        }`}
+                      >
+                        {included ? (
+                          <div className="w-5 h-5 bg-teal-100 dark:bg-teal-900/40 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                            <X className="w-3 h-3 text-gray-400 dark:text-gray-500" />
+                          </div>
+                        )}
+                        <span className={`text-sm leading-relaxed ${
+                          included 
+                            ? 'text-gray-750 dark:text-gray-300 font-bold' 
+                            : 'text-gray-500 dark:text-gray-500 font-medium line-through decoration-gray-300 dark:decoration-slate-800'
+                        }`}>
+                          {labelText}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             </div>

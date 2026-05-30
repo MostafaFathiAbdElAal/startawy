@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Star, MessageCircle, Calendar, User as UserIcon, Shield, Quote, Loader2, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from '@/components/providers/ToastProvider';
@@ -18,6 +18,84 @@ interface FeedbackItem {
     image: string | null;
     type: string;
   };
+}
+
+interface CustomFeedbackStatusDropdownProps {
+  value: string;
+  onChange: (val: string) => void;
+}
+
+function CustomFeedbackStatusDropdown({ value, onChange }: CustomFeedbackStatusDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const options = [
+    { label: "Pending", value: "PENDING" },
+    { label: "Reviewed", value: "REVIEWED" },
+    { label: "Action Taken", value: "ACTION_TAKEN" }
+  ];
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const selectedOption = options.find(opt => opt.value === value) || options[0];
+
+  return (
+    <div className="relative text-left w-36" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full flex items-center justify-between px-3 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl border outline-none cursor-pointer transition-all shadow-sm ${
+          value === 'REVIEWED' ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/10 dark:border-emerald-500/20' :
+          value === 'ACTION_TAKEN' ? 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/20' :
+          'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:border-slate-700'
+        }`}
+      >
+        <span>{selectedOption.label}</span>
+        <ChevronRight
+          className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-300 shrink-0 ml-2 ${
+            isOpen ? "rotate-90" : "rotate-0"
+          }`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 mt-2 z-50 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-xl transition-all duration-200">
+          <ul className="py-1">
+            {options.map((opt) => (
+              <li key={opt.value}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest transition-colors ${
+                    value === opt.value
+                      ? "bg-teal-500/10 text-teal-600 dark:text-teal-400"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function AdminFeedbackPage() {
@@ -215,7 +293,7 @@ export default function AdminFeedbackPage() {
             {displayFeedbacks.map((f) => (
               <div 
                 key={f.id} 
-                className="group bg-white dark:bg-slate-900 rounded-[28px] md:rounded-[32px] border border-slate-100 dark:border-slate-800 p-5 md:p-8 shadow-sm hover:shadow-xl hover:shadow-teal-500/5 transition-all duration-500 relative overflow-hidden"
+                className="group bg-white dark:bg-slate-900 rounded-[28px] md:rounded-[32px] border border-slate-100 dark:border-slate-800 p-5 md:p-8 shadow-sm hover:shadow-xl hover:shadow-teal-500/5 transition-all duration-500 relative"
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
 
@@ -265,30 +343,16 @@ export default function AdminFeedbackPage() {
 
                 <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-slate-50 dark:border-slate-800/50 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="relative group/select">
-                      <select
-                        value={f.status}
-                        onChange={(e) => handleUpdate(f.id, 'status', e.target.value)}
-                        className={`appearance-none text-[10px] font-black uppercase tracking-widest pl-3 pr-8 py-2 rounded-xl border outline-none cursor-pointer transition-all shadow-sm ${
-                          f.status === 'REVIEWED' ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/10 dark:border-emerald-500/20' :
-                          f.status === 'ACTION_TAKEN' ? 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/20' :
-                          'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:border-slate-700'
-                        }`}
-                      >
-                        <option value="PENDING">Pending</option>
-                        <option value="REVIEWED">Reviewed</option>
-                        <option value="ACTION_TAKEN">Action Taken</option>
-                      </select>
-                      <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover/select:text-teal-500 transition-colors">
-                        <ChevronRight className="w-3.5 h-3.5 rotate-90" />
-                      </div>
-                    </div>
+                    <CustomFeedbackStatusDropdown
+                      value={f.status}
+                      onChange={(val) => handleUpdate(f.id, 'status', val)}
+                    />
                   </div>
                   
                   <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
                     <Calendar className="w-3.5 h-3.5 text-teal-500/50" />
                     <span className="text-[10px] md:text-[11px] font-black uppercase tracking-tighter">
-                      {new Date(f.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {new Date(f.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                   </div>
                 </div>

@@ -142,12 +142,26 @@ export async function fulfillPayment(session: any) {
       const planName = metadata.planName;
       logFulfillment(`Processing subscription: ${planName}`);
 
+      // Check if this Stripe session has already been processed for subscription
+      const stripePaymentMethod = `Stripe_${session.id}`;
+      const existingPayment = await prisma.payment.findFirst({
+        where: {
+          founderId,
+          paymentMethod: stripePaymentMethod,
+        },
+      });
+
+      if (existingPayment) {
+        logFulfillment(`Subscription payment for session ${session.id} already processed. Skipping.`);
+        return true;
+      }
+
       // 1. Record Payment
       const payment = await prisma.payment.create({
         data: {
           founderId: founderId,
           paymentType: planName,
-          paymentMethod: "Stripe",
+          paymentMethod: stripePaymentMethod,
           amount: amount,
           transDate: new Date(),
         },

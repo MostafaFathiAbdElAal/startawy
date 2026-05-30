@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Package, Plus, ShieldCheck, Trash2, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Package, ShieldCheck, Loader2, ChevronDown } from "lucide-react";
 import { useToast } from "@/components/providers/ToastProvider";
-import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 interface ServicePackage {
   id: number;
@@ -13,14 +12,87 @@ interface ServicePackage {
   description: string;
 }
 
+interface CustomDurationDropdownProps {
+  value: string;
+  onChange: (val: string) => void;
+}
+
+function CustomDurationDropdown({ value, onChange }: CustomDurationDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  const options = [
+    { label: "Per Month", value: "month" },
+    { label: "Per Year", value: "year" },
+    { label: "One-time", value: "once" }
+  ];
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const selectedOption = options.find(opt => opt.value === value) || options[0];
+
+  return (
+    <div className="relative text-left w-full" ref={dropdownRef}>
+      <label className="block text-sm font-medium mb-1 dark:text-gray-300">Duration</label>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-800 rounded-xl text-gray-950 dark:text-white text-sm focus:ring-2 focus:ring-teal-500 transition-all outline-none"
+      >
+        <span>{selectedOption.label}</span>
+        <ChevronDown
+          className={`w-4 h-4 text-gray-400 transition-transform duration-300 shrink-0 ml-2 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 mt-2 z-50 max-h-56 overflow-y-auto bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-xl transition-all duration-200">
+          <ul className="py-1">
+            {options.map((opt) => (
+              <li key={opt.value}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
+                    value === opt.value
+                      ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 font-bold"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminPackagesClient({ initialData }: { initialData: ServicePackage[] }) {
   const { showToast } = useToast();
   const [packages, setPackages] = useState<ServicePackage[]>(initialData);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editMode, setEditMode] = useState(false);
   const [currentPkgId, setCurrentPkgId] = useState<number | null>(null);
-  const [pkgToDelete, setPkgToDelete] = useState<ServicePackage | null>(null);
   const [newPkg, setNewPkg] = useState({ type: "", price: "", duration: "month", description: "" });
 
   const fetchPackages = async () => {
@@ -51,14 +123,6 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
       description: pkg.description,
     });
     setCurrentPkgId(pkg.id);
-    setEditMode(true);
-    setIsModalOpen(true);
-  };
-
-  const openCreateModal = () => {
-    setNewPkg({ type: "", price: "", duration: "month", description: "" });
-    setEditMode(false);
-    setCurrentPkgId(null);
     setIsModalOpen(true);
   };
 
@@ -66,13 +130,10 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
     e.preventDefault();
     setLoading(true);
     try {
-      const method = editMode ? "PATCH" : "POST";
-      const body = editMode ? { ...newPkg, id: currentPkgId } : newPkg;
-
       const res = await fetch("/api/admin/packages", {
-        method,
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...newPkg, id: currentPkgId }),
       });
 
       if (res.ok) {
@@ -81,8 +142,8 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
         fetchPackages();
         showToast({
           type: "success",
-          title: editMode ? "Package Updated" : "Package Created",
-          message: editMode ? "Package details have been updated." : "New subscription package has been added successfully."
+          title: "Package Updated",
+          message: "Package details have been updated."
         });
       }
     } catch (err) {
@@ -97,34 +158,6 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
     }
   };
 
-  const handleDelete = async () => {
-    if (!pkgToDelete) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/admin/packages?id=${pkgToDelete.id}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        setPackages(packages.filter(p => p.id !== pkgToDelete.id));
-        showToast({
-          type: "success",
-          title: "Package Deleted",
-          message: `${pkgToDelete.type} has been removed permanently.`
-        });
-      }
-    } catch (err) {
-      console.error(err);
-      showToast({
-        type: "error",
-        title: "Delete Error",
-        message: "An error occurred while trying to delete the package."
-      });
-    } finally {
-      setLoading(false);
-      setPkgToDelete(null);
-    }
-  };
-
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <div className="mb-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -132,13 +165,6 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
           <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">Service Packages</h1>
           <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium">Configure subscription plans and pricing for Founders</p>
         </div>
-        <button 
-          onClick={openCreateModal}
-          className="w-full lg:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-2xl hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg shadow-teal-500/20 font-black tracking-tight shrink-0 active:scale-95"
-        >
-          <Plus className="w-5 h-5" />
-          Create New Package
-        </button>
       </div>
 
       {loading && packages.length === 0 ? (
@@ -161,15 +187,6 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
               <div className="flex justify-between items-start mb-8 relative z-10">
                 <div className="p-4 bg-teal-50 dark:bg-teal-900/20 rounded-2xl text-teal-600 dark:text-teal-400 group-hover:scale-110 transition-transform">
                   <Package className="w-8 h-8" />
-                </div>
-                <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300">
-                  <button 
-                    className="p-2.5 text-red-500/70 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all" 
-                    onClick={() => setPkgToDelete(pkg)}
-                    title="Delete Package"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
                 </div>
               </div>
 
@@ -202,7 +219,7 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
               <Package className="w-16 h-16 text-gray-200 dark:text-gray-700 mb-4" />
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">No Packages Configured</h3>
               <p className="text-gray-500 dark:text-gray-400 max-w-sm">
-                Your platform currently has no active subscription packages. Click &quot;Create New Package&quot; to start.
+                Your platform currently has no active subscription packages.
               </p>
             </div>
           )}
@@ -219,13 +236,14 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
             className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-8 shadow-2xl border border-gray-100 dark:border-slate-800 animate-in zoom-in duration-200"
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-2xl font-bold mb-6 dark:text-white text-left">{editMode ? "Edit Package" : "Create New Package"}</h2>
+            <h2 className="text-2xl font-bold mb-6 dark:text-white text-left">Edit Package</h2>
             <form onSubmit={handleSubmit} className="space-y-4 text-left">
               <div>
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Package Title (e.g. Premium Plan)</label>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Package Title (Read-only)</label>
                 <input 
+                  disabled
                   required
-                  className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
+                  className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-100 dark:bg-slate-800/50 dark:text-gray-400 text-gray-500 cursor-not-allowed outline-none focus:ring-0"
                   value={newPkg.type}
                   onChange={e => setNewPkg({...newPkg, type: e.target.value})}
                   placeholder="Basic, Pro, Enterprise..."
@@ -242,24 +260,18 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
                     placeholder="29.99"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1 dark:text-gray-300">Duration</label>
-                  <select 
-                    className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
-                    value={newPkg.duration}
-                    onChange={e => setNewPkg({...newPkg, duration: e.target.value})}
-                  >
-                    <option value="month">Per Month</option>
-                    <option value="year">Per Year</option>
-                    <option value="once">One-time</option>
-                  </select>
-                </div>
+                <CustomDurationDropdown
+                  value={newPkg.duration}
+                  onChange={(val) => setNewPkg({ ...newPkg, duration: val })}
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Features (Comma separated)</label>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Features (Read-only)</label>
                 <textarea 
+                  disabled
                   required
-                  className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none h-32"
+                  className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-100 dark:bg-slate-800/50 dark:text-gray-400 text-gray-500 cursor-not-allowed outline-none focus:ring-0 h-32"
+                  style={{ resize: 'none' }}
                   value={newPkg.description}
                   onChange={e => setNewPkg({...newPkg, description: e.target.value})}
                   placeholder="3 Consultants, 5 Market Reports, 24/7 Support..."
@@ -278,7 +290,7 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
                   disabled={loading}
                   className="flex-1 py-3 px-4 bg-teal-500 text-white rounded-xl hover:bg-teal-600 font-semibold shadow-md disabled:opacity-50"
                 >
-                  {loading ? "Saving..." : (editMode ? "Update Package" : "Save Package")}
+                  {loading ? "Saving..." : "Update Package"}
                 </button>
               </div>
             </form>
@@ -286,17 +298,6 @@ export default function AdminPackagesClient({ initialData }: { initialData: Serv
         </div>
       )}
 
-      {/* Confirm Deletion */}
-      <ConfirmModal 
-        isOpen={!!pkgToDelete}
-        onClose={() => setPkgToDelete(null)}
-        onConfirm={handleDelete}
-        title="Delete Package?"
-        message={`Are you sure you want to delete the ${pkgToDelete?.type} package? This action will prevent new signups for this plan.`}
-        confirmLabel="Delete Permanently"
-        cancelLabel="Keep Package"
-        isProcessing={loading}
-      />
     </div>
   );
 }

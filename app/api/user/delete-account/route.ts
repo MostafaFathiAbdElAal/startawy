@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Confirmation phrase is required' }, { status: 400 });
     }
 
-    if (confirmPhrase !== 'iam sure') {
+    if (confirmPhrase.trim().toLowerCase() !== 'iam sure') {
       return NextResponse.json({ error: 'Incorrect confirmation phrase. You must write "iam sure" exactly.' }, { status: 400 });
     }
 
