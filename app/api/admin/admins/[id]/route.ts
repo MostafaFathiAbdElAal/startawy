@@ -108,6 +108,20 @@ export async function PATCH(
       });
     });
 
+    // Re-create the session for the demoted user to update their JWT cookie immediately
+    const currentUser = await prisma.user.findUnique({
+      where: { id: currentOwnerId }
+    });
+    if (currentUser) {
+      const { createSession } = await import('@/lib/auth-utils');
+      await createSession({
+        id: currentUser.id,
+        role: currentUser.type,
+        email: currentUser.email,
+        name: currentUser.name
+      });
+    }
+
     return NextResponse.json({ success: true, message: 'Ownership transferred successfully.' });
   } catch (error) {
     console.error('Transfer Ownership API Error:', error);

@@ -110,6 +110,10 @@ export default function AdminReportsPage() {
   const [editReport, setEditReport] = useState<ReportItem | null>(null);
   const [editFormData, setEditFormData] = useState({ title: "", industry: "Fintech", description: "", pages: "" });
   const [isEditing, setIsEditing] = useState(false);
+  const [editIndustryOpen, setEditIndustryOpen] = useState(false);
+  const editIndustryOptions = ["Fintech", "SaaS", "E-Commerce", "Healthcare", "EdTech", "GreenTech"];
+  const [editNewImage, setEditNewImage] = useState("");          // new image URL after upload
+  const [isUploadingEditImage, setIsUploadingEditImage] = useState(false);
 
   useEffect(() => {
     fetchReports();
@@ -189,6 +193,8 @@ export default function AdminReportsPage() {
           industry: editFormData.industry,
           description: editFormData.description,
           pages: parseInt(editFormData.pages) || editReport.pages,
+          // Only send image if a new one was uploaded
+          ...(editNewImage ? { image: editNewImage } : {}),
         })
       });
       const data = await res.json();
@@ -200,6 +206,7 @@ export default function AdminReportsPage() {
         });
         fetchReports();
         setEditReport(null);
+        setEditNewImage("");    // reset image state on close
       } else {
         showToast({
           type: "error",
@@ -215,6 +222,26 @@ export default function AdminReportsPage() {
       });
     } finally {
       setIsEditing(false);
+    }
+  };
+
+  const handleEditImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingEditImage(true);
+    const data = new FormData();
+    data.append("file", file);
+    try {
+      const res = await fetch("/api/admin/reports/upload", { method: "POST", body: data });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Upload failed");
+      setEditNewImage(json.url);
+      showToast({ type: "success", title: "Image Uploaded", message: "New cover image is ready. Save changes to apply." });
+    } catch (err: unknown) {
+      const error = err as Error;
+      showToast({ type: "error", title: "Upload Failed", message: error.message });
+    } finally {
+      setIsUploadingEditImage(false);
     }
   };
 
@@ -534,14 +561,7 @@ export default function AdminReportsPage() {
                 </div>
            </div>
 
-           <div className="p-6 bg-amber-50 dark:bg-amber-900/10 rounded-2xl border border-amber-200 dark:border-amber-900/30">
-                <h4 className="text-amber-800 dark:text-amber-400 font-bold text-sm mb-2 flex items-center gap-2">
-                    <Link className="w-4 h-4" /> Cloud Storage Notice
-                </h4>
-                <p className="text-amber-700 dark:text-amber-500 text-[10px] leading-relaxed">
-                    All reports and images are directly streamed to Cloudinary&apos;s secure servers. The database only stores the secure metadata and public links.
-                </p>
-           </div>
+          
          </div>
       </div>
 
@@ -594,7 +614,7 @@ export default function AdminReportsPage() {
                   <div className="flex items-center gap-3 text-[10px] font-bold text-gray-400">
                     <span className="flex items-center gap-1">
                       <FileText className="w-3.5 h-3.5" />
-                      {report.pages} pgs
+                      {report.pages} pages
                     </span>
                     <span className="w-1.5 h-1.5 rounded-full bg-gray-200 dark:bg-slate-800" />
                     <span>{new Intl.DateTimeFormat('en-GB').format(new Date(report.uploadDate))}</span>
@@ -604,6 +624,7 @@ export default function AdminReportsPage() {
                     <button
                       onClick={() => {
                         setEditReport(report);
+                        setEditNewImage("");
                         setEditFormData({
                           title: report.title,
                           industry: report.industry,
@@ -708,86 +729,166 @@ export default function AdminReportsPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.85, y: 24 }}
               transition={{ type: "spring", stiffness: 300, damping: 28 }}
-              className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden"
+              className="relative w-full max-w-lg max-h-[90vh] flex flex-col bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden"
             >
-              {/* Modal Header */}
-              <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gray-50/50 dark:bg-slate-800/50">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-teal-50 dark:bg-teal-900/20 rounded-xl">
-                    <Pencil className="w-5 h-5 text-teal-600" />
+              <form onSubmit={handleEditReport} className="flex flex-col overflow-hidden max-h-[90vh]">
+                {/* Modal Header */}
+                <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gray-50/50 dark:bg-slate-800/50 shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-teal-50 dark:bg-teal-900/20 rounded-xl">
+                      <Pencil className="w-5 h-5 text-teal-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">Edit Report</h3>
+                      <p className="text-xs text-gray-400">Update report metadata</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Edit Report</h3>
-                    <p className="text-xs text-gray-400">Update report metadata</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setEditReport(null)}
-                  disabled={isEditing}
-                  className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full transition-colors disabled:opacity-50"
-                >
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-
-              {/* Modal Form */}
-              <form onSubmit={handleEditReport} className="p-6 space-y-5">
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Report Title</label>
-                  <input
-                    type="text"
-                    required
-                    value={editFormData.title}
-                    onChange={e => setEditFormData({ ...editFormData, title: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950 border border-transparent focus:border-teal-500 rounded-2xl outline-none transition-all text-gray-900 dark:text-white text-sm"
-                    placeholder="e.g. 2026 Fintech Growth Analysis"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Industry Sector</label>
-                  <select
-                    value={editFormData.industry}
-                    onChange={e => setEditFormData({ ...editFormData, industry: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950 border border-transparent focus:border-teal-500 rounded-2xl outline-none transition-all text-gray-900 dark:text-white text-sm"
+                  <button
+                    type="button"
+                    onClick={() => setEditReport(null)}
+                    disabled={isEditing}
+                    className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full transition-colors disabled:opacity-50"
                   >
-                    {["Fintech", "SaaS", "E-Commerce", "Healthcare", "EdTech", "GreenTech"].map(opt => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
                 </div>
 
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Executive Summary</label>
-                  <textarea
-                    required
-                    value={editFormData.description}
-                    onChange={e => setEditFormData({ ...editFormData, description: e.target.value })}
-                    maxLength={500}
-                    rows={4}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950 border border-transparent focus:border-teal-500 rounded-2xl outline-none transition-all text-gray-900 dark:text-white text-sm leading-relaxed placeholder:text-gray-400"
-                    placeholder="Describe the key value propositions of this report..."
-                    style={{ resize: 'none' }}
-                  />
-                  <div className="flex justify-end mt-1">
-                    <span className={`text-[10px] font-bold ${editFormData.description.length >= 450 ? 'text-amber-500' : 'text-gray-400'}`}>
-                      {editFormData.description.length}/500
-                    </span>
+                {/* Modal Body / Scrollable Content */}
+                <div className="p-6 space-y-5 overflow-y-auto flex-1">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Report Title</label>
+                    <input
+                      type="text"
+                      required
+                      value={editFormData.title}
+                      onChange={e => setEditFormData({ ...editFormData, title: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950 border border-transparent focus:border-teal-500 rounded-2xl outline-none transition-all text-gray-900 dark:text-white text-sm"
+                      placeholder="e.g. 2026 Fintech Growth Analysis"
+                    />
+                  </div>
+
+                  <div className="relative">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Industry Sector</label>
+                    {/* Custom styled dropdown matching filter style */}
+                    <button
+                      type="button"
+                      onClick={() => setEditIndustryOpen(prev => !prev)}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-slate-950 border border-transparent hover:border-teal-500/40 focus:border-teal-500 rounded-2xl outline-none transition-all text-gray-900 dark:text-white text-sm group"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />
+                        <span className="font-semibold">{editFormData.industry}</span>
+                      </div>
+                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${editIndustryOpen ? 'rotate-180 text-teal-500' : ''}`} />
+                    </button>
+
+                    {editIndustryOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-700 rounded-2xl shadow-2xl shadow-black/10 overflow-hidden">
+                        <div className="p-1.5 space-y-0.5">
+                          {editIndustryOptions.map(opt => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => {
+                                setEditFormData({ ...editFormData, industry: opt });
+                                setEditIndustryOpen(false);
+                              }}
+                              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                                editFormData.industry === opt
+                                  ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400'
+                                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
+                              }`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${editFormData.industry === opt ? 'bg-teal-500' : 'bg-gray-300 dark:bg-slate-600'}`} />
+                              {opt}
+                              {editFormData.industry === opt && (
+                                <CheckCircle className="w-3.5 h-3.5 ml-auto text-teal-500" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Executive Summary</label>
+                    <textarea
+                      required
+                      value={editFormData.description}
+                      onChange={e => setEditFormData({ ...editFormData, description: e.target.value })}
+                      maxLength={500}
+                      rows={4}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950 border border-transparent focus:border-teal-500 rounded-2xl outline-none transition-all text-gray-900 dark:text-white text-sm leading-relaxed placeholder:text-gray-400"
+                      placeholder="Describe the key value propositions of this report..."
+                      style={{ resize: 'none' }}
+                    />
+                    <div className="flex justify-end mt-1">
+                      <span className={`text-[10px] font-bold ${editFormData.description.length >= 450 ? 'text-amber-500' : 'text-gray-400'}`}>
+                        {editFormData.description.length}/500
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Cover Image</label>
+                    <div className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-slate-950 rounded-2xl border border-transparent hover:border-teal-500/20 transition-all">
+                      {/* Thumbnail Preview */}
+                      <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 shrink-0 border border-gray-100 dark:border-slate-800">
+                        <img
+                          src={editNewImage || editReport.image || "https://images.unsplash.com/photo-1618044733300-9472054094ee"}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      {/* Upload button & details */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">
+                          {editNewImage ? "New image uploaded" : "Current report cover"}
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">
+                          PNG, JPG or GIF up to 5MB
+                        </p>
+                      </div>
+                      {/* Action button */}
+                      <div className="relative shrink-0">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleEditImageUpload}
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                          disabled={isUploadingEditImage}
+                        />
+                        <button
+                          type="button"
+                          disabled={isUploadingEditImage}
+                          className="px-3 py-2 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-xl border border-gray-200 dark:border-slate-800 transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50"
+                        >
+                          {isUploadingEditImage ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-teal-500" />
+                          ) : (
+                            <UploadCloud className="w-3.5 h-3.5" />
+                          )}
+                          {isUploadingEditImage ? "Uploading..." : "Change Image"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Total Pages</label>
+                    <input
+                      type="number"
+                      value={editFormData.pages}
+                      onChange={e => setEditFormData({ ...editFormData, pages: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950 border border-transparent focus:border-teal-500 rounded-2xl outline-none transition-all text-gray-900 dark:text-white text-sm"
+                      placeholder="Number of pages"
+                    />
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Total Pages</label>
-                  <input
-                    type="number"
-                    value={editFormData.pages}
-                    onChange={e => setEditFormData({ ...editFormData, pages: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950 border border-transparent focus:border-teal-500 rounded-2xl outline-none transition-all text-gray-900 dark:text-white text-sm"
-                    placeholder="Number of pages"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3 pt-2">
+                {/* Modal Footer */}
+                <div className="p-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50 flex items-center gap-3 shrink-0">
                   <button
                     type="button"
                     onClick={() => setEditReport(null)}

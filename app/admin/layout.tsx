@@ -21,7 +21,12 @@ export default async function AdminLayout({
     where: { id: userPayload.id } // Use standardized numeric ID
   });
 
-  const isOwner = !!userPayload.isOwner;
+  // Query database directly to get the live ownership status
+  const admin = await prisma.admin.findUnique({
+    where: { userId: userPayload.id },
+    select: { isOwner: true }
+  });
+  const isOwner = !!admin?.isOwner;
 
   if (!user || (user.type !== 'ADMIN' && !isOwner)) {
     return <AccessDenied message="You must be an Administrator to view this page." />;

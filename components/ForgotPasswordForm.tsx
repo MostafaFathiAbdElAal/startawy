@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { Phone, Key, Lock, CheckCircle2, ArrowRight, ArrowLeft, Loader2, User, Clock, AlertCircle } from 'lucide-react';
+import { Phone, Key, Lock, CheckCircle2, ArrowRight, ArrowLeft, Loader2, User, Clock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { sendPasswordResetOTP, resetPassword, verifyOTP } from '../app/actions/auth';
 import Link from 'next/link';
 import PhoneInput from './ui/PhoneInput';
@@ -22,6 +22,8 @@ export default function ForgotPasswordForm() {
     const [success, setSuccess] = useState(false);
     const [identifiedUser, setIdentifiedUser] = useState<{ name: string; email: string } | null>(null);
     const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     useEffect(() => {
         if (currentStep === 1 && timeLeft > 0) {
@@ -43,7 +45,7 @@ export default function ForgotPasswordForm() {
         setLoading(true);
         setError(null);
         formik.setFieldValue('otp', ''); // Clear the old OTP field
-        const res = await sendPasswordResetOTP(formik.values.phone);
+        const res = await sendPasswordResetOTP(formik.values.phone, true);
         if (res.success) {
             setTimeLeft(300); // Start a new 5-minute timer immediately
         } else {
@@ -290,12 +292,19 @@ export default function ForgotPasswordForm() {
                                     <Lock size={20} />
                                 </div>
                                 <input
-                                    type="password"
+                                    type={showNewPassword ? "text" : "password"}
                                     placeholder="••••••••"
                                     autoComplete="new-password"
-                                    className={`auth-input auth-input-icon ${formik.touched.newPassword && formik.errors.newPassword ? 'auth-input-error' : ''}`}
+                                    className={`auth-input auth-input-icon pr-12 ${formik.touched.newPassword && formik.errors.newPassword ? 'auth-input-error' : ''}`}
                                     {...formik.getFieldProps('newPassword')}
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-teal-600 transition-colors z-10"
+                                >
+                                    {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
                             </div>
                             {formik.touched.newPassword && formik.errors.newPassword && (
                                 <p className="text-red-500 text-xs mt-1 font-bold">{formik.errors.newPassword}</p>
@@ -308,12 +317,19 @@ export default function ForgotPasswordForm() {
                                     <Lock size={20} />
                                 </div>
                                 <input
-                                    type="password"
+                                    type={showConfirmPassword ? "text" : "password"}
                                     placeholder="••••••••"
                                     autoComplete="new-password"
-                                    className={`auth-input auth-input-icon ${formik.touched.confirmPassword && formik.errors.confirmPassword ? 'auth-input-error' : ''}`}
+                                    className={`auth-input auth-input-icon pr-12 ${formik.touched.confirmPassword && formik.errors.confirmPassword ? 'auth-input-error' : ''}`}
                                     {...formik.getFieldProps('confirmPassword')}
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-teal-600 transition-colors z-10"
+                                >
+                                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
                             </div>
                             {formik.touched.confirmPassword && formik.errors.confirmPassword && (
                                 <p className="text-red-500 text-xs mt-1 font-bold">{formik.errors.confirmPassword}</p>

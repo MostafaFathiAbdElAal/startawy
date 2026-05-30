@@ -111,8 +111,15 @@ export default async function SelectConsultantPage() {
     );
   }
 
-  // Fetch all available consultants
+  // Fetch all available consultants (must be verified email & phone, and strictly consultants)
   const dbConsultants = await prisma.consultant.findMany({
+    where: {
+      user: {
+        type: "CONSULTANT",
+        isEmailVerified: true,
+        isPhoneVerified: true,
+      }
+    },
     include: { 
         user: {
             select: { name: true, image: true }

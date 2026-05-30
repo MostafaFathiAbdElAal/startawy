@@ -89,17 +89,17 @@ export default function ConsultantAvailabilityPage() {
 
         {/* Informational Guidance Section */}
         <div className="space-y-6">
-          <div className="bg-linear-to-br from-gray-900 to-slate-800 dark:from-teal-950 dark:to-slate-900 border border-gray-800 dark:border-teal-500/20 rounded-[2.5rem] p-8 text-white shadow-2xl overflow-hidden relative group">
+          <div className="bg-white dark:bg-gray-800 border border-teal-100/50 dark:border-teal-900/20 rounded-[2.5rem] p-8 shadow-sm hover:border-teal-500/20 transition-all overflow-hidden relative group">
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-teal-500/20 rounded-2xl flex items-center justify-center mb-6 border border-teal-500/30">
-                <Info className="w-6 h-6 text-teal-400" />
+              <div className="w-12 h-12 bg-teal-50 dark:bg-teal-900/30 rounded-2xl flex items-center justify-center mb-6 border border-teal-100 dark:border-teal-800/30">
+                <Info className="w-6 h-6 text-teal-600 dark:text-teal-400" />
               </div>
-              <h3 className="font-black text-2xl mb-4 tracking-tight">Strategic Impact</h3>
-              <p className="text-sm text-gray-300 leading-relaxed font-medium">
-                A structured availability schedule is the cornerstone of professional consulting. By providing clear windows, you reduce friction for high-value founders, resulting in a <span className="text-teal-400 font-bold text-lg">40% increase</span> in booking conversion and superior platform ratings.
+              <h3 className="font-black text-2xl mb-4 tracking-tight text-gray-900 dark:text-white">Strategic Impact</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+                A structured availability schedule is the cornerstone of professional consulting. By providing clear windows, you reduce friction for high-value founders, resulting in a <span className="text-teal-600 dark:text-teal-400 font-bold text-lg">40% increase</span> in booking conversion and superior platform ratings.
               </p>
             </div>
-            <Clock className="absolute -bottom-10 -right-10 w-48 h-48 text-white/5 rotate-12 group-hover:scale-110 transition-transform duration-700" />
+            <Clock className="absolute -bottom-10 -right-10 w-48 h-48 text-gray-100 dark:text-white/5 rotate-12 group-hover:scale-110 transition-transform duration-700 pointer-events-none" />
           </div>
 
           {/* Quick Notice Card */}

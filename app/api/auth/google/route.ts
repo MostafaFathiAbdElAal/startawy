@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OAuth2Client } from 'google-auth-library';
 import { prisma } from '@/lib/prisma';
-import { createSession } from '@/lib/auth-utils';
+import { createSession, verifyAuth } from '@/lib/auth-utils';
+import { cookies } from 'next/headers';
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -41,6 +42,24 @@ export async function POST(req: NextRequest) {
     }
 
     const { email, name, sub: googleId } = payload;
+
+    // Check if user is currently logged in (verifying/linking email)
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value;
+    const decoded = token ? await verifyAuth(token) : null;
+
+    if (decoded) {
+      // Find the logged-in user in database to check their email
+      const currentUser = await prisma.user.findUnique({
+        where: { id: Number(decoded.id) }
+      });
+
+      if (currentUser && currentUser.email.toLowerCase() !== email.toLowerCase()) {
+        return NextResponse.json({ 
+          error: "Verification failed. The selected Google account email does not match your registered email." 
+        }, { status: 400 });
+      }
+    }
 
     // 2. Find or Create User
     let user = await prisma.user.findUnique({

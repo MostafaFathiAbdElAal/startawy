@@ -13,6 +13,7 @@ export default async function BookConsultantPage() {
       user: {
         isEmailVerified: true,
         isPhoneVerified: true,
+        type: "CONSULTANT",
       }
     },
     include: {

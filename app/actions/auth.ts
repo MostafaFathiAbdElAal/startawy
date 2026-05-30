@@ -87,7 +87,7 @@ function obscureEmail(email: string) {
   return `${name[0]}${'*'.repeat(name.length - 2)}${name[name.length - 1]}@${domain}`;
 }
 
-export async function sendPasswordResetOTP(phone: string) {
+export async function sendPasswordResetOTP(phone: string, force = false) {
   try {
     // 1. Check if user exists with this phone
     const user = await prisma.user.findFirst({
@@ -104,23 +104,25 @@ export async function sendPasswordResetOTP(phone: string) {
     }
 
     // 2. Check if a valid OTP already exists
-    const existingOtp = await prisma.oTP.findFirst({
-      where: {
-        phone,
-        expiresAt: { gt: new Date() }
-      }
-    });
+    if (!force) {
+      const existingOtp = await prisma.oTP.findFirst({
+        where: {
+          phone,
+          expiresAt: { gt: new Date() }
+        }
+      });
 
-    if (existingOtp) {
-      const remainingSeconds = Math.floor((existingOtp.expiresAt.getTime() - Date.now()) / 1000);
-      return {
-        success: true,
-        user: {
-          name: user.name,
-          email: obscureEmail(user.email)
-        },
-        remainingSeconds // Return existing time to sync frontend timer
-      };
+      if (existingOtp) {
+        const remainingSeconds = Math.floor((existingOtp.expiresAt.getTime() - Date.now()) / 1000);
+        return {
+          success: true,
+          user: {
+            name: user.name,
+            email: obscureEmail(user.email)
+          },
+          remainingSeconds // Return existing time to sync frontend timer
+        };
+      }
     }
 
     // 3. Generate 6-digit OTP
@@ -233,7 +235,7 @@ export async function logoutToHome() {
   redirect('/');
 }
 
-export async function sendVerificationOTP() {
+export async function sendVerificationOTP(force = false) {
   console.log('[OTP] sendVerificationOTP called');
   try {
     const session = await getUser();
@@ -246,16 +248,18 @@ export async function sendVerificationOTP() {
     if (user.isPhoneVerified) return { error: 'Phone already verified' };
 
     // Check if a valid OTP already exists
-    const existingOtp = await prisma.oTP.findFirst({
-      where: {
-        phone: user.phone,
-        expiresAt: { gt: new Date() }
-      }
-    });
+    if (!force) {
+      const existingOtp = await prisma.oTP.findFirst({
+        where: {
+          phone: user.phone,
+          expiresAt: { gt: new Date() }
+        }
+      });
 
-    if (existingOtp) {
-      const remainingSeconds = Math.floor((existingOtp.expiresAt.getTime() - Date.now()) / 1000);
-      return { success: true, remainingSeconds };
+      if (existingOtp) {
+        const remainingSeconds = Math.floor((existingOtp.expiresAt.getTime() - Date.now()) / 1000);
+        return { success: true, remainingSeconds };
+      }
     }
 
     // Generate 6-digit OTP

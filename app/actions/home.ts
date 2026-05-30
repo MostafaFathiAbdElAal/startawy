@@ -6,14 +6,19 @@ export async function getHomePageData() {
   try {
     // 1. Fetch Approved Reviews (Feedback)
     const reviews = await prisma.feedback.findMany({
-      where: { status: "APPROVED" },
+      where: {
+        status: {
+          in: ["REVIEWED", "ACTION_TAKEN"]
+        }
+      },
       take: 3,
       orderBy: { createdAt: 'desc' },
       include: {
         user: {
           select: {
             name: true,
-            type: true
+            type: true,
+            image: true
           }
         }
       }
@@ -28,7 +33,11 @@ export async function getHomePageData() {
     // Calculate average rating
     const avgRatingAggregate = await prisma.feedback.aggregate({
       _avg: { rating: true },
-      where: { status: "APPROVED" }
+      where: {
+        status: {
+          in: ["REVIEWED", "ACTION_TAKEN"]
+        }
+      }
     });
 
     const stats = {

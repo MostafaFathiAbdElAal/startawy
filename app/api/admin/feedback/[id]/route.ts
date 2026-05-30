@@ -37,6 +37,8 @@ export async function PATCH(
       data: {
         comment: body.comment || undefined,
         rating: body.rating || undefined,
+        status: status || undefined,
+        category: category || undefined,
       },
     });
 

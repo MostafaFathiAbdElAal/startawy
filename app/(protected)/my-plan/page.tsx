@@ -26,6 +26,45 @@ export default async function MyPlanPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  const resolvedParams = await searchParams;
+  const sessionId = resolvedParams.session_id as string;
+
+  if (sessionId) {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value;
+    const userPayload = await verifyAuth(token);
+
+    if (!userPayload) {
+      redirect('/login');
+    }
+
+    try {
+      console.log(`[MY-PLAN-PAGE] Verifying session: ${sessionId}`);
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+      if (session.payment_status === 'paid' || session.status === 'complete') {
+        await fulfillPayment(session);
+        console.log(`[MY-PLAN-PAGE] Payment verified and fulfilled for session ${sessionId}`);
+
+        // If it's a Premium or PRO plan, redirect to consultant selection
+        const planNameLower = session.metadata?.planName?.toLowerCase() || '';
+        if (planNameLower.includes('premium') || planNameLower.includes('pro')) {
+           redirect('/select-consultant');
+        }
+        
+        // Successfully verified and fulfilled
+        redirect('/my-plan?success=true');
+      } else {
+        console.warn(`[MY-PLAN-PAGE] Session ${sessionId} is not paid (status: ${session.payment_status})`);
+        redirect('/my-plan?error=unpaid');
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) throw error;
+      console.error("[MY-PLAN-PAGE] Session verification failed:", error);
+      redirect('/my-plan?error=verification_failed');
+    }
+  }
+
   return (
     <div className="p-4 sm:p-8">
       {/* Toast Notifier for Payment Success */}
@@ -39,7 +78,7 @@ export default async function MyPlanPage({
 
       {/* Main Content with Suspense and Skeleton */}
       <Suspense fallback={<MyPlanSkeleton />}>
-        <PlanContent searchParams={searchParams} />
+        <PlanContent />
       </Suspense>
     </div>
   );
@@ -93,45 +132,13 @@ const systemFeatures = [
   }
 ];
 
-async function PlanContent({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+async function PlanContent() {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
   const userPayload = await verifyAuth(token);
 
   if (!userPayload) {
     redirect('/login');
-  }
-
-  // Handle Synchronous Verification after payment
-  const resolvedParams = await searchParams;
-  const sessionId = resolvedParams.session_id as string;
-
-  if (sessionId) {
-    try {
-      console.log(`[MY-PLAN] Verifying session: ${sessionId}`);
-      const session = await stripe.checkout.sessions.retrieve(sessionId);
-
-      if (session.payment_status === 'paid' || session.status === 'complete') {
-        await fulfillPayment(session);
-        console.log(`[MY-PLAN] Payment verified and fulfilled for session ${sessionId}`);
-
-        // If it's a Premium or PRO plan, redirect to consultant selection
-        const planNameLower = session.metadata?.planName?.toLowerCase() || '';
-        if (planNameLower.includes('premium') || planNameLower.includes('pro')) {
-           redirect('/select-consultant');
-        }
-        
-        // Successfully verified and fulfilled
-        redirect('/my-plan?success=true');
-      } else {
-        console.warn(`[MY-PLAN] Session ${sessionId} is not paid (status: ${session.payment_status})`);
-        redirect('/my-plan?error=unpaid');
-      }
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) throw error;
-      console.error("[MY-PLAN] Session verification failed:", error);
-      redirect('/my-plan?error=verification_failed');
-    }
   }
 
   const user = await prisma.user.findUnique({

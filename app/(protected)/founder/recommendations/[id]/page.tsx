@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/auth-utils";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { 
   Lightbulb, 
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import UserAvatar from "@/components/ui/UserAvatar";
+import RecommendationActions from "./RecommendationActions";
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +51,26 @@ async function getRecommendation(id: number) {
     }
   });
 
+  // If the status is PENDING when viewed by the founder, automatically transition it to VIEWED
+  if (rec && rec.status === "PENDING") {
+    // Update database status to VIEWED instantly
+    const updatedRec = await prisma.recommendation.update({
+      where: { id: rec.id },
+      data: { status: "VIEWED" },
+      include: {
+        consultant: {
+          include: {
+            user: {
+              select: { name: true, image: true, email: true }
+            }
+          }
+        }
+      }
+    });
+
+    return updatedRec;
+  }
+
   return rec;
 }
 
@@ -63,6 +84,7 @@ const priorityConfig: Record<string, { label: string; color: string; icon: React
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   PENDING:  { label: 'Pending Review', color: 'bg-amber-500 text-white' },
+  VIEWED:   { label: 'Viewed',         color: 'bg-blue-500 text-white' },
   ADOPTED:  { label: 'Adopted',        color: 'bg-emerald-500 text-white' },
   REJECTED: { label: 'Rejected',       color: 'bg-red-500 text-white' },
 };
@@ -171,6 +193,9 @@ export default async function RecommendationDetailPage({
               </p>
             </div>
           </div>
+
+          {/* Evaluate Actions Area */}
+          <RecommendationActions recommendationId={rec.id} currentStatus={rec.status} />
 
           {/* Metadata Footer */}
           <div className="flex flex-wrap gap-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400 font-medium">

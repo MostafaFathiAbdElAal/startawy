@@ -132,6 +132,7 @@ export default async function PlansPage() {
       founder: {
         include: {
           payments: {
+            where: { subscription: { isNot: null } },
             include: { subscription: true },
             orderBy: { transDate: 'desc' },
             take: 1

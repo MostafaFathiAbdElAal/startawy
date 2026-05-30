@@ -114,20 +114,20 @@ function SecuritySkeleton() {
 
 function PlanCardSkeleton() {
   return (
-    <div className="bg-slate-900 rounded-[32px] p-8 space-y-6">
+    <div className="bg-white dark:bg-slate-900 rounded-[32px] p-8 space-y-6 border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
       <div className="flex items-center gap-3">
-        <Bone className="w-6 h-6 rounded-full bg-slate-700" />
-        <Bone className="h-5 w-24 bg-slate-700" />
+        <Bone className="w-6 h-6 rounded-full" />
+        <Bone className="h-5 w-24" />
       </div>
       <div className="space-y-2">
-        <Bone className="h-3 w-20 bg-slate-700" />
-        <Bone className="h-9 w-40 bg-slate-700" />
+        <Bone className="h-3 w-20" />
+        <Bone className="h-9 w-40" />
       </div>
-      <div className="py-4 border-y border-white/10 flex items-center justify-between">
-        <Bone className="h-3 w-20 bg-slate-700" />
-        <Bone className="h-3 w-24 bg-slate-700" />
+      <div className="py-4 border-y border-slate-100 dark:border-white/10 flex items-center justify-between">
+        <Bone className="h-3 w-20" />
+        <Bone className="h-3 w-24" />
       </div>
-      <Bone className="h-14 w-full rounded-2xl bg-slate-700" />
+      <Bone className="h-14 w-full rounded-2xl" />
     </div>
   );
 }

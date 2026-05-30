@@ -195,6 +195,13 @@ export default function RecommendationForm({ clients, onSuccess }: Recommendatio
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [selectedFounderId, setSelectedFounderId] = useState("");
+  
+  // Controlled form states to ensure flawless empty reset without any reload/redirect
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [impact, setImpact] = useState("");
+  const [category, setCategory] = useState("STRATEGY");
+  const [priority, setPriority] = useState("MEDIUM");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -208,19 +215,12 @@ export default function RecommendationForm({ clients, onSuccess }: Recommendatio
       return;
     }
 
-    setLoading(true);
-    
-    const formData = new FormData(event.currentTarget);
-    const title = formData.get("title") as string;
-    const content = formData.get("content") as string;
-
     if (title.length < 10) {
       showToast({
         type: "error",
         title: "Invalid Title",
         message: "Title must be at least 10 characters long."
       });
-      setLoading(false);
       return;
     }
 
@@ -230,17 +230,18 @@ export default function RecommendationForm({ clients, onSuccess }: Recommendatio
         title: "Content Too Short",
         message: "Advice content must be at least 20 characters long."
       });
-      setLoading(false);
       return;
     }
+
+    setLoading(true);
 
     const data = {
       founderId: selectedFounderId,
       title,
       content,
-      category: formData.get("category"),
-      priority: formData.get("priority"),
-      impact: formData.get("impact"),
+      category,
+      priority,
+      impact: impact || undefined,
     };
 
     try {
@@ -258,8 +259,15 @@ export default function RecommendationForm({ clients, onSuccess }: Recommendatio
           title: "Recommendation Sent",
           message: "Recommendation sent successfully!"
         });
-        if (event.currentTarget) event.currentTarget.reset();
+        
+        // Reset controlled state values to empty strings instantly
+        setTitle("");
+        setContent("");
+        setImpact("");
+        setCategory("STRATEGY");
+        setPriority("MEDIUM");
         setSelectedFounderId("");
+        
         if (onSuccess) onSuccess();
       } else {
         showToast({
@@ -302,6 +310,8 @@ export default function RecommendationForm({ clients, onSuccess }: Recommendatio
             <label className="block text-xs font-black text-gray-400 dark:text-gray-500 mb-3 uppercase tracking-widest">Category</label>
             <select 
               name="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
               className="w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-bold focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 transition-all outline-none"
             >
               <option value="STRATEGY">Strategy</option>
@@ -318,6 +328,8 @@ export default function RecommendationForm({ clients, onSuccess }: Recommendatio
             <label className="block text-xs font-black text-gray-400 dark:text-gray-500 mb-3 uppercase tracking-widest">Priority Level</label>
             <select 
               name="priority"
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
               className="w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-bold focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 transition-all outline-none"
             >
               <option value="LOW">Low</option>
@@ -335,6 +347,8 @@ export default function RecommendationForm({ clients, onSuccess }: Recommendatio
             name="title"
             type="text" 
             required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Q3 Budget Optimization Strategy"
             className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-bold focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 transition-all outline-none placeholder:text-gray-300 dark:placeholder:text-gray-600"
           />
@@ -345,6 +359,8 @@ export default function RecommendationForm({ clients, onSuccess }: Recommendatio
           <input 
             name="impact"
             type="text" 
+            value={impact}
+            onChange={(e) => setImpact(e.target.value)}
             placeholder="e.g. 15% reduction in CAC"
             className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-bold focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 transition-all outline-none placeholder:text-gray-300 dark:placeholder:text-gray-600"
           />
@@ -356,6 +372,8 @@ export default function RecommendationForm({ clients, onSuccess }: Recommendatio
             name="content"
             required
             rows={6}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
             placeholder="Describe your strategic advice in detail..."
             className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-bold focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 transition-all outline-none resize-none placeholder:text-gray-300 dark:placeholder:text-gray-600"
           />

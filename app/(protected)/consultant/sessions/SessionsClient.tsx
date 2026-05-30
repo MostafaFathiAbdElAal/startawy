@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { 
   Calendar, Clock, Search, 
   MessageSquare, 
   CheckCircle2, AlertCircle, X, Save, Loader2,
-  Briefcase
+  Briefcase, Video
 } from 'lucide-react';
 import { updateSessionNotes } from '@/app/actions/consultant';
 import { useToast } from '@/components/providers/ToastProvider';
@@ -14,12 +15,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface Session {
   id: number;
   founderName: string;
+  founderEmail?: string;
+  founderImage?: string | null;
   businessName: string;
   date: Date;
   duration: number | string;
   notes: string | null;
   paymentStatus: string;
   amount: number;
+  meetingLink: string | null;
 }
 
 export default function SessionsClient({ initialSessions }: { initialSessions: Session[] }) {
@@ -169,12 +173,19 @@ export default function SessionsClient({ initialSessions }: { initialSessions: S
                   <tr key={session.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/20 transition-colors group">
                     <td className="px-6 py-6">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl flex items-center justify-center font-black text-sm border border-teal-500/20">
-                          {session.founderName.charAt(0)}
+                        <div className="w-10 h-10 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl flex items-center justify-center font-black text-sm border border-teal-500/20 overflow-hidden relative">
+                          {session.founderImage ? (
+                            <Image src={session.founderImage} alt={session.founderName} width={40} height={40} className="w-full h-full object-cover" />
+                          ) : (
+                            session.founderName.charAt(0)
+                          )}
                         </div>
                         <div>
                           <p className="font-bold text-slate-900 dark:text-white leading-tight">{session.founderName}</p>
                           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{session.businessName}</p>
+                          {session.founderEmail && (
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5 truncate">{session.founderEmail}</p>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -197,17 +208,30 @@ export default function SessionsClient({ initialSessions }: { initialSessions: S
                       {getStatusBadge(session.paymentStatus, session.date)}
                     </td>
                     <td className="px-6 py-6 text-right">
-                      <button
-                        onClick={() => handleOpenNotes(session)}
-                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                          session.notes 
-                            ? "bg-slate-50 dark:bg-slate-800 text-teal-600 dark:text-teal-400 border border-teal-500/10"
-                            : "bg-teal-600 text-white shadow-lg shadow-teal-500/20 hover:scale-105 active:scale-95"
-                        }`}
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                        {session.notes ? "View Notes" : "Add Note"}
-                      </button>
+                      <div className="flex items-center justify-end gap-3">
+                        {session.paymentStatus === 'PAID' && session.meetingLink && (
+                          <a
+                            href={session.meetingLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95"
+                          >
+                            <Video className="w-3.5 h-3.5" />
+                            Join Meeting
+                          </a>
+                        )}
+                        <button
+                          onClick={() => handleOpenNotes(session)}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                            session.notes 
+                              ? "bg-slate-50 dark:bg-slate-800 text-teal-600 dark:text-teal-400 border border-teal-500/10"
+                              : "bg-teal-600 text-white shadow-lg shadow-teal-500/20 hover:scale-105 active:scale-95"
+                          }`}
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          {session.notes ? "View Notes" : "Add Note"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -229,12 +253,19 @@ export default function SessionsClient({ initialSessions }: { initialSessions: S
             <div key={session.id} className="bg-white dark:bg-slate-900 p-5 rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-sm active:scale-[0.98] transition-all">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl flex items-center justify-center font-black text-sm border border-teal-500/20">
-                    {session.founderName.charAt(0)}
+                  <div className="w-10 h-10 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl flex items-center justify-center font-black text-sm border border-teal-500/20 overflow-hidden relative">
+                    {session.founderImage ? (
+                      <Image src={session.founderImage} alt={session.founderName} width={40} height={40} className="w-full h-full object-cover" />
+                    ) : (
+                      session.founderName.charAt(0)
+                    )}
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 dark:text-white leading-tight">{session.founderName}</h3>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{session.businessName}</p>
+                    {session.founderEmail && (
+                      <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">{session.founderEmail}</p>
+                    )}
                   </div>
                 </div>
                 {getStatusBadge(session.paymentStatus, session.date)}
@@ -266,12 +297,25 @@ export default function SessionsClient({ initialSessions }: { initialSessions: S
                   <Briefcase className="w-3.5 h-3.5 text-slate-400" />
                   <span className="text-[11px] font-bold text-slate-500">{getDurationLabel(session.duration)}</span>
                 </div>
-                <button
-                  onClick={() => handleOpenNotes(session)}
-                  className="px-4 py-2 bg-teal-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-teal-500/20 active:scale-95"
-                >
-                  {session.notes ? "View Notes" : "Add Note"}
-                </button>
+                <div className="flex items-center gap-2">
+                  {session.paymentStatus === 'PAID' && session.meetingLink && (
+                    <a
+                      href={session.meetingLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-2 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center gap-1"
+                    >
+                      <Video className="w-3 h-3" />
+                      Join
+                    </a>
+                  )}
+                  <button
+                    onClick={() => handleOpenNotes(session)}
+                    className="px-4 py-2 bg-teal-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-teal-500/20 active:scale-95"
+                  >
+                    {session.notes ? "View Notes" : "Add Note"}
+                  </button>
+                </div>
               </div>
             </div>
           ))

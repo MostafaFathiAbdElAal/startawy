@@ -25,8 +25,6 @@ export async function getConsultantDashboardData() {
   const consultant = await getAuthConsultant();
   if (!consultant) return null;
 
-  const PLATFORM_FEE = 0.15; // 15% platform commission
-
   // All sessions for this consultant
   const allSessions = await prisma.session.findMany({
     where: { consultantId: consultant.id },
@@ -39,21 +37,49 @@ export async function getConsultantDashboardData() {
 
   const now = new Date();
 
-  // Upcoming sessions (future)
+  // Upcoming/completed sessions & active client counts
   const upcomingSessions = allSessions.filter(s => s.date > now);
-  // Completed sessions (past)
   const completedSessions = allSessions.filter(s => s.date <= now);
-
-  // Unique clients (unique founderId)
   const uniqueClientIds = new Set(allSessions.map(s => s.founderId));
   const activeClients = uniqueClientIds.size;
 
-  // Total gross earnings from paid sessions
-  const totalGrossEarnings = allSessions
+  const PLATFORM_FEE = 0.15; // 15% platform commission
+  const ADVISOR_COMMISSION_RATE = 0.40; // 40% advisor commission on plans
+
+  // 1. Session Earnings
+  const sessionGross = allSessions
     .filter(s => s.paymentStatus === 'PAID' && s.payment)
     .reduce((sum, s) => sum + (s.payment?.amount ?? 0), 0);
+  const sessionNet = sessionGross * (1 - PLATFORM_FEE);
 
-  const totalNetEarnings = totalGrossEarnings * (1 - PLATFORM_FEE);
+  // 2. Subscription Commission Earnings (followers who chose this consultant)
+  const followedFounders = await prisma.startupFounder.findMany({
+    where: { followUpConsultantId: consultant.id },
+  });
+  const followedFounderIds = followedFounders.map(f => f.id);
+
+  const rawSubscriptionPayments = followedFounderIds.length > 0 ? await prisma.payment.findMany({
+    where: {
+      founderId: { in: followedFounderIds },
+      sessionId: null,
+    },
+  }) : [];
+
+  // Deduplicate subscription payments
+  const uniqueSubsMap = new Map<string, typeof rawSubscriptionPayments[0]>();
+  for (const p of rawSubscriptionPayments) {
+    const key = p.paymentMethod || `${p.founderId}-${p.transDate.getTime()}-${p.amount}`;
+    if (!uniqueSubsMap.has(key)) {
+      uniqueSubsMap.set(key, p);
+    }
+  }
+  const subscriptionPayments = Array.from(uniqueSubsMap.values());
+
+  const subscriptionGross = subscriptionPayments.reduce((sum, p) => sum + p.amount, 0);
+  const subscriptionNet = subscriptionGross * ADVISOR_COMMISSION_RATE;
+
+  // Combined Net Earnings
+  const totalNetEarnings = sessionNet + subscriptionNet;
 
   // Monthly earnings chart – last 6 months
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -67,11 +93,22 @@ export async function getConsultantDashboardData() {
     const m = d.getMonth();
     const y = d.getFullYear();
 
+    // Calculate session net for this month
     const monthSessions = allSessions.filter(
       s => s.date.getMonth() === m && s.date.getFullYear() === y && s.paymentStatus === 'PAID' && s.payment
     );
-    const gross = monthSessions.reduce((sum, s) => sum + (s.payment?.amount ?? 0), 0);
-    const net = gross * (1 - PLATFORM_FEE);
+    const mSessionGross = monthSessions.reduce((sum, s) => sum + (s.payment?.amount ?? 0), 0);
+    const mSessionNet = mSessionGross * (1 - PLATFORM_FEE);
+
+    // Calculate subscription commission net for this month
+    const monthSubscriptions = subscriptionPayments.filter(
+      p => p.transDate.getMonth() === m && p.transDate.getFullYear() === y
+    );
+    const mSubGross = monthSubscriptions.reduce((sum, p) => sum + p.amount, 0);
+    const mSubNet = mSubGross * ADVISOR_COMMISSION_RATE;
+
+    const net = mSessionNet + mSubNet;
+    const gross = mSessionGross + mSubGross;
 
     earningsData.push({ month: monthNames[m], gross, net });
 
@@ -135,12 +172,15 @@ export async function getConsultantSessions() {
   return sessions.map(s => ({
     id: s.id,
     founderName: s.founder.user.name,
+    founderEmail: s.founder.user.email,
+    founderImage: s.founder.user.image,
     businessName: s.founder.businessName,
     date: s.date,
     duration: s.duration,
     notes: s.notes,
     paymentStatus: s.paymentStatus,
     amount: s.payment?.amount ?? 0,
+    meetingLink: s.meetingLink,
   }));
 }
 
@@ -184,14 +224,14 @@ export async function getConsultantClients() {
   }));
 }
 
-// ─── Earnings ─────────────────────────────────────────────────────────────────
-
 export async function getConsultantEarnings() {
   const consultant = await getAuthConsultant();
   if (!consultant) return null;
 
   const PLATFORM_FEE = 0.15; // 15% platform commission
+  const ADVISOR_COMMISSION_RATE = 0.40; // 40% advisor commission on premium plans
 
+  // 1. Paid Sessions
   const paidSessions = await prisma.session.findMany({
     where: { consultantId: consultant.id, paymentStatus: 'PAID' },
     include: {
@@ -201,15 +241,68 @@ export async function getConsultantEarnings() {
     orderBy: { date: 'desc' },
   });
 
-  const records = paidSessions.map(s => ({
-    id: s.id,
-    founderName: s.founder.user.name,
-    businessName: s.founder.businessName,
-    date: s.date,
-    gross: s.payment?.amount ?? 0,
-    platformFee: (s.payment?.amount ?? 0) * PLATFORM_FEE,
-    net: (s.payment?.amount ?? 0) * (1 - PLATFORM_FEE),
-  }));
+  // 2. Premium subscription commissions (followers who chose this consultant)
+  const followers = await prisma.startupFounder.findMany({
+    where: { followUpConsultantId: consultant.id },
+  });
+  const followerIds = followers.map(f => f.id);
+
+  const rawSubscriptionPayments = followerIds.length > 0 ? await prisma.payment.findMany({
+    where: {
+      founderId: { in: followerIds },
+      sessionId: null,
+    },
+    include: {
+      founder: { include: { user: true } },
+    },
+    orderBy: { transDate: 'desc' },
+  }) : [];
+
+  // Deduplicate subscription payments
+  const uniqueSubsMap = new Map<string, typeof rawSubscriptionPayments[0]>();
+  for (const p of rawSubscriptionPayments) {
+    const key = p.paymentMethod || `${p.founderId}-${p.transDate.getTime()}-${p.amount}`;
+    if (!uniqueSubsMap.has(key)) {
+      uniqueSubsMap.set(key, p);
+    }
+  }
+  const subscriptionPayments = Array.from(uniqueSubsMap.values());
+
+  // Map session earnings
+  const sessionRecords = paidSessions.map(s => {
+    const gross = s.payment?.amount ?? 0;
+    const fee = gross * PLATFORM_FEE;
+    const net = gross * (1 - PLATFORM_FEE);
+    return {
+      id: `session-${s.id}`,
+      founderName: s.founder.user.name,
+      businessName: `${s.founder.businessName} (Session)`,
+      date: s.date,
+      gross,
+      platformFee: fee,
+      net,
+    };
+  });
+
+  // Map subscription commissions
+  const subscriptionRecords = subscriptionPayments.map(p => {
+    const gross = p.amount;
+    const net = gross * ADVISOR_COMMISSION_RATE;
+    return {
+      id: `sub-${p.id}`,
+      founderName: p.founder.user.name,
+      businessName: `${p.founder.businessName} (${p.paymentType || 'Premium'} Plan Commission)`,
+      date: p.transDate,
+      gross: net, // For advisors, their gross and net premium income are their commission
+      platformFee: 0,
+      net,
+    };
+  });
+
+  // Merge and sort by date descending
+  const records = [...sessionRecords, ...subscriptionRecords].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
 
   const totalGross = records.reduce((sum, r) => sum + r.gross, 0);
   const totalNet = records.reduce((sum, r) => sum + r.net, 0);

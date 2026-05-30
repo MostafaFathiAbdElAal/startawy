@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { User, Mail, Smartphone, Briefcase, Save, Loader2, UserCheck, Target } from 'lucide-react';
+import { User, Mail, Briefcase, Save, Loader2, UserCheck, Target } from 'lucide-react';
 import { updateProfile } from '@/app/actions/user';
 import { UserWithRelations } from '@/lib/types/user';
 import { useRouter } from 'next/navigation';
 import DateInput from '@/components/ui/DateInput';
 import { useToast } from '@/components/providers/ToastProvider';
+import PhoneInput from '@/components/ui/PhoneInput';
 
 import ProfileImageUpload from '@/components/profile/ProfileImageUpload';
 
@@ -17,6 +18,7 @@ interface ProfileEditFormProps {
 export default function ProfileEditForm({ user }: ProfileEditFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [phone, setPhone] = useState(user.phone ?? '');
   const router = useRouter();
   const { showToast } = useToast();
   const [foundingDate, setFoundingDate] = useState(user.founder?.foundingDate ? new Date(user.founder.foundingDate).toISOString().split('T')[0] : '');
@@ -27,10 +29,11 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
     setError(null);
 
     const formData = new FormData(e.target as HTMLFormElement);
-    // Explicitly add foundingDate to FormData since DateInput uses a hidden field but we might need to sync it
+    // Explicitly add foundingDate and phone to FormData since we manage their state
     if (user.type === 'FOUNDER') {
       formData.set('foundingDate', foundingDate);
     }
+    formData.set('phone', phone);
     const data = Object.fromEntries(formData.entries()) as unknown as Parameters<typeof updateProfile>[0];
 
     const res = await updateProfile(data);
@@ -103,15 +106,11 @@ export default function ProfileEditForm({ user }: ProfileEditFormProps) {
           {/* Phone Input */}
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Phone Number</label>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                <Smartphone className="h-5 w-5 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
-              </div>
-              <input
-                name="phone"
-                type="text"
-                defaultValue={user.phone ?? ''}
-                className="w-full h-14 pl-12 pr-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all font-semibold text-sm text-slate-900 dark:text-white outline-hidden focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500"
+            <div className="auth-field relative">
+              <PhoneInput
+                value={phone}
+                onChange={(val) => setPhone(val)}
+                className="w-full"
               />
             </div>
           </div>

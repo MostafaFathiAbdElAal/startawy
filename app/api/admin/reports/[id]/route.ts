@@ -136,14 +136,31 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { title, industry, description, pages } = body;
+    const { title, industry, description, pages, image } = body;
+
+    interface ReportMetadata {
+      title?: string;
+      description?: string;
+      pages?: number;
+      image?: string;
+      pdfUrl?: string;
+    }
 
     // Parse existing metadata from the link column
-    let metadata: Record<string, unknown> = {};
+    let metadata: ReportMetadata = {};
     try {
-      metadata = JSON.parse(existingReport.link);
+      const parsed = JSON.parse(existingReport.link);
+      metadata = parsed && typeof parsed === "object" ? parsed : {};
     } catch {
       metadata = {};
+    }
+
+    // If a new image is provided, delete the old one from Cloudinary (if applicable)
+    if (image !== undefined && image !== metadata.image) {
+      if (metadata.image && metadata.image.includes("cloudinary.com")) {
+        await deleteFromCloudinary(metadata.image);
+      }
+      metadata.image = image;
     }
 
     // Update only the provided metadata fields

@@ -110,6 +110,7 @@ export default async function RecommendationsPage() {
               {/* Status Badge */}
               <div className="absolute top-6 right-6 font-bold uppercase tracking-widest text-[10px]">
                 {rec.status === 'PENDING' && <span className="px-3 py-1 bg-amber-500 text-white rounded-full">PENDING</span>}
+                {rec.status === 'VIEWED' && <span className="px-3 py-1 bg-blue-500 text-white rounded-full">VIEWED</span>}
                 {rec.status === 'ADOPTED' && <span className="px-3 py-1 bg-emerald-500 text-white rounded-full">ADOPTED</span>}
                 {rec.status === 'REJECTED' && <span className="px-3 py-1 bg-red-500 text-white rounded-full">REJECTED</span>}
               </div>

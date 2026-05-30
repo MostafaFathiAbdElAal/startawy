@@ -88,7 +88,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
   }, [initialUser]);
 
 
-  const handleStartPhoneVerification = async () => {
+  const handleStartPhoneVerification = async (force = false) => {
     // Close other forms to prevent overlapping
     setShowPasswordModal(false);
     setShowDeleteModal(false);
@@ -96,7 +96,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
     setOtpLoading(true);
     setOtpError(null);
     try {
-      const res = await sendVerificationOTP();
+      const res = await sendVerificationOTP(force);
       if (res.success) {
         setShowOtpView(true);
       } else {
@@ -329,7 +329,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
           ) : (
             <div className="mt-auto">
               <button
-                onClick={handleStartPhoneVerification}
+                onClick={() => handleStartPhoneVerification()}
                 disabled={otpLoading}
                 className="w-full py-3 bg-teal-600 dark:bg-teal-500 text-white dark:text-slate-900 rounded-xl font-bold hover:scale-[1.02] active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-2 shadow-sm shadow-teal-500/20"
               >
@@ -506,7 +506,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                       </div>
                     )}
                   </button>
-                  <button onClick={handleStartPhoneVerification} disabled={otpLoading} className="text-[10px] font-black text-slate-400 hover:text-teal-600 uppercase tracking-widest transition-colors mb-4">Didn&apos;t get the code? <span className="underline decoration-slate-300">Resend</span></button>
+                  <button onClick={() => handleStartPhoneVerification(true)} disabled={otpLoading} className="text-[10px] font-black text-slate-400 hover:text-teal-600 uppercase tracking-widest transition-colors mb-4">Didn&apos;t get the code? <span className="underline decoration-slate-300">Resend</span></button>
                 </div>
               </motion.div>
             ) : (
@@ -517,7 +517,7 @@ export default function SecurityActions({ user: initialUser }: SecurityActionsPr
                 </h3>
                 <div className="grid gap-4">
                   {!user.isPhoneVerified && (
-                    <button onClick={handleStartPhoneVerification} className="w-full flex flex-col sm:flex-row items-center sm:justify-between p-4 sm:p-5 bg-linear-to-r from-teal-500/10 to-teal-500/5 dark:from-teal-900/20 dark:to-teal-900/10 rounded-2xl border border-teal-500/20 hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-500/10 transition-all group relative overflow-hidden gap-4 sm:gap-5">
+                    <button onClick={() => handleStartPhoneVerification()} className="w-full flex flex-col sm:flex-row items-center sm:justify-between p-4 sm:p-5 bg-linear-to-r from-teal-500/10 to-teal-500/5 dark:from-teal-900/20 dark:to-teal-900/10 rounded-2xl border border-teal-500/20 hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-500/10 transition-all group relative overflow-hidden gap-4 sm:gap-5">
                       <div className="absolute inset-0 bg-linear-to-r from-teal-500/0 via-teal-500/5 to-teal-500/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                       <div className="flex items-center gap-4 sm:gap-5 relative z-10 w-full">
                         <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center border border-teal-200 dark:border-teal-800 shadow-sm text-teal-600 transition-transform group-hover:scale-110 shrink-0">

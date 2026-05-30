@@ -83,3 +83,35 @@ export async function getConsultantRecommendations() {
 
   return await RecommendationService.getRecommendationsByConsultant(consultant.id);
 }
+
+export async function updateRecommendationStatus(id: number, status: 'ADOPTED' | 'REJECTED' | 'VIEWED') {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth-token")?.value;
+  const decoded = await verifyAuth(token);
+
+  if (!decoded || decoded.role !== "FOUNDER") {
+    return { error: "Unauthorized" };
+  }
+
+  const founder = await prisma.startupFounder.findUnique({
+    where: { userId: Number(decoded.id) }
+  });
+
+  if (!founder) return { error: "Founder profile not found" };
+
+  try {
+    const updated = await prisma.recommendation.update({
+      where: { id, founderId: founder.id },
+      data: { status }
+    });
+
+    revalidatePath("/consultant/recommendations");
+    revalidatePath("/founder/recommendations");
+    revalidatePath(`/founder/recommendations/${id}`);
+    
+    return { success: true, recommendation: updated };
+  } catch (error) {
+    console.error("Failed to update recommendation status:", error);
+    return { error: "Database error" };
+  }
+}

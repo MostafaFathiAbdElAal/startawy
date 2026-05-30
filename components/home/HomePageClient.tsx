@@ -6,10 +6,10 @@ import Link from "next/link";
 import {
   TrendingUp, MessageSquare, Users, BarChart3, Target, Shield,
   ArrowRight, CheckCircle, Sparkles, Zap, Award, Globe,
-  Menu, X, User as UserIcon, Star, Quote
+  Menu, X, User as UserIcon, Star, Quote, Sun, Moon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import ThemeToggle from "@/components/ThemeToggle";
+import { useTheme } from "next-themes";
 import Counter from "@/components/Counter";
 import Footer from "@/components/layout/Footer";
 import heroImage from "@/assets/imgs/hero.png";
@@ -18,7 +18,7 @@ interface Review {
   id: number;
   rating: number;
   comment: string;
-  user: { name: string; type: string | null } | null;
+  user: { name: string; type: string | null; image: string | null } | null;
   createdAt: Date;
 }
 
@@ -92,6 +92,13 @@ export default function HomePageClient({ initialReviews, initialStats, serverIsA
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
 
+  const { setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
@@ -123,6 +130,8 @@ export default function HomePageClient({ initialReviews, initialStats, serverIsA
       }
     };
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
     checkAuthStatus();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -139,8 +148,6 @@ export default function HomePageClient({ initialReviews, initialStats, serverIsA
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-teal-50 dark:from-gray-900 dark:via-gray-950 dark:to-teal-950 transition-colors duration-500 font-sans">
-      <ThemeToggle />
-
       {/* Navigation */}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
@@ -172,6 +179,15 @@ export default function HomePageClient({ initialReviews, initialStats, serverIsA
                 Reviews
               </a>
 
+              {/* Theme Toggle Button for Desktop */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                title={mounted && resolvedTheme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
+                {mounted && resolvedTheme === 'dark' ? <Sun className="w-5.5 h-5.5" /> : <Moon className="w-5.5 h-5.5" />}
+              </button>
+
               {isAuthenticated ? (
                 <div className="flex items-center gap-3">
                   <Link
@@ -200,8 +216,15 @@ export default function HomePageClient({ initialReviews, initialStats, serverIsA
               )}
             </div>
 
-            {/* Mobile Menu Button */}
-            <div className="md:hidden flex items-center gap-4">
+            {/* Mobile Menu Button + Theme Toggle */}
+            <div className="md:hidden flex items-center gap-2">
+              <button
+                onClick={toggleTheme}
+                className="p-2 text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                title={mounted && resolvedTheme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
+                {mounted && resolvedTheme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="text-gray-700 dark:text-gray-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
@@ -588,10 +611,19 @@ export default function HomePageClient({ initialReviews, initialStats, serverIsA
                 <div className="my-6 border-t border-gray-100 dark:border-gray-700"></div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-linear-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-md flex-shrink-0">
-                    <span className="text-white font-bold text-base">
-                      {review.user?.name?.charAt(0).toUpperCase() || "U"}
-                    </span>
+                  <div className="relative w-11 h-11 rounded-full overflow-hidden bg-linear-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-md flex-shrink-0 border border-white dark:border-slate-800">
+                    {review.user?.image ? (
+                      <Image
+                        src={review.user.image}
+                        alt={review.user.name || "User"}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span className="text-white font-bold text-base">
+                        {review.user?.name?.charAt(0).toUpperCase() || "U"}
+                      </span>
+                    )}
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900 dark:text-white text-sm">{review.user?.name || "Anonymous"}</p>

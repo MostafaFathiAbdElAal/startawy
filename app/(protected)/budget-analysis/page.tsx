@@ -24,6 +24,7 @@ export default async function BudgetAnalysisPage() {
       founder: {
         include: {
           payments: {
+            where: { subscription: { isNot: null } },
             include: { subscription: true },
             orderBy: { transDate: 'desc' },
             take: 1

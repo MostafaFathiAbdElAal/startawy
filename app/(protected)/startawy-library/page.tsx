@@ -23,6 +23,8 @@ export default async function StartawyLibraryPage() {
       founder: {
         include: {
           payments: {
+            where: { subscription: { isNot: null } },
+            include: { subscription: true },
             orderBy: { transDate: 'desc' },
             take: 1
           }
@@ -38,8 +40,11 @@ export default async function StartawyLibraryPage() {
 
   // Plan calculation for UI display
   const lastPayment = user.founder?.payments?.[0];
+  const subscription = lastPayment?.subscription;
+  const isActive = subscription?.status === 'ACTIVE' && new Date() < new Date(subscription.endDate);
+
   const userPlan = (() => {
-    if (!lastPayment) return 'Free';
+    if (!isActive || !lastPayment) return 'Free';
     const typeLower = lastPayment.paymentType?.toLowerCase() || '';
     if (typeLower.includes('pro') || typeLower.includes('premium') || lastPayment.amount >= 200) {
       return 'Premium';

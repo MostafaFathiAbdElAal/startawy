@@ -9,6 +9,7 @@ export class UserService {
         founder: {
           include: {
             payments: {
+              where: { subscription: { isNot: null } },
               include: {
                 subscription: true
               },

@@ -29,16 +29,24 @@ export async function GET(req: NextRequest) {
         include: { 
           founder: {
             include: {
-              payments: { orderBy: { transDate: 'desc' }, take: 1 }
+              payments: {
+                where: { subscription: { isNot: null } },
+                include: { subscription: true },
+                orderBy: { transDate: 'desc' },
+                take: 1
+              }
             }
           } 
         }
       });
 
       const latestPayment = dbUser?.founder?.payments?.[0];
+      const subscription = latestPayment?.subscription;
+      const isActive = subscription?.status === 'ACTIVE' && new Date() < new Date(subscription.endDate);
+
       const isPremium =
         dbUser?.type === 'ADMIN' ||
-        (latestPayment && (
+        (isActive && latestPayment && (
           (latestPayment.paymentType && (
             latestPayment.paymentType.toLowerCase().includes('pro') || 
             latestPayment.paymentType.toLowerCase().includes('premium')

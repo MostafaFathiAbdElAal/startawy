@@ -138,7 +138,7 @@ export default function ManageAdminsPage() {
           title: 'Ownership Transferred',
           message: 'The Super Admin ownership has been successfully transferred. You are now a regular administrator.'
         });
-        window.location.reload();
+        window.location.href = '/admin/dashboard';
       } else {
         showToast({
           type: 'error',

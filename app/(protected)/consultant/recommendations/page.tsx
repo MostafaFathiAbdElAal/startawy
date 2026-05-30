@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Lightbulb, User, Clock, Send, Info, Loader2 } from 'lucide-react';
+import { Lightbulb, User, Clock, Send, Info } from 'lucide-react';
 import RecommendationForm from './RecommendationForm';
 import { useToast } from "@/components/providers/ToastProvider";
 
@@ -171,7 +171,11 @@ export default function ConsultantRecommendationsPage() {
                       <span className={`text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest ${
                         recItem.status === 'ADOPTED' 
                           ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' 
-                          : 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400'
+                          : recItem.status === 'VIEWED'
+                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400'
+                          : recItem.status === 'REJECTED'
+                          ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+                          : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
                       }`}>
                         {recItem.status}
                       </span>

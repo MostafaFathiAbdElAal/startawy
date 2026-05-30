@@ -133,7 +133,12 @@ export default async function DashboardPage() {
               </div>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Recent Activities</h3>
             </div>
-            <span className="text-xs font-medium text-teal-600 dark:text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-full">Live Updates</span>
+            <Link 
+              href="/my-payments" 
+              className="text-xs font-semibold text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              View All
+            </Link>
           </div>
 
           <div className="p-4 flex-1">
