@@ -32,9 +32,10 @@ interface PhoneInputProps {
   error?: boolean;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
 }
 
-export default function PhoneInput({ value, onChange, error, placeholder, className }: PhoneInputProps) {
+export default function PhoneInput({ value, onChange, error, placeholder, className, disabled }: PhoneInputProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<Country>(() => {
     if (typeof window !== 'undefined' && value) {
@@ -89,10 +90,11 @@ export default function PhoneInput({ value, onChange, error, placeholder, classN
       <div className="relative" ref={dropdownRef}>
         <button
           type="button"
+          disabled={disabled}
           onClick={() => setIsOpen(!isOpen)}
           className={`flex items-center gap-2 px-3 h-[52px] bg-gray-100 dark:bg-gray-800 border-1.5 rounded-xl transition-all ${
             isOpen ? 'border-teal-500 ring-2 ring-teal-500/10' : error ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
-          }`}
+          } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <span className="text-xl">{selectedCountry.flag}</span>
           <span className="font-semibold text-gray-700 dark:text-gray-200">+{selectedCountry.code}</span>
@@ -150,8 +152,9 @@ export default function PhoneInput({ value, onChange, error, placeholder, classN
           type="text"
           value={localNumber}
           onChange={handleNumberChange}
+          disabled={disabled}
           placeholder={placeholder || "1012345678"}
-          className={`auth-input w-full h-[52px] ${error ? 'auth-input-error' : ''}`}
+          className={`auth-input w-full h-[52px] ${error ? 'auth-input-error' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         />
       </div>
     </div>

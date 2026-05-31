@@ -87,12 +87,19 @@ function obscureEmail(email: string) {
   return `${name[0]}${'*'.repeat(name.length - 2)}${name[name.length - 1]}@${domain}`;
 }
 
-export async function sendPasswordResetOTP(phone: string, force = false) {
+export async function sendPasswordResetOTP(phone: string, selectedEmail?: string, force = false) {
   try {
     // 1. Check if user exists with this phone
-    const user = await prisma.user.findFirst({
-      where: { phone: phone },
-    });
+    let user;
+    if (selectedEmail) {
+      user = await prisma.user.findUnique({
+        where: { email: selectedEmail },
+      });
+    } else {
+      user = await prisma.user.findFirst({
+        where: { phone: phone },
+      });
+    }
 
     if (!user) {
       return { error: 'No account found with this phone number.' };
@@ -187,7 +194,7 @@ export async function verifyOTP(phone: string, otp: string) {
   }
 }
 
-export async function resetPassword(phone: string, otp: string, newPassword: string) {
+export async function resetPassword(phone: string, otp: string, newPassword: string, selectedEmail?: string) {
   try {
     // 1. Verify OTP
     const storedOtp = await prisma.oTP.findFirst({
@@ -206,7 +213,12 @@ export async function resetPassword(phone: string, otp: string, newPassword: str
     const hashedPassword = await bcrypt.hash(newPassword, 12);
 
     // 3. Update User Password
-    const user = await prisma.user.findFirst({ where: { phone } });
+    let user;
+    if (selectedEmail) {
+      user = await prisma.user.findUnique({ where: { email: selectedEmail } });
+    } else {
+      user = await prisma.user.findFirst({ where: { phone } });
+    }
     if (!user) return { error: 'User not found' };
 
     await prisma.user.update({

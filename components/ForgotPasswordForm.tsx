@@ -24,6 +24,10 @@ export default function ForgotPasswordForm() {
     const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    
+    // Support multiple accounts linked to a single phone number
+    const [usersList, setUsersList] = useState<{ id: number; name: string; email: string; realEmail: string }[]>([]);
+    const [selectedEmail, setSelectedEmail] = useState<string>('');
 
     useEffect(() => {
         if (currentStep === 1 && timeLeft > 0) {
@@ -45,7 +49,7 @@ export default function ForgotPasswordForm() {
         setLoading(true);
         setError(null);
         formik.setFieldValue('otp', ''); // Clear the old OTP field
-        const res = await sendPasswordResetOTP(formik.values.phone, true);
+        const res = await sendPasswordResetOTP(formik.values.phone, selectedEmail || undefined, true);
         if (res.success) {
             setTimeLeft(300); // Start a new 5-minute timer immediately
         } else {
@@ -82,16 +86,60 @@ export default function ForgotPasswordForm() {
             setLoading(true);
 
             if (currentStep === 0) {
-                // Step 1: Send OTP
-                const res = await sendPasswordResetOTP(values.phone);
-                if (res.success && res.user) {
-                    setIdentifiedUser(res.user);
-                    // Use remaining time from server if it exists, otherwise start fresh 5 mins
-                    const remaining = (res as { remainingSeconds?: number }).remainingSeconds;
-                    setTimeLeft(remaining || 300);
-                    setCurrentStep(1);
-                } else {
-                    setError(res.error || 'Failed to send OTP');
+                // If multiple users are found and listed, and one is selected, proceed to send OTP
+                if (usersList.length > 1 && selectedEmail) {
+                    const res = await sendPasswordResetOTP(values.phone, selectedEmail);
+                    if (res.success && res.user) {
+                        setIdentifiedUser(res.user);
+                        const remaining = (res as { remainingSeconds?: number }).remainingSeconds;
+                        setTimeLeft(remaining || 300);
+                        setCurrentStep(1);
+                    } else {
+                        setError(res.error || 'Failed to send OTP');
+                    }
+                    setLoading(false);
+                    return;
+                }
+
+                // First submission: retrieve accounts linked to the phone number
+                try {
+                    const response = await fetch('/api/auth/find-users-by-phone', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone: values.phone }),
+                    });
+                    
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        setError(data.error || 'Failed to find accounts linked to this phone.');
+                        setLoading(false);
+                        return;
+                    }
+
+                    const accounts = data.users || [];
+                    if (accounts.length === 0) {
+                        setError('No account found with this phone number or it is not verified. Please verify it in your profile first.');
+                    } else if (accounts.length === 1) {
+                        // Exactly one account - proceed automatically
+                        const email = accounts[0].realEmail;
+                        setSelectedEmail(email);
+                        const res = await sendPasswordResetOTP(values.phone, email);
+                        if (res.success && res.user) {
+                            setIdentifiedUser(res.user);
+                            const remaining = (res as { remainingSeconds?: number }).remainingSeconds;
+                            setTimeLeft(remaining || 300);
+                            setCurrentStep(1);
+                        } else {
+                            setError(res.error || 'Failed to send OTP');
+                        }
+                    } else {
+                        // Multiple accounts - show selection
+                        setUsersList(accounts);
+                        setSelectedEmail(accounts[0].realEmail);
+                    }
+                } catch (err) {
+                    console.error('Fetch users error:', err);
+                    setError('An error occurred. Please try again.');
                 }
             } else if (currentStep === 1) {
                 // Step 2: Validate OTP on server before moving to step 3
@@ -103,7 +151,7 @@ export default function ForgotPasswordForm() {
                 }
             } else if (currentStep === 2) {
                 // Step 3: Reset Password
-                const res = await resetPassword(values.phone, values.otp, values.newPassword);
+                const res = await resetPassword(values.phone, values.otp, values.newPassword, selectedEmail || undefined);
                 if (res.success) {
                     setSuccess(true);
                 } else {
@@ -207,13 +255,68 @@ export default function ForgotPasswordForm() {
                             <label className="auth-label font-bold text-gray-700 dark:text-gray-100">Phone Number</label>
                             <PhoneInput
                                 value={formik.values.phone}
-                                onChange={(val) => formik.setFieldValue('phone', val)}
+                                onChange={(val) => {
+                                    formik.setFieldValue('phone', val);
+                                    // Reset users list if phone changes
+                                    if (usersList.length > 0) {
+                                        setUsersList([]);
+                                        setSelectedEmail('');
+                                    }
+                                }}
+                                disabled={usersList.length > 1}
                                 error={!!(formik.touched.phone && formik.errors.phone)}
                             />
                             {formik.touched.phone && formik.errors.phone && (
                                 <p className="text-red-500 text-xs mt-1 font-bold">{formik.errors.phone}</p>
                             )}
                         </div>
+
+                        {usersList.length > 1 && (
+                            <div className="mt-6 space-y-3 p-4 bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800 rounded-xl animate-in fade-in zoom-in-95 duration-200">
+                                <label className="text-sm font-black text-slate-800 dark:text-slate-200 block mb-2">
+                                    Multiple accounts found. Please select yours:
+                                </label>
+                                <div className="space-y-2">
+                                    {usersList.map((user) => (
+                                        <label
+                                            key={user.id}
+                                            className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                                selectedEmail === user.realEmail
+                                                    ? 'border-teal-500 bg-teal-50/50 dark:bg-teal-900/20'
+                                                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                                            }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="selectedAccount"
+                                                value={user.realEmail}
+                                                checked={selectedEmail === user.realEmail}
+                                                onChange={() => setSelectedEmail(user.realEmail)}
+                                                className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500 accent-teal-600"
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                                                    {user.name}
+                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                                    {user.email}
+                                                </p>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setUsersList([]);
+                                        setSelectedEmail('');
+                                    }}
+                                    className="text-xs font-bold text-slate-500 hover:text-slate-800 underline block mt-2"
+                                >
+                                    Change Phone Number
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
 
