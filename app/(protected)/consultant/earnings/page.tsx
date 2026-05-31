@@ -123,7 +123,7 @@ export default function ConsultantEarningsPage() {
           <p className="text-3xl font-black text-gray-900 dark:text-white mb-1 tabular-nums">
             ${commissionEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">40% Subscription Commissions</p>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Subscription Commissions</p>
         </div>
 
         {/* Grand Total Income Card */}

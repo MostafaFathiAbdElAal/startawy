@@ -4,13 +4,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function getHomePageData() {
   try {
-    // 1. Fetch Approved Reviews (Feedback)
+    // 1. Fetch Approved Reviews (Feedback) - Fetch latest 21 regardless of status
     const reviews = await prisma.feedback.findMany({
-      where: {
-        status: {
-          in: ["REVIEWED", "ACTION_TAKEN"]
-        }
-      }, take: 21,
+      take: 21,
       orderBy: { createdAt: 'desc' },
       include: {
         user: {
