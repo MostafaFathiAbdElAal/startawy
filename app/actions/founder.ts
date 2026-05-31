@@ -1,3 +1,5 @@
+"use server";
+
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
@@ -110,8 +112,100 @@ export async function getFounderSessions() {
   return founder.sessions.map(s => ({
     id: s.id,
     consultantName: s.consultant.user.name,
+    consultantId: s.consultant.id,
+    consultantAvailability: s.consultant.availability,
     date: s.date,
     status: s.paymentStatus,
     meetingLink: s.meetingLink
   }));
+}
+
+export async function rescheduleSession(sessionId: number, newDateStr: string) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth-token")?.value;
+  const decoded = await verifyAuth(token);
+
+  if (!decoded || decoded.role !== "FOUNDER") {
+    return { success: false, error: "Unauthorized access" };
+  }
+
+  const founder = await prisma.startupFounder.findUnique({
+    where: { userId: Number(decoded.id) }
+  });
+
+  if (!founder) {
+    return { success: false, error: "Founder profile not found" };
+  }
+
+  const session = await prisma.session.findFirst({
+    where: {
+      id: sessionId,
+      founderId: founder.id
+    }
+  });
+
+  if (!session) {
+    return { success: false, error: "Session not found" };
+  }
+
+  try {
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: { date: new Date(newDateStr) }
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("[RESCHEDULE_SESSION_ERROR]", error);
+    return { success: false, error: "Failed to reschedule session" };
+  }
+}
+
+export async function cancelSession(sessionId: number) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth-token")?.value;
+  const decoded = await verifyAuth(token);
+
+  if (!decoded || decoded.role !== "FOUNDER") {
+    return { success: false, error: "Unauthorized access" };
+  }
+
+  const founder = await prisma.startupFounder.findUnique({
+    where: { userId: Number(decoded.id) }
+  });
+
+  if (!founder) {
+    return { success: false, error: "Founder profile not found" };
+  }
+
+  const session = await prisma.session.findFirst({
+    where: {
+      id: sessionId,
+      founderId: founder.id
+    }
+  });
+
+  if (!session) {
+    return { success: false, error: "Session not found" };
+  }
+
+  try {
+    if (session.paymentStatus === "PAID") {
+      await prisma.session.update({
+        where: { id: sessionId },
+        data: { paymentStatus: "CANCELLED" }
+      });
+    } else {
+      await prisma.payment.updateMany({
+        where: { sessionId },
+        data: { sessionId: null }
+      });
+      await prisma.session.delete({
+        where: { id: sessionId }
+      });
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("[CANCEL_SESSION_ERROR]", error);
+    return { success: false, error: "Failed to cancel session" };
+  }
 }

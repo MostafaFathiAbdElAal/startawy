@@ -32,7 +32,47 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { amount, itemName, metadata } = body;
+    const { itemName, metadata } = body;
+
+    if (!metadata || !metadata.type) {
+      return NextResponse.json({ error: "Missing transaction metadata" }, { status: 400 });
+    }
+
+    let validatedAmount = 0;
+
+    if (metadata.type === "consultation") {
+      const consultantId = parseInt(metadata.consultantId, 10);
+      if (isNaN(consultantId)) {
+        return NextResponse.json({ error: "Invalid consultant ID" }, { status: 400 });
+      }
+
+      const consultant = await prisma.consultant.findUnique({
+        where: { id: consultantId }
+      });
+
+      if (!consultant) {
+        return NextResponse.json({ error: "Consultant not found" }, { status: 404 });
+      }
+
+      validatedAmount = consultant.sessionRate;
+    } else if (metadata.type === "subscription") {
+      const planName = metadata.planName;
+      if (!planName) {
+        return NextResponse.json({ error: "Missing plan name in metadata" }, { status: 400 });
+      }
+
+      const pkg = await prisma.package.findFirst({
+        where: { type: planName }
+      });
+
+      if (!pkg) {
+        return NextResponse.json({ error: "Subscription package not found" }, { status: 404 });
+      }
+
+      validatedAmount = pkg.price;
+    } else {
+      return NextResponse.json({ error: "Invalid payment type" }, { status: 400 });
+    }
     
     // Ensure all metadata values are strictly strings for Stripe
     const stringifiedMetadata: Record<string, string> = {};
@@ -62,7 +102,7 @@ export async function POST(req: NextRequest) {
             product_data: {
               name: itemName || "Subscription / Consultation",
             },
-            unit_amount: Math.round(amount * 100), // Stripe expects cents
+            unit_amount: Math.round(validatedAmount * 100), // Stripe expects cents
           },
           quantity: 1,
         },

@@ -10,8 +10,7 @@ export async function getHomePageData() {
         status: {
           in: ["REVIEWED", "ACTION_TAKEN"]
         }
-      },
-      take: 3,
+      }, take: 21,
       orderBy: { createdAt: 'desc' },
       include: {
         user: {
@@ -29,6 +28,7 @@ export async function getHomePageData() {
     const totalFounders = await prisma.startupFounder.count();
     const totalConsultants = await prisma.consultant.count();
     const totalSessions = await prisma.session.count({ where: { paymentStatus: 'PAID' } });
+    const totalSessionsAll = await prisma.session.count();
     
     // Calculate average rating
     const avgRatingAggregate = await prisma.feedback.aggregate({
@@ -45,9 +45,9 @@ export async function getHomePageData() {
       totalFounders,
       totalConsultants,
       totalSessions,
-      avgRating: avgRatingAggregate._avg.rating || 4.8,
-      successRate: 94, // Mock or calculated
-      activeStartups: totalFounders > 0 ? totalFounders : 120 // Fallback for UI aesthetics
+      avgRating: avgRatingAggregate._avg.rating || 0,
+      successRate: totalSessionsAll > 0 ? Math.round((totalSessions / totalSessionsAll) * 100) : 0,
+      activeStartups: totalFounders
     };
 
     return {

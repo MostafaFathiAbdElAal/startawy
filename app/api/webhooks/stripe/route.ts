@@ -12,17 +12,22 @@ export async function POST(req: NextRequest) {
   const body = await req.text();
   const signature = req.headers.get("stripe-signature") as string;
 
+  if (!webhookSecret) {
+    console.error("[WEBHOOK] Critical Configuration Error: STRIPE_WEBHOOK_SECRET is not defined");
+    return NextResponse.json({ error: "Webhook configuration error" }, { status: 500 });
+  }
+
+  if (!signature) {
+    console.error("[WEBHOOK] Error: Missing stripe-signature header");
+    return NextResponse.json({ error: "Missing signature" }, { status: 400 });
+  }
+
   let event: Stripe.Event;
 
   try {
-    if (!webhookSecret) {
-      console.warn("[WEBHOOK] No webhook secret found, parsing raw body");
-      event = JSON.parse(body) as Stripe.Event;
-    } else {
-      console.log(`[WEBHOOK] Verifying signature... (Using secret starting with: ${webhookSecret.substring(0, 10)}...)`);
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-      console.log(`[WEBHOOK] Signature verified, event type: ${event.type}`);
-    }
+    console.log(`[WEBHOOK] Verifying signature... (Using secret starting with: ${webhookSecret.substring(0, 10)}...)`);
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    console.log(`[WEBHOOK] Signature verified, event type: ${event.type}`);
   } catch (err) {
     const error = err as Error;
     console.error(`[WEBHOOK] Signature verification failed: ${error.message}`);

@@ -99,6 +99,44 @@ export default function HomePageClient({ initialReviews, initialStats, serverIsA
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   };
 
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const [screenWidth, setScreenWidth] = useState(0);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setScreenWidth(window.innerWidth);
+    const handleResize = () => setScreenWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const getTranslation = () => {
+    if (screenWidth >= 1024) {
+      return `calc(-${currentIndex} * (33.333% + 8px))`;
+    }
+    if (screenWidth >= 768) {
+      return `calc(-${currentIndex} * (50% + 12px))`;
+    }
+    return `calc(-${currentIndex} * (100% + 24px))`;
+  };
+
+  useEffect(() => {
+    if (initialReviews.length === 0 || isHovered) return;
+    const visibleItems = screenWidth >= 1024 ? 3 : (screenWidth >= 768 ? 2 : 1);
+    const maxIndex = Math.max(0, initialReviews.length - visibleItems);
+    if (maxIndex === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCurrentIndex(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [initialReviews.length, isHovered, screenWidth]);
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
@@ -576,70 +614,93 @@ export default function HomePageClient({ initialReviews, initialStats, serverIsA
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {initialReviews.length > 0 ? (
-            initialReviews.map((review, index) => (
-              <motion.div
-                key={review.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.15 }}
-                className="relative bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col"
-              >
-                <div className="absolute top-6 right-6 opacity-10">
-                  <Quote className="w-12 h-12 text-teal-500" />
-                </div>
+        <div 
+          className="overflow-hidden w-full py-4 px-1"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <motion.div 
+            className="flex gap-6"
+            animate={{ x: getTranslation() }}
+            transition={{ type: "tween", ease: [0.16, 1, 0.3, 1], duration: 1 }}
+          >
+            {initialReviews.length > 0 ? (
+              initialReviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] shrink-0 relative bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 flex flex-col"
+                >
+                  <div className="absolute top-6 right-6 opacity-10">
+                    <Quote className="w-12 h-12 text-teal-500" />
+                  </div>
 
-                <div className="flex gap-1 mb-5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-5 h-5 ${
-                        i < review.rating
-                          ? "text-yellow-400 fill-yellow-400"
-                          : "text-gray-300 dark:text-gray-600"
-                      }`}
-                    />
-                  ))}
-                </div>
-
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed flex-1 italic">
-                  &ldquo;{review.comment}&rdquo;
-                </p>
-
-                <div className="my-6 border-t border-gray-100 dark:border-gray-700"></div>
-
-                <div className="flex items-center gap-3">
-                  <div className="relative w-11 h-11 rounded-full overflow-hidden bg-linear-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-md flex-shrink-0 border border-white dark:border-slate-800">
-                    {review.user?.image ? (
-                      <Image
-                        src={review.user.image}
-                        alt={review.user.name || "User"}
-                        fill
-                        className="object-cover"
+                  <div className="flex gap-1 mb-5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-5 h-5 ${
+                          i < review.rating
+                            ? "text-yellow-400 fill-yellow-400"
+                            : "text-gray-300 dark:text-gray-600"
+                        }`}
                       />
-                    ) : (
-                      <span className="text-white font-bold text-base">
-                        {review.user?.name?.charAt(0).toUpperCase() || "U"}
-                      </span>
-                    )}
+                    ))}
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white text-sm">{review.user?.name || "Anonymous"}</p>
-                    <p className="text-xs text-teal-600 dark:text-teal-400 font-medium">
-                      {review.user?.type === "FOUNDER" ? "Startup Founder" : review.user?.type === "CONSULTANT" ? "Financial Consultant" : "Platform User"}
-                    </p>
+
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed flex-1 italic">
+                    &ldquo;{review.comment}&rdquo;
+                  </p>
+
+                  <div className="my-6 border-t border-gray-100 dark:border-gray-700"></div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-11 h-11 rounded-full overflow-hidden bg-linear-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-md flex-shrink-0 border border-white dark:border-slate-800">
+                      {review.user?.image ? (
+                        <Image
+                          src={review.user.image}
+                          alt={review.user.name || "User"}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <span className="text-white font-bold text-base">
+                          {review.user?.name?.charAt(0).toUpperCase() || "U"}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white text-sm">{review.user?.name || "Anonymous"}</p>
+                      <p className="text-xs text-teal-600 dark:text-teal-400 font-medium">
+                        {review.user?.type === "FOUNDER" ? "Startup Founder" : review.user?.type === "CONSULTANT" ? "Financial Consultant" : "Platform User"}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </motion.div>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-10 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700">
-              <p className="text-gray-500 dark:text-gray-400">No real reviews found in the database yet.</p>
-            </div>
-          )}
+              ))
+            ) : (
+              <div className="w-full text-center py-10 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700">
+                <p className="text-gray-500 dark:text-gray-400">No real reviews found in the database yet.</p>
+              </div>
+            )}
+          </motion.div>
         </div>
+
+        {initialReviews.length > 0 && (
+          <div className="flex justify-center gap-2 mt-8">
+            {Array.from({ length: Math.max(0, initialReviews.length - (screenWidth >= 1024 ? 3 : (screenWidth >= 768 ? 2 : 1))) + 1 }).map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentIndex(idx)}
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                  currentIndex === idx 
+                    ? "bg-teal-500 w-8 shadow-[0_0_8px_rgba(20,184,166,0.6)]" 
+                    : "bg-gray-300 dark:bg-gray-700 hover:bg-teal-400"
+                }`}
+                title={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Footer */}

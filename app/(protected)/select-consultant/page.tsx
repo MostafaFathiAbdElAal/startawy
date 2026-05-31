@@ -48,9 +48,6 @@ export default async function SelectConsultantPage() {
                 
                 <div className="relative mb-8 inline-block">
                     <UserAvatar name={c.user.name} image={c.user.image} size="xl" isVerified={true} />
-                    <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white p-2 rounded-full shadow-lg">
-                        <ShieldCheck className="w-5 h-5" />
-                    </div>
                 </div>
 
                 <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-4">Consultant Assigned!</h1>

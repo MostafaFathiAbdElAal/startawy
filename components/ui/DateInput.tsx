@@ -16,7 +16,6 @@ interface DateInputProps {
 
 export default function DateInput({ value, onChange, error, name, placeholder, disablePast, disableFuture }: DateInputProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [popoverPlacement, setPopoverPlacement] = useState<'top' | 'bottom'>('bottom');
   const containerRef = React.useRef<HTMLDivElement>(null);
   
   // Internal state for calendar navigation
@@ -34,14 +33,7 @@ export default function DateInput({ value, onChange, error, name, placeholder, d
     return `${d}/${m}/${y}`;
   }, [value]);
 
-  // Handle smart positioning
   const toggleOpen = () => {
-    if (!isOpen && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const popoverHeight = 420; // Estimated height
-      setPopoverPlacement(spaceBelow < popoverHeight ? 'top' : 'bottom');
-    }
     setIsOpen(!isOpen);
   };
 
@@ -199,96 +191,103 @@ export default function DateInput({ value, onChange, error, name, placeholder, d
 
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: popoverPlacement === 'bottom' ? 10 : -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: popoverPlacement === 'bottom' ? 5 : -5, scale: 0.98 }}
-            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-            className={`absolute left-0 z-[100] w-[280px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-[24px] p-5 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] border border-slate-200/50 dark:border-slate-800/50
-              ${popoverPlacement === 'top' ? 'bottom-full mb-3' : 'top-full mt-3'}
-            `}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4 px-1">
-              <button 
-                type="button" 
-                onClick={() => changeMonth(-1)}
-                className="w-8 h-8 flex items-center justify-center hover:bg-teal-500/10 hover:text-teal-500 dark:hover:bg-teal-500/20 rounded-xl text-slate-500 dark:text-slate-400 transition-all active:scale-90"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              
-              <div className="flex flex-col items-center">
-                <span className="text-[10px] font-black text-teal-500 uppercase tracking-[0.2em] mb-0.5">
-                  {months[viewDate.getMonth()]}
-                </span>
-                <div className="flex items-center gap-1 group/yr cursor-pointer relative">
-                  <select 
-                    value={viewDate.getFullYear()} 
-                    onChange={(e) => changeYear(parseInt(e.target.value))}
-                    className="bg-transparent border-none p-0 text-base font-black text-slate-900 dark:text-white focus:ring-0 cursor-pointer hover:text-teal-500 transition-colors text-center appearance-none pr-1 focus:outline-none"
-                    style={{ textAlignLast: 'center' }}
-                  >
-                    {years.map(y => <option key={y} value={y} className="bg-white dark:bg-slate-900 font-bold text-slate-900 dark:text-white">{y}</option>)}
-                  </select>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs cursor-pointer"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className="relative w-[300px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-[32px] p-6 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] border border-slate-200/50 dark:border-slate-800/50 z-10"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4 px-1">
+                <button 
+                  type="button" 
+                  onClick={() => changeMonth(-1)}
+                  className="w-8 h-8 flex items-center justify-center hover:bg-teal-500/10 hover:text-teal-500 dark:hover:bg-teal-500/20 rounded-xl text-slate-500 dark:text-slate-400 transition-all active:scale-90"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                
+                <div className="flex flex-col items-center">
+                  <span className="text-[10px] font-black text-teal-500 uppercase tracking-[0.2em] mb-0.5">
+                    {months[viewDate.getMonth()]}
+                  </span>
+                  <div className="flex items-center gap-1 group/yr cursor-pointer relative">
+                    <select 
+                      value={viewDate.getFullYear()} 
+                      onChange={(e) => changeYear(parseInt(e.target.value))}
+                      className="bg-transparent border-none p-0 text-base font-black text-slate-900 dark:text-white focus:ring-0 cursor-pointer hover:text-teal-500 transition-colors text-center appearance-none pr-1 focus:outline-none"
+                      style={{ textAlignLast: 'center' }}
+                    >
+                      {years.map(y => <option key={y} value={y} className="bg-white dark:bg-slate-900 font-bold text-slate-900 dark:text-white">{y}</option>)}
+                    </select>
+                  </div>
                 </div>
+
+                <button 
+                  type="button" 
+                  onClick={() => changeMonth(1)}
+                  className="w-8 h-8 flex items-center justify-center hover:bg-teal-500/10 hover:text-teal-500 dark:hover:bg-teal-500/20 rounded-xl text-slate-500 dark:text-slate-400 transition-all active:scale-90"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
 
-              <button 
-                type="button" 
-                onClick={() => changeMonth(1)}
-                className="w-8 h-8 flex items-center justify-center hover:bg-teal-500/10 hover:text-teal-500 dark:hover:bg-teal-500/20 rounded-xl text-slate-500 dark:text-slate-400 transition-all active:scale-90"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+              {/* Weekdays */}
+              <div className="grid grid-cols-7 mb-2">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
+                  <div key={`${day}-${idx}`} className="w-full aspect-square flex items-center justify-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase">
+                    {day}
+                  </div>
+                ))}
+              </div>
 
-            {/* Weekdays */}
-            <div className="grid grid-cols-7 mb-2">
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
-                <div key={`${day}-${idx}`} className="w-full aspect-square flex items-center justify-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase">
-                  {day}
-                </div>
-              ))}
-            </div>
+              {/* Days Grid */}
+              <div className="grid grid-cols-7 gap-1">
+                {days}
+              </div>
 
-            {/* Days Grid */}
-            <div className="grid grid-cols-7 gap-1">
-              {days}
-            </div>
-
-            {/* Today and Clear Buttons */}
-            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => {
-                  const now = new Date();
-                  const y = now.getFullYear();
-                  const m = String(now.getMonth() + 1).padStart(2, '0');
-                  const d = String(now.getDate()).padStart(2, '0');
-                  onChange(`${y}-${m}-${d}`);
-                  setViewDate(now);
-                  setIsOpen(false);
-                }}
-                className="text-[11px] font-bold text-teal-500 hover:text-teal-600 transition-colors flex items-center gap-1.5"
-              >
-                <div className="w-1.5 h-1.5 bg-teal-500 rounded-full animate-pulse" />
-                Go to Today
-              </button>
-              {value && (
+              {/* Today and Clear Buttons */}
+              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => {
-                    onChange('');
+                    const now = new Date();
+                    const y = now.getFullYear();
+                    const m = String(now.getMonth() + 1).padStart(2, '0');
+                    const d = String(now.getDate()).padStart(2, '0');
+                    onChange(`${y}-${m}-${d}`);
+                    setViewDate(now);
                     setIsOpen(false);
                   }}
-                  className="text-[11px] font-bold text-slate-400 hover:text-red-500 transition-colors"
+                  className="text-[11px] font-bold text-teal-500 hover:text-teal-600 transition-colors flex items-center gap-1.5"
                 >
-                  Clear
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full animate-pulse" />
+                  Go to Today
                 </button>
-              )}
-            </div>
-          </motion.div>
+                {value && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange('');
+                      setIsOpen(false);
+                    }}
+                    className="text-[11px] font-bold text-slate-400 hover:text-red-500 transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
