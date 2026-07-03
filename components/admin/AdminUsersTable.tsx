@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Search, Filter, Edit, Trash2, Eye, UserX, UserCheck, ChevronDown, ChevronUp, X, Phone } from "lucide-react";
+import { Search, Filter, Edit, Trash2, Eye, UserX, UserCheck, ChevronDown, ChevronUp, X, Phone, RefreshCw, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/providers/ToastProvider";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -24,6 +24,10 @@ type UserData = {
   sessionRate?: number;
   image?: string;
   businessSector?: string;
+  nationalId?: string;
+  nationalIdFront?: string;
+  nationalIdBack?: string;
+  certificate?: string;
   phone?: string;
 };
 
@@ -129,6 +133,29 @@ export function AdminUsersTable({
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [previewingUser, setPreviewingUser] = useState<UserData | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
+  const [verifyingId, setVerifyingId] = useState<number | null>(null);
+
+  const handleVerifyConsultant = async (userId: number) => {
+    setVerifyingId(userId);
+    try {
+      const response = await fetch(`/api/admin/consultants/${userId}/verify`, { method: "POST" });
+      const result = await response.json();
+      if (result.success) {
+        showToast({ type: "success", title: "Consultant Verified", message: "Consultant has been verified and approved." });
+        setUsers(users.map(u => u.id === userId ? { ...u, status: "VERIFIED" } : u));
+        if (previewingUser && previewingUser.id === userId) {
+          setPreviewingUser({ ...previewingUser, status: "VERIFIED" });
+        }
+      } else {
+        showToast({ type: "error", title: "Verification Failed", message: result.error || "Failed to verify consultant." });
+      }
+    } catch (err) {
+      console.error("[VERIFY_CONSULTANT_ERROR]", err);
+      showToast({ type: "error", title: "Network Error", message: "Failed to reach server for verification." });
+    } finally {
+      setVerifyingId(null);
+    }
+  };
   const [editFormData, setEditFormData] = useState({ 
     name: "", 
     email: "", 
@@ -862,6 +889,51 @@ export function AdminUsersTable({
                 </div>
 
                 <div className="pt-4">
+                  {/* Verification Documents */}
+                  {(previewingUser.nationalId || previewingUser.nationalIdFront || previewingUser.nationalIdBack || (roleType === "Consultant" && previewingUser.certificate)) && (
+                    <div className="bg-slate-50 dark:bg-slate-800/30 rounded-2xl p-4 border border-slate-100 dark:border-slate-800/80 mb-4 space-y-2">
+                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Verification Documents</p>
+                      {previewingUser.nationalId && (
+                        <div>
+                          <span className="text-xs font-semibold text-slate-400">National ID: </span>
+                          <span className="text-xs font-bold text-slate-900 dark:text-white">{previewingUser.nationalId}</span>
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-2">
+                        {previewingUser.nationalIdFront && (
+                          <a href={previewingUser.nationalIdFront} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] font-black text-teal-600 hover:text-teal-700 bg-teal-50 dark:bg-teal-900/20 px-3 py-1.5 rounded-xl transition-colors">
+                            👁️ ID Front
+                          </a>
+                        )}
+                        {previewingUser.nationalIdBack && (
+                          <a href={previewingUser.nationalIdBack} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] font-black text-teal-600 hover:text-teal-700 bg-teal-50 dark:bg-teal-900/20 px-3 py-1.5 rounded-xl transition-colors">
+                            👁️ ID Back
+                          </a>
+                        )}
+                        {roleType === "Consultant" && previewingUser.certificate && (
+                          <a href={previewingUser.certificate} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] font-black text-teal-600 hover:text-teal-700 bg-teal-50 dark:bg-teal-900/20 px-3 py-1.5 rounded-xl transition-colors">
+                            📄 Certificate
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Approve Consultant Button */}
+                  {roleType === "Consultant" && previewingUser.status !== "VERIFIED" && (
+                    <button
+                      onClick={() => handleVerifyConsultant(previewingUser.id)}
+                      disabled={verifyingId === previewingUser.id}
+                      className="w-full py-4 mb-3 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-teal-500/10 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {verifyingId === previewingUser.id ? (
+                        <><RefreshCw className="w-4 h-4 animate-spin" /> Verifying...</>
+                      ) : (
+                        <><CheckCircle2 className="w-4 h-4" /> Approve &amp; Verify Consultant</>
+                      )}
+                    </button>
+                  )}
+
                   <button 
                     onClick={() => setPreviewingUser(null)} 
                     className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-slate-900/10 dark:shadow-white/5"

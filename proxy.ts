@@ -51,9 +51,10 @@ export async function proxy(request: NextRequest) {
       return response;
     }
 
-    // Force profile update if missing national ID or certificate (for existing users)
+    // Force profile update if missing national ID or certificate (for existing Founders and Consultants only)
+    // Admins are exempt from this verification requirement
     const isCompleteProfile = pathname.startsWith('/complete-profile');
-    if (user.role && !isOwner && !isCompleteProfile) {
+    if (user.role && user.role !== 'ADMIN' && !isOwner && !isCompleteProfile) {
       const needsProfileUpdate = !dbUser?.nationalId || (user.role === 'CONSULTANT' && !dbUser?.consultant?.certificate);
       if (needsProfileUpdate) {
         console.log(`[PROXY] Existing user ${user.email} needs to update verification info -> Redirecting to /complete-profile`);
@@ -63,7 +64,7 @@ export async function proxy(request: NextRequest) {
 
     if (user.role === 'CONSULTANT' && dbUser?.consultant && !dbUser.consultant.isVerified) {
       const isPendingPage = pathname === '/consultant/pending-verification';
-      if (!isPendingPage) {
+      if (!isPendingPage && !isCompleteProfile) {
         console.log(`[PROXY] Unverified consultant detected -> Redirecting to /consultant/pending-verification`);
         return NextResponse.redirect(new URL('/consultant/pending-verification', request.url));
       }

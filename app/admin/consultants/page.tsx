@@ -32,7 +32,7 @@ export default async function ManageConsultantsPage({
     name: u.name || "Unknown",
     email: u.email,
     specialty: u.consultant?.specialization || "Consulting",
-    status: (u.isEmailVerified && u.isPhoneVerified) ? "VERIFIED" : "UNVERIFIED",
+    status: u.consultant?.isVerified ? "VERIFIED" : "UNVERIFIED",
     isSuspended: u.isSuspended,
     joinedDate: new Intl.DateTimeFormat('en-GB').format(new Date(u.createdAt)),
     sessions: 0,
@@ -41,7 +41,11 @@ export default async function ManageConsultantsPage({
     yearsOfExp: u.consultant?.yearsOfExp || 0,
     sessionRate: u.consultant?.sessionRate || 150,
     image: u.image || undefined,
-    phone: u.phone || ""
+    phone: u.phone || "",
+    nationalId: u.nationalId || "",
+    nationalIdFront: u.nationalIdFront || "",
+    nationalIdBack: u.nationalIdBack || "",
+    certificate: u.consultant?.certificate || ""
   }));
 
   return (
