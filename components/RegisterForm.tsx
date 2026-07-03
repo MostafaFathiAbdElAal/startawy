@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useFormik } from 'formik';
 import { RegisterSchema } from '../lib/validations';
 import Link from 'next/link';
-import { Lock, Mail, Eye, EyeOff, User, UserCheck } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, User, UserCheck, Upload, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import GoogleLoginButton from './GoogleLoginButton';
 import PhoneInput from './ui/PhoneInput';
@@ -22,8 +22,48 @@ export default function RegisterForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [serverError, setServerError] = useState<string | null>(null);
+    const [idFrontFile, setIdFrontFile] = useState<File | null>(null);
+    const [idBackFile, setIdBackFile] = useState<File | null>(null);
+    const [certificateFile, setCertificateFile] = useState<File | null>(null);
+    const [uploading, setUploading] = useState(false);
     const router = useRouter();
     const { showToast } = useToast();
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Limit size to 10MB
+        if (file.size > 10 * 1024 * 1024) {
+            showToast({ type: 'error', title: 'File Too Large', message: 'Maximum size is 10MB' });
+            return;
+        }
+
+        if (fieldName === 'nationalIdFront') {
+            setIdFrontFile(file);
+            formik.setFieldValue('nationalIdFront', 'selected');
+        } else if (fieldName === 'nationalIdBack') {
+            setIdBackFile(file);
+            formik.setFieldValue('nationalIdBack', 'selected');
+        } else if (fieldName === 'certificate') {
+            setCertificateFile(file);
+            formik.setFieldValue('certificate', 'selected');
+        }
+    };
+
+    const uploadFileDirect = async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/user/upload-doc', {
+            method: 'POST',
+            body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Failed to upload document');
+        }
+        return data.url;
+    };
 
     const formik = useFormik({
         initialValues: {
@@ -31,6 +71,9 @@ export default function RegisterForm() {
             role: '' as '' | 'FOUNDER' | 'CONSULTANT',
             email: '',
             phone: '',
+            nationalId: '',
+            nationalIdFront: '',
+            nationalIdBack: '',
             password: '',
             confirmPassword: '',
             // Founder
@@ -41,15 +84,42 @@ export default function RegisterForm() {
             specialization: '',
             yearsOfExp: 0,
             availability: '',
+            certificate: '',
         },
         validationSchema: RegisterSchema,
         onSubmit: async (values, { setSubmitting }) => {
             setServerError(null);
+
+            if (!idFrontFile || !idBackFile || (values.role === 'CONSULTANT' && !certificateFile)) {
+                setServerError('Please select all required documents.');
+                setSubmitting(false);
+                return;
+            }
+
+            setUploading(true);
             try {
+                const uploadPromises = [
+                    uploadFileDirect(idFrontFile),
+                    uploadFileDirect(idBackFile)
+                ];
+
+                if (values.role === 'CONSULTANT' && certificateFile) {
+                    uploadPromises.push(uploadFileDirect(certificateFile));
+                }
+
+                const [frontUrl, backUrl, certUrl] = await Promise.all(uploadPromises);
+
+                const payload = {
+                    ...values,
+                    nationalIdFront: frontUrl,
+                    nationalIdBack: backUrl,
+                    certificate: certUrl || undefined,
+                };
+
                 const response = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(values),
+                    body: JSON.stringify(payload),
                 });
 
                 const result = await response.json();
@@ -67,13 +137,15 @@ export default function RegisterForm() {
                     router.refresh();
                     router.push('/login?registered=true');
                 }
-            } catch (err) {
-                const errMsg = 'Network error. Please try again.';
+            } catch (err: unknown) {
+                const errMsg = err instanceof Error ? err.message : 'Network error. Please try again.';
                 setServerError(errMsg);
                 showToast({ type: 'error', title: 'Error', message: errMsg });
                 console.error(err);
+            } finally {
+                setUploading(false);
+                setSubmitting(false);
             }
-            setSubmitting(false);
         },
     });
 
@@ -82,12 +154,12 @@ export default function RegisterForm() {
         formik.setErrors({});
         formik.setTouched({}, false);
 
-        const fieldsToValidate = ['role', 'phone'];
+        const fieldsToValidate = ['role', 'phone', 'nationalId', 'nationalIdFront', 'nationalIdBack'];
 
         if (formik.values.role === 'FOUNDER') {
             fieldsToValidate.push('businessName', 'businessSector', 'foundingDate');
         } else if (formik.values.role === 'CONSULTANT') {
-            fieldsToValidate.push('specialization', 'yearsOfExp', 'availability');
+            fieldsToValidate.push('specialization', 'yearsOfExp', 'availability', 'certificate');
         }
 
         fieldsToValidate.forEach(field => formik.setFieldTouched(field, true));
@@ -107,6 +179,32 @@ export default function RegisterForm() {
         }
 
         return true;
+    };
+
+    const uploadFilesForGoogle = async () => {
+        if (!idFrontFile || !idBackFile || (formik.values.role === 'CONSULTANT' && !certificateFile)) {
+            return null;
+        }
+        try {
+            const uploadPromises = [
+                uploadFileDirect(idFrontFile),
+                uploadFileDirect(idBackFile)
+            ];
+
+            if (formik.values.role === 'CONSULTANT' && certificateFile) {
+                uploadPromises.push(uploadFileDirect(certificateFile));
+            }
+
+            const [frontUrl, backUrl, certUrl] = await Promise.all(uploadPromises);
+            return {
+                frontUrl,
+                backUrl,
+                certUrl: certUrl || undefined,
+            };
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
     };
 
     return (
@@ -257,6 +355,37 @@ export default function RegisterForm() {
                                 />
                                 {formik.touched.availability && formik.errors.availability && <p className="text-red-500 text-xs mt-1">{formik.errors.availability as string}</p>}
                             </div>
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Professional Certificate</label>
+                                <div className="relative">
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp,application/pdf"
+                                        onChange={(e) => handleFileChange(e, 'certificate')}
+                                        className="hidden"
+                                        id="certificateInput"
+                                    />
+                                    <label
+                                        htmlFor="certificateInput"
+                                        className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-6 cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
+                                            certificateFile ? 'border-teal-500 bg-teal-50/20 dark:bg-teal-900/10' : 'border-slate-200 dark:border-slate-800'
+                                        }`}
+                                    >
+                                        {certificateFile ? (
+                                            <div className="flex flex-col items-center text-center">
+                                                <CheckCircle2 className="w-8 h-8 text-teal-500 mb-1" />
+                                                <span className="text-xs text-teal-600 dark:text-teal-400 font-bold truncate max-w-full">{certificateFile.name}</span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center text-center">
+                                                <Upload className="w-8 h-8 text-slate-400 mb-1" />
+                                                <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Upload Certificate (PDF or Image)</span>
+                                            </div>
+                                        )}
+                                    </label>
+                                </div>
+                                {formik.touched.certificate && formik.errors.certificate && <p className="text-red-500 text-xs mt-1 font-bold">{formik.errors.certificate as string}</p>}
+                            </div>
                         </>
                     )}
 
@@ -294,6 +423,89 @@ export default function RegisterForm() {
                         />
                     </div>
                     {formik.touched.phone && formik.errors.phone && <p className="text-red-500 text-xs mt-1 font-bold">{formik.errors.phone as string}</p>}
+                </div>
+
+                {/* National ID */}
+                <div className="space-y-2">
+                    <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">National ID</label>
+                    <input
+                        name="nationalId"
+                        type="text"
+                        maxLength={14}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        value={formik.values.nationalId}
+                        className={`auth-input px-5 py-4 ${formik.touched.nationalId && formik.errors.nationalId ? 'auth-input-error' : ''}`}
+                        placeholder="14-digit National ID"
+                    />
+                    {formik.touched.nationalId && formik.errors.nationalId && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold uppercase tracking-tight">{formik.errors.nationalId}</p>}
+                </div>
+
+                {/* National ID Front and Back Images */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">ID Front Image</label>
+                        <div className="relative">
+                            <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={(e) => handleFileChange(e, 'nationalIdFront')}
+                                className="hidden"
+                                id="nationalIdFrontInput"
+                            />
+                            <label
+                                htmlFor="nationalIdFrontInput"
+                                className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-4 cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
+                                    idFrontFile ? 'border-teal-500 bg-teal-50/20 dark:bg-teal-900/10' : 'border-slate-200 dark:border-slate-800'
+                                }`}
+                            >
+                                {idFrontFile ? (
+                                    <div className="flex flex-col items-center text-center">
+                                        <CheckCircle2 className="w-6 h-6 text-teal-500 mb-1" />
+                                        <span className="text-[10px] text-teal-600 dark:text-teal-400 font-bold truncate max-w-full">{idFrontFile.name}</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center text-center">
+                                        <Upload className="w-6 h-6 text-slate-400 mb-1" />
+                                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Upload Front</span>
+                                    </div>
+                                )}
+                            </label>
+                        </div>
+                        {formik.touched.nationalIdFront && formik.errors.nationalIdFront && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold">{formik.errors.nationalIdFront}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">ID Back Image</label>
+                        <div className="relative">
+                            <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={(e) => handleFileChange(e, 'nationalIdBack')}
+                                className="hidden"
+                                id="nationalIdBackInput"
+                            />
+                            <label
+                                htmlFor="nationalIdBackInput"
+                                className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-4 cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
+                                    idBackFile ? 'border-teal-500 bg-teal-50/20 dark:bg-teal-900/10' : 'border-slate-200 dark:border-slate-800'
+                                }`}
+                            >
+                                {idBackFile ? (
+                                    <div className="flex flex-col items-center text-center">
+                                        <CheckCircle2 className="w-6 h-6 text-teal-500 mb-1" />
+                                        <span className="text-[10px] text-teal-600 dark:text-teal-400 font-bold truncate max-w-full">{idBackFile.name}</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center text-center">
+                                        <Upload className="w-6 h-6 text-slate-400 mb-1" />
+                                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Upload Back</span>
+                                    </div>
+                                )}
+                            </label>
+                        </div>
+                        {formik.touched.nationalIdBack && formik.errors.nationalIdBack && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold">{formik.errors.nationalIdBack}</p>}
+                    </div>
                 </div>
 
                 {/* Password */}
@@ -356,10 +568,10 @@ export default function RegisterForm() {
                 <button
                     type="submit"
                     onClick={() => setServerError(null)}
-                    disabled={formik.isSubmitting}
+                    disabled={formik.isSubmitting || uploading}
                     className="w-full bg-linear-to-r from-teal-500 to-teal-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-teal-600 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                    {formik.isSubmitting ? 'Creating Account...' : 'Create Account'}
+                    {uploading ? 'Uploading Docs...' : formik.isSubmitting ? 'Creating Account...' : 'Create Account'}
                 </button>
             </form>
 
@@ -381,6 +593,7 @@ export default function RegisterForm() {
                     mode="register"
                     onBeforeClick={handleGoogleClick}
                     extraData={formik.values}
+                    uploadFiles={uploadFilesForGoogle}
                 />
             </div>
 

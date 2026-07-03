@@ -17,7 +17,6 @@ export async function DELETE(
     if (!userPayload || !userPayload.isOwner) {
       return NextResponse.json({ error: 'Unauthorized. Only Super Admins can perform this action.' }, { status: 403 });
     }
-
     const resolvedParams = await Promise.resolve(context.params);
     const targetUserId = parseInt(resolvedParams.id, 10);
 

@@ -38,7 +38,6 @@ export async function POST(req: NextRequest) {
     if (!userPayload || !userPayload.isOwner) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
-
     const { name, email, password } = await req.json();
 
     if (!name || !email || !password) {

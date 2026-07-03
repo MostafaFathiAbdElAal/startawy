@@ -27,10 +27,14 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { role, phone, name, ...roleData } = body;
+    const { role, phone, name, nationalId, nationalIdFront, nationalIdBack, certificate, ...roleData } = body;
 
-    if (!role || !phone) {
-      return NextResponse.json({ error: 'Role and Phone are required' }, { status: 400 });
+    if (!role || !phone || !nationalId || !nationalIdFront || !nationalIdBack) {
+      return NextResponse.json({ error: 'Role, Phone, National ID, and ID Images (Front & Back) are required' }, { status: 400 });
+    }
+
+    if (role === 'CONSULTANT' && !certificate) {
+      return NextResponse.json({ error: 'Certificate is required for consultants' }, { status: 400 });
     }
 
     // Validate role against Prisma Enum
@@ -46,7 +50,10 @@ export async function POST(req: NextRequest) {
         data: { 
             type: role as UserType,
             phone: phone,
-            name: name || undefined
+            name: name || undefined,
+            nationalId: nationalId,
+            nationalIdFront: nationalIdFront,
+            nationalIdBack: nationalIdBack
         },
       });
 
@@ -84,6 +91,7 @@ export async function POST(req: NextRequest) {
               bio: roleData.bio || '',
               sessionRate: sessionRate,
               expertise: expertiseString,
+              certificate: certificate,
             },
             create: {
               userId: userId,
@@ -93,6 +101,8 @@ export async function POST(req: NextRequest) {
               bio: roleData.bio || '',
               sessionRate: sessionRate,
               expertise: expertiseString,
+              certificate: certificate,
+              isVerified: false,
             },
           });
         }

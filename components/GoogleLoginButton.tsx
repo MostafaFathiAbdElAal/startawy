@@ -7,30 +7,51 @@ import { useToast } from './providers/ToastProvider';
 
 interface GoogleLoginButtonProps {
   onBeforeClick?: () => boolean;
-  extraData?: Record<string, string | number | boolean | null | undefined>;
+  extraData?: Record<string, unknown>;
   mode?: 'login' | 'register';
+  uploadFiles?: () => Promise<{ frontUrl?: string, backUrl?: string, certUrl?: string } | null>;
 }
 
-export default function GoogleLoginButton({ onBeforeClick, extraData, mode = 'login' }: GoogleLoginButtonProps) {
+export default function GoogleLoginButton({ onBeforeClick, extraData, mode = 'login', uploadFiles }: GoogleLoginButtonProps) {
   const [error, setError] = useState<string | null>(null);
   const { showToast } = useToast();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(false);
+  const [uploadingDocs, setUploadingDocs] = useState(false);
   const [client, setClient] = useState<{ requestCode: () => void } | null>(null);
   const router = useRouter();
   const extraDataRef = useRef(extraData);
   const modeRef = useRef(mode);
+  const uploadFilesRef = useRef(uploadFiles);
 
   // Update refs when props change
   useEffect(() => {
     extraDataRef.current = extraData;
     modeRef.current = mode;
-  }, [extraData, mode]);
+    uploadFilesRef.current = uploadFiles;
+  }, [extraData, mode, uploadFiles]);
 
   const handleGoogleResponse = useCallback(async (response: { code: string }) => {
     setLoading(true);
     setError(null);
     try {
+      let finalExtraData = { ...extraDataRef.current };
+
+      if (modeRef.current === 'register' && uploadFilesRef.current) {
+        setUploadingDocs(true);
+        const urls = await uploadFilesRef.current();
+        setUploadingDocs(false);
+        if (urls) {
+          finalExtraData = {
+            ...finalExtraData,
+            nationalIdFront: urls.frontUrl,
+            nationalIdBack: urls.backUrl,
+            certificate: urls.certUrl,
+          };
+        } else {
+          throw new Error('Failed to upload verification documents. Please try again.');
+        }
+      }
+
       const res = await fetch('/api/auth/google', {
         method: 'POST',
         headers: {
@@ -38,7 +59,7 @@ export default function GoogleLoginButton({ onBeforeClick, extraData, mode = 'lo
         },
         body: JSON.stringify({
           code: response.code,
-          extraData: extraDataRef.current,
+          extraData: finalExtraData,
           mode: modeRef.current
         }),
       });
@@ -62,15 +83,16 @@ export default function GoogleLoginButton({ onBeforeClick, extraData, mode = 'lo
         setError(errMsg);
         showToast({ type: 'error', title: 'Login Error', message: errMsg });
       }
-    } catch (err) {
-      const errMsg = 'Network error during Google login';
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Network error during Google login';
       setError(errMsg);
       showToast({ type: 'error', title: 'Error', message: errMsg });
       console.error(err);
     } finally {
+      setUploadingDocs(false);
       setLoading(false);
     }
-  }, [router]);
+  }, [router, showToast]);
 
   useEffect(() => {
     const initializeGoogleSignIn = () => {
@@ -112,7 +134,8 @@ export default function GoogleLoginButton({ onBeforeClick, extraData, mode = 'lo
       <button
         type="button"
         onClick={handleCustomClick}
-        className="flex items-center justify-center gap-3 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm active:scale-[0.98]"
+        disabled={loading || uploadingDocs}
+        className="flex items-center justify-center gap-3 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -120,7 +143,9 @@ export default function GoogleLoginButton({ onBeforeClick, extraData, mode = 'lo
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
         </svg>
-        <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Continue with Google</span>
+        <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+          {uploadingDocs ? 'Uploading Docs...' : loading ? 'Signing up...' : 'Continue with Google'}
+        </span>
       </button>
       {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
     </div>

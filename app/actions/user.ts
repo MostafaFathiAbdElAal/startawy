@@ -32,6 +32,9 @@ export async function getProfileData() {
       isEmailVerified: profile.isEmailVerified,
       isPhoneVerified: profile.isPhoneVerified,
       isSuspended: profile.isSuspended,
+      nationalId: profile.nationalId,
+      nationalIdFront: profile.nationalIdFront,
+      nationalIdBack: profile.nationalIdBack,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,
       password: null, // Critical to satisfy UserWithRelations

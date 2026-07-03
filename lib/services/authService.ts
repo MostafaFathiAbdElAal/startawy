@@ -8,7 +8,7 @@ export class AuthService {
    * Universal User Registration
    */
   static async register(data: RegistrationData) {
-    const { email, password, fullName, phone, role, businessName, businessSector, foundingDate, yearsOfExp, specialization, availability, adminLevel, adminScope } = data;
+    const { email, password, fullName, phone, role, businessName, businessSector, foundingDate, yearsOfExp, specialization, availability, adminLevel, adminScope, nationalId, nationalIdFront, nationalIdBack, certificate } = data;
 
     // 1. Check if user exists
     const existingUser = await prisma.user.findUnique({
@@ -31,6 +31,9 @@ export class AuthService {
           password: hashedPassword,
           phone,
           type: role as UserType,
+          nationalId,
+          nationalIdFront,
+          nationalIdBack,
         },
       });
 
@@ -50,6 +53,8 @@ export class AuthService {
             yearsOfExp: parseInt(yearsOfExp as unknown as string) || 0,
             specialization: specialization || '',
             availability: availability || 'NOT_SPECIFIED',
+            certificate: certificate || null,
+            isVerified: false,
           },
         });
       } else if (role === 'ADMIN') {

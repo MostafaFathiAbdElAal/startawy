@@ -14,6 +14,12 @@ export const RegisterSchema = Yup.object().shape({
   phone: Yup.string()
     .matches(phoneRegex, 'Invalid Egyptian phone number (e.g. 01012345678)')
     .required('Phone number is required'),
+  nationalId: Yup.string()
+    .length(14, 'National ID must be exactly 14 digits')
+    .matches(/^\d+$/, 'National ID must contain only digits')
+    .required('National ID is required'),
+  nationalIdFront: Yup.string().required('National ID Front Image is required'),
+  nationalIdBack: Yup.string().required('National ID Back Image is required'),
   password: Yup.string()
     .matches(passwordRegex, 'Password must be at least 8 chars, with one uppercase, one lowercase, one number and one special char')
     .required('Password is required'),
@@ -58,6 +64,11 @@ export const RegisterSchema = Yup.object().shape({
   availability: Yup.string().when('role', {
     is: 'CONSULTANT',
     then: (schema) => schema.required('Availability is required'),
+    otherwise: (schema) => schema.optional(),
+  }),
+  certificate: Yup.string().when('role', {
+    is: 'CONSULTANT',
+    then: (schema) => schema.required('Professional certificate is required'),
     otherwise: (schema) => schema.optional(),
   }),
 });

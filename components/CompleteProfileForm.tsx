@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useRouter } from 'next/navigation';
-import { UserCheck } from 'lucide-react';
+import { UserCheck, Upload, CheckCircle2 } from 'lucide-react';
 import PhoneInput from './ui/PhoneInput';
 import DateInput from './ui/DateInput';
+import { useToast } from '@/components/providers/ToastProvider';
 
 const CompleteProfileSchema = Yup.object().shape({
   name: Yup.string()
@@ -15,6 +16,12 @@ const CompleteProfileSchema = Yup.object().shape({
   phone: Yup.string()
     .required('Phone number is required')
     .min(8, 'Invalid phone number'),
+  nationalId: Yup.string()
+    .length(14, 'National ID must be exactly 14 digits')
+    .matches(/^\d+$/, 'National ID must contain only digits')
+    .required('National ID is required'),
+  nationalIdFront: Yup.string().required('National ID Front Image is required'),
+  nationalIdBack: Yup.string().required('National ID Back Image is required'),
   role: Yup.string()
     .oneOf(['FOUNDER', 'CONSULTANT'], 'Invalid role selected')
     .required('Role is required'),
@@ -59,38 +66,139 @@ const CompleteProfileSchema = Yup.object().shape({
     then: (schema) => schema.required('Availability is required'),
     otherwise: (schema) => schema.optional(),
   }),
+  certificate: Yup.string().when('role', {
+    is: 'CONSULTANT',
+    then: (schema) => schema.required('Professional certificate is required'),
+    otherwise: (schema) => schema.optional(),
+  }),
 });
 
-export default function CompleteProfileForm() {
+interface CompleteProfileFormProps {
+    initialUser?: {
+        name?: string | null;
+        phone?: string | null;
+        nationalId?: string | null;
+        nationalIdFront?: string | null;
+        nationalIdBack?: string | null;
+        type?: string | null;
+        founder?: {
+            businessName?: string | null;
+            businessSector?: string | null;
+            foundingDate?: string | Date | null;
+        } | null;
+        consultant?: {
+            specialization?: string | null;
+            yearsOfExp?: number | null;
+            availability?: string | null;
+            sessionRate?: number | null;
+            bio?: string | null;
+            expertise?: string | null;
+            certificate?: string | null;
+        } | null;
+    } | null;
+}
+
+export default function CompleteProfileForm({ initialUser }: CompleteProfileFormProps) {
     const [serverError, setServerError] = useState<string | null>(null);
     const [currentTag, setCurrentTag] = useState('');
+    const [idFrontFile, setIdFrontFile] = useState<File | null>(null);
+    const [idBackFile, setIdBackFile] = useState<File | null>(null);
+    const [certificateFile, setCertificateFile] = useState<File | null>(null);
+    const [uploading, setUploading] = useState(false);
     const router = useRouter();
+    const { showToast } = useToast();
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Limit size to 10MB
+        if (file.size > 10 * 1024 * 1024) {
+            showToast({ type: 'error', title: 'File Too Large', message: 'Maximum size is 10MB' });
+            return;
+        }
+
+        if (fieldName === 'nationalIdFront') {
+            setIdFrontFile(file);
+            formik.setFieldValue('nationalIdFront', 'selected');
+        } else if (fieldName === 'nationalIdBack') {
+            setIdBackFile(file);
+            formik.setFieldValue('nationalIdBack', 'selected');
+        } else if (fieldName === 'certificate') {
+            setCertificateFile(file);
+            formik.setFieldValue('certificate', 'selected');
+        }
+    };
+
+    const uploadFileDirect = async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/user/upload-doc', {
+            method: 'POST',
+            body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Failed to upload document');
+        }
+        return data.url;
+    };
 
     const formik = useFormik({
         initialValues: {
-            name: '',
-            phone: '',
-            role: 'FOUNDER' as 'FOUNDER' | 'CONSULTANT',
-            businessName: '',
-            businessSector: '',
-            foundingDate: '',
-            specialization: '',
-            yearsOfExp: 0,
-            availability: '',
-            sessionRate: 150,
-            bio: '',
-            expertise: [] as string[],
+            name: initialUser?.name || '',
+            phone: initialUser?.phone || '',
+            nationalId: initialUser?.nationalId || '',
+            nationalIdFront: initialUser?.nationalIdFront ? 'selected' : '',
+            nationalIdBack: initialUser?.nationalIdBack ? 'selected' : '',
+            role: (initialUser?.type || 'FOUNDER') as 'FOUNDER' | 'CONSULTANT',
+            businessName: initialUser?.founder?.businessName || '',
+            businessSector: initialUser?.founder?.businessSector || '',
+            foundingDate: initialUser?.founder?.foundingDate
+                ? new Date(initialUser.founder.foundingDate).toISOString().split('T')[0]
+                : '',
+            specialization: initialUser?.consultant?.specialization || '',
+            yearsOfExp: initialUser?.consultant?.yearsOfExp || 0,
+            availability: initialUser?.consultant?.availability || '',
+            sessionRate: initialUser?.consultant?.sessionRate || 150,
+            bio: initialUser?.consultant?.bio || '',
+            expertise: initialUser?.consultant?.expertise
+                ? initialUser.consultant.expertise.split(';')
+                : [] as string[],
+            certificate: initialUser?.consultant?.certificate ? 'selected' : '',
         },
         validationSchema: CompleteProfileSchema,
         onSubmit: async (values, { setSubmitting }) => {
             setServerError(null);
+
+            const hasFront = idFrontFile || (initialUser?.nationalIdFront && initialUser.nationalIdFront !== 'selected');
+            const hasBack = idBackFile || (initialUser?.nationalIdBack && initialUser.nationalIdBack !== 'selected');
+            const hasCert = values.role !== 'CONSULTANT' || certificateFile || (initialUser?.consultant?.certificate && initialUser.consultant.certificate !== 'selected');
+
+            if (!hasFront || !hasBack || !hasCert) {
+                setServerError('Please select all required documents.');
+                setSubmitting(false);
+                return;
+            }
+
+            setUploading(true);
             try {
+                const frontUrl = idFrontFile ? await uploadFileDirect(idFrontFile) : initialUser?.nationalIdFront;
+                const backUrl = idBackFile ? await uploadFileDirect(idBackFile) : initialUser?.nationalIdBack;
+                const certUrl = certificateFile ? await uploadFileDirect(certificateFile) : initialUser?.consultant?.certificate;
+
+                const payload = {
+                    ...values,
+                    nationalIdFront: frontUrl,
+                    nationalIdBack: backUrl,
+                    certificate: certUrl || undefined,
+                };
+
                 const response = await fetch('/api/auth/complete-profile', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(values),
+                    body: JSON.stringify(payload),
                 });
-// ... (rest of onSubmit remains same)
 
                 const result = await response.json();
 
@@ -100,10 +208,13 @@ export default function CompleteProfileForm() {
                     router.refresh(); // Invalidate server components cache
                     router.push('/dashboard');
                 }
-            } catch {
-                setServerError('Network error. Please try again.');
+            } catch (err: unknown) {
+                const errMsg = err instanceof Error ? err.message : 'Network error. Please try again.';
+                setServerError(errMsg);
+            } finally {
+                setUploading(false);
+                setSubmitting(false);
             }
-            setSubmitting(false);
         },
     });
 
@@ -150,6 +261,99 @@ export default function CompleteProfileForm() {
                     {formik.touched.phone && formik.errors.phone && <p className="text-red-500 text-[10px] mt-2 font-bold uppercase tracking-tight ml-1">{formik.errors.phone}</p>}
                 </div>
 
+                {/* National ID */}
+                <div className="space-y-2">
+                    <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">National ID</label>
+                    <input
+                        name="nationalId"
+                        type="text"
+                        maxLength={14}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        value={formik.values.nationalId}
+                        className={`auth-input px-5 py-4 ${formik.touched.nationalId && formik.errors.nationalId ? 'auth-input-error' : ''}`}
+                        placeholder="14-digit National ID"
+                    />
+                    {formik.touched.nationalId && formik.errors.nationalId && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold uppercase tracking-tight">{formik.errors.nationalId}</p>}
+                </div>
+
+                {/* National ID Front and Back Images */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">ID Front Image</label>
+                        <div className="relative">
+                            <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={(e) => handleFileChange(e, 'nationalIdFront')}
+                                className="hidden"
+                                id="nationalIdFrontInput"
+                            />
+                            <label
+                                htmlFor="nationalIdFrontInput"
+                                className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-4 cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
+                                    idFrontFile ? 'border-teal-500 bg-teal-50/20 dark:bg-teal-900/10' : 'border-slate-200 dark:border-slate-800'
+                                }`}
+                            >
+                                {idFrontFile ? (
+                                    <div className="flex flex-col items-center text-center">
+                                        <CheckCircle2 className="w-6 h-6 text-teal-500 mb-1" />
+                                        <span className="text-[10px] text-teal-600 dark:text-teal-400 font-bold truncate max-w-full">{idFrontFile.name}</span>
+                                    </div>
+                                ) : initialUser?.nationalIdFront ? (
+                                    <div className="flex flex-col items-center text-center">
+                                        <CheckCircle2 className="w-6 h-6 text-teal-500 mb-1" />
+                                        <span className="text-[10px] text-teal-600 dark:text-teal-400 font-bold truncate max-w-full">Existing Front Card</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center text-center">
+                                        <Upload className="w-6 h-6 text-slate-400 mb-1" />
+                                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Upload Front</span>
+                                    </div>
+                                )}
+                            </label>
+                        </div>
+                        {formik.touched.nationalIdFront && formik.errors.nationalIdFront && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold">{formik.errors.nationalIdFront}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">ID Back Image</label>
+                        <div className="relative">
+                            <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={(e) => handleFileChange(e, 'nationalIdBack')}
+                                className="hidden"
+                                id="nationalIdBackInput"
+                            />
+                            <label
+                                htmlFor="nationalIdBackInput"
+                                className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-4 cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
+                                    idBackFile ? 'border-teal-500 bg-teal-50/20 dark:bg-teal-900/10' : 'border-slate-200 dark:border-slate-800'
+                                }`}
+                            >
+                                {idBackFile ? (
+                                    <div className="flex flex-col items-center text-center">
+                                        <CheckCircle2 className="w-6 h-6 text-teal-500 mb-1" />
+                                        <span className="text-[10px] text-teal-600 dark:text-teal-400 font-bold truncate max-w-full">{idBackFile.name}</span>
+                                    </div>
+                                ) : initialUser?.nationalIdBack ? (
+                                    <div className="flex flex-col items-center text-center">
+                                        <CheckCircle2 className="w-6 h-6 text-teal-500 mb-1" />
+                                        <span className="text-[10px] text-teal-600 dark:text-teal-400 font-bold truncate max-w-full">Existing Back Card</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center text-center">
+                                        <Upload className="w-6 h-6 text-slate-400 mb-1" />
+                                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Upload Back</span>
+                                    </div>
+                                )}
+                            </label>
+                        </div>
+                        {formik.touched.nationalIdBack && formik.errors.nationalIdBack && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold">{formik.errors.nationalIdBack}</p>}
+                    </div>
+                </div>
+
                 {/* Role */}
                 <div className="space-y-2">
                     <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">I am a...</label>
@@ -158,12 +362,11 @@ export default function CompleteProfileForm() {
                             <UserCheck className="h-5 w-5" />
                         </div>
                         <select
-                            id="role"
                             name="role"
                             onChange={formik.handleChange}
-                            onBlur={formik.handleBlur}
                             value={formik.values.role}
-                            className={`auth-input auth-input-icon pr-10 appearance-none cursor-pointer font-bold ${formik.touched.role && formik.errors.role ? 'auth-input-error' : ''}`}
+                            disabled={!!initialUser?.type}
+                            className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all appearance-none cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
                         >
                             <option value="FOUNDER">Startup Founder</option>
                             <option value="CONSULTANT">Consultant</option>
@@ -331,16 +534,53 @@ export default function CompleteProfileForm() {
                                 />
                                 {formik.touched.availability && formik.errors.availability && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold">{formik.errors.availability}</p>}
                             </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Professional Certificate</label>
+                                <div className="relative">
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp,application/pdf"
+                                        onChange={(e) => handleFileChange(e, 'certificate')}
+                                        className="hidden"
+                                        id="certificateInput"
+                                    />
+                                    <label
+                                        htmlFor="certificateInput"
+                                        className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-6 cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
+                                            certificateFile ? 'border-teal-500 bg-teal-50/20 dark:bg-teal-900/10' : 'border-slate-200 dark:border-slate-800'
+                                        }`}
+                                    >
+                                        {certificateFile ? (
+                                            <div className="flex flex-col items-center text-center">
+                                                <CheckCircle2 className="w-8 h-8 text-teal-500 mb-1" />
+                                                <span className="text-xs text-teal-600 dark:text-teal-400 font-bold truncate max-w-full">{certificateFile.name}</span>
+                                            </div>
+                                        ) : initialUser?.consultant?.certificate ? (
+                                            <div className="flex flex-col items-center text-center">
+                                                <CheckCircle2 className="w-8 h-8 text-teal-500 mb-1" />
+                                                <span className="text-xs text-teal-600 dark:text-teal-400 font-bold truncate max-w-full">Existing Certificate</span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center text-center">
+                                                <Upload className="w-8 h-8 text-slate-400 mb-1" />
+                                                <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Upload Certificate (PDF or Image)</span>
+                                            </div>
+                                        )}
+                                    </label>
+                                </div>
+                                {formik.touched.certificate && formik.errors.certificate && <p className="text-red-500 text-xs mt-1 font-bold">{formik.errors.certificate}</p>}
+                            </div>
                         </div>
                     )}
                 </div>
 
                 <button
                     type="submit"
-                    disabled={formik.isSubmitting}
+                    disabled={formik.isSubmitting || uploading}
                     className="w-full bg-linear-to-r from-teal-500 to-teal-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-teal-600 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                    {formik.isSubmitting ? 'Saving...' : 'Finish Setup'}
+                    {uploading ? 'Uploading Docs...' : formik.isSubmitting ? 'Saving...' : 'Finish Setup'}
                 </button>
             </form>
         </div>

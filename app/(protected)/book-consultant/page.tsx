@@ -46,8 +46,8 @@ export default async function BookConsultantPage() {
 
   return (
     <BookConsultantClient 
-      initialConsultants={consultants} 
+     initialConsultants={consultants} 
       specializations={specializations} 
-    />
+    /> 
   );
 }

@@ -98,6 +98,9 @@ export async function POST(req: NextRequest) {
           phone: extraData?.phone,
           type: userType,
           isEmailVerified: true, // Google email is inherently verified
+          nationalId: extraData?.nationalId || null,
+          nationalIdFront: extraData?.nationalIdFront || null,
+          nationalIdBack: extraData?.nationalIdBack || null,
         },
       });
 
@@ -118,6 +121,8 @@ export async function POST(req: NextRequest) {
             specialization: extraData.specialization,
             yearsOfExp: parseInt(extraData.yearsOfExp) || 0,
             availability: extraData.availability,
+            certificate: extraData.certificate || null,
+            isVerified: false,
           }
         });
       } else if (userType === 'ADMIN' && extraData) {

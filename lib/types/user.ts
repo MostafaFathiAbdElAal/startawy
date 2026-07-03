@@ -65,4 +65,8 @@ export interface RegistrationData {
   availability?: string;
   adminLevel?: string;
   adminScope?: string;
+  nationalId?: string;
+  nationalIdFront?: string;
+  nationalIdBack?: string;
+  certificate?: string;
 }

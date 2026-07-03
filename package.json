@@ -6,7 +6,8 @@
     "dev": "next dev -H 0.0.0.0",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "admin": "node scratch/make-admin.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

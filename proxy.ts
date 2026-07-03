@@ -5,14 +5,14 @@ import { prisma } from './lib/prisma';
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
+
   const isHomePage = pathname === '/';
-  
+
   // Public assets, API routes, and Home Page should always bypass proxy logic immediately
   // This MUST happen before verifyAuth to avoid unnecessary auth checks and log noise
   if (
-    pathname.includes('.') || 
-    pathname.startsWith('/api') || 
+    pathname.includes('.') ||
+    pathname.startsWith('/api') ||
     pathname.startsWith('/_next') ||
     isHomePage
   ) {
@@ -23,7 +23,7 @@ export async function proxy(request: NextRequest) {
   console.log(`[PROXY] Intercepting: ${pathname}`);
 
   const user = await verifyAuth(token);
-  
+
   if (user) {
     console.log(`[PROXY] User detected: ${user.email}, Role: ${user.role}`);
   } else {
@@ -37,14 +37,39 @@ export async function proxy(request: NextRequest) {
   if (user && !isHomePage && !pathname.startsWith('/api')) {
     const dbUser = await prisma.user.findUnique({
       where: { id: user.id },
-      select: { isSuspended: true }
+      select: { 
+        isSuspended: true, 
+        nationalId: true, 
+        consultant: { select: { isVerified: true, certificate: true } } 
+      }
     });
-    
+
     if (dbUser?.isSuspended) {
       console.log(`[PROXY] Suspended user detected -> Forcing logout and redirecting to /login`);
       const response = NextResponse.redirect(new URL('/login?suspended=true', request.url));
       response.cookies.delete('auth-token');
       return response;
+    }
+
+    // Force profile update if missing national ID or certificate (for existing users)
+    const isCompleteProfile = pathname.startsWith('/complete-profile');
+    if (user.role && !isOwner && !isCompleteProfile) {
+      const needsProfileUpdate = !dbUser?.nationalId || (user.role === 'CONSULTANT' && !dbUser?.consultant?.certificate);
+      if (needsProfileUpdate) {
+        console.log(`[PROXY] Existing user ${user.email} needs to update verification info -> Redirecting to /complete-profile`);
+        return NextResponse.redirect(new URL('/complete-profile', request.url));
+      }
+    }
+
+    if (user.role === 'CONSULTANT' && dbUser?.consultant && !dbUser.consultant.isVerified) {
+      const isPendingPage = pathname === '/consultant/pending-verification';
+      if (!isPendingPage) {
+        console.log(`[PROXY] Unverified consultant detected -> Redirecting to /consultant/pending-verification`);
+        return NextResponse.redirect(new URL('/consultant/pending-verification', request.url));
+      }
+    } else if (user.role === 'CONSULTANT' && pathname === '/consultant/pending-verification') {
+      console.log(`[PROXY] Verified consultant on pending page -> Redirecting to dashboard`);
+      return NextResponse.redirect(new URL('/consultant/dashboard', request.url));
     }
   }
 
@@ -82,15 +107,15 @@ export async function proxy(request: NextRequest) {
   // 4. New: If user is logged in, NO role, and NOT on /complete-profile -> Complete Profile
   // Owner Bypasses this to allow direct access to Admin tools
   if (!isOwner && user && !user.role && !isCompleteProfile && !isHomePage) {
-      console.log(`[PROXY] User with NO ROLE on protected page -> Redirecting to /complete-profile from ${pathname}`);
-      return NextResponse.redirect(new URL('/complete-profile', request.url));
+    console.log(`[PROXY] User with NO ROLE on protected page -> Redirecting to /complete-profile from ${pathname}`);
+    return NextResponse.redirect(new URL('/complete-profile', request.url));
   }
 
   // 5. Role-Based Access Control (RBAC) - [STRICT ENFORCEMENT]
   if (user && user.role) {
     const isConsultantRoute = pathname.startsWith('/consultant');
     const isAdminRoute = pathname.startsWith('/admin');
-    
+
     // Special routes that are public-ish (Consultant Profiles & Booking)
     // Matches: /consultant/123, /consultant/123/, /consultant/123/book, /consultant/123/book/
     const isPublicConsultantView = pathname.match(/^\/consultant\/\d+(\/book)?\/?$/);
@@ -158,12 +183,12 @@ export async function proxy(request: NextRequest) {
       const latestPayment = dbUser?.founder?.payments?.[0];
       const subscription = latestPayment?.subscription;
       const isActive = subscription?.status === 'ACTIVE' && new Date() < new Date(subscription.endDate);
-      
+
       const isPremium = isActive && (
         (latestPayment?.paymentType && (
-          latestPayment.paymentType.toLowerCase().includes('pro') || 
+          latestPayment.paymentType.toLowerCase().includes('pro') ||
           latestPayment.paymentType.toLowerCase().includes('premium')
-        )) || 
+        )) ||
         (latestPayment?.amount || 0) >= 200
       );
 
